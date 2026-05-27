@@ -52,6 +52,7 @@ function TradePage() {
   const [tf, setTf] = React.useState("6M");
   const [amount, setAmount] = React.useState(50);
   const [duration, setDuration] = React.useState(60);
+  const [sheet, setSheet] = React.useState<null | "buy" | "sell">(null);
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
@@ -60,7 +61,6 @@ function TradePage() {
     enabled: !!user,
   });
 
-  /* Keep positions query running so settlement logic works */
   const { data: positions } = useQuery({
     queryKey: ["open-trades", user?.id],
     queryFn: async () =>
@@ -77,12 +77,12 @@ function TradePage() {
       openServer({ data: { direction: dir, amount, durationSec: duration, openPrice: price } }),
     onSuccess: () => {
       toast.success("Trade opened");
+      setSheet(null);
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  /* Background settlement — no UI needed */
   React.useEffect(() => {
     if (!positions?.length) return;
     const t = setInterval(() => {
@@ -127,7 +127,7 @@ function TradePage() {
         </div>
       </div>
 
-      {/* Price Display */}
+      {/* Price */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -151,11 +151,7 @@ function TradePage() {
             up ? "text-success" : "text-destructive"
           }`}
         >
-          {up ? (
-            <ArrowUp className="size-3.5" />
-          ) : (
-            <ArrowDown className="size-3.5" />
-          )}
+          {up ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
           <span className="num">{up ? "+" : "-"}${fmtUSD(Math.abs(change))}</span>
           <span className="num">({fmtPct(changePct)})</span>
         </div>
@@ -170,9 +166,7 @@ function TradePage() {
               key={t.id}
               onClick={() => setTf(t.id)}
               className={`relative px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                active
-                  ? "text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {active && (
@@ -200,132 +194,40 @@ function TradePage() {
         </div>
       </motion.div>
 
-      {/* Trade Settings */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.2 }}
-        className="space-y-4"
-      >
-        {/* Amount */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Amount
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              Bal: <span className="num text-foreground">${fmtUSD(balance)}</span>
-            </span>
+      {/* Buy / Sell only */}
+      <div className="grid grid-cols-2 gap-3">
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={() => setSheet("buy")}
+          className="relative overflow-hidden py-4 rounded-2xl font-bold text-base tracking-wide"
+          style={{
+            background: "linear-gradient(145deg, oklch(0.68 0.15 156), oklch(0.58 0.14 150))",
+            boxShadow: "0 14px 36px -14px oklch(0.60 0.15 156 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
+            color: "oklch(0.10 0.01 260)",
+          }}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <ArrowUp className="size-5" strokeWidth={2.5} />
+            <span>BUY</span>
           </div>
-          <div className="flex gap-2">
-            {AMOUNT_PRESETS.map((v) => (
-              <button
-                key={v}
-                onClick={() => setAmount(v)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold num transition-all active:scale-95 ${
-                  amount === v
-                    ? "bg-gold/15 text-gold border border-gold/40"
-                    : "bg-surface-elevated border border-border/40 text-foreground hover:bg-secondary"
-                }`}
-              >
-                ${v}
-              </button>
-            ))}
-            <button
-              onClick={() => {
-                const next = amount * 2;
-                setAmount(Math.min(next, 100000));
-              }}
-              className="px-3 py-2.5 rounded-xl text-sm font-semibold bg-surface-elevated border border-border/40 text-foreground hover:bg-secondary transition-all active:scale-95"
-            >
-              ×2
-            </button>
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={() => setSheet("sell")}
+          className="relative overflow-hidden py-4 rounded-2xl font-bold text-base tracking-wide"
+          style={{
+            background: "linear-gradient(145deg, oklch(0.66 0.18 22), oklch(0.56 0.17 18))",
+            boxShadow: "0 14px 36px -14px oklch(0.60 0.18 22 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
+            color: "oklch(0.98 0.005 250)",
+          }}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <ArrowDown className="size-5" strokeWidth={2.5} />
+            <span>SELL</span>
           </div>
-        </div>
-
-        {/* Duration */}
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Clock className="size-3 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Duration
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {DURATIONS.map((d) => (
-              <button
-                key={d.s}
-                onClick={() => setDuration(d.s)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                  duration === d.s
-                    ? "bg-gradient-gold text-primary-foreground shadow-gold-soft"
-                    : "bg-surface-elevated border border-border/40 text-foreground hover:bg-secondary"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Payout info */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Activity className="size-3.5" />
-            <span>Payout</span>
-          </div>
-          <span className="text-sm font-bold text-gold num">+85%</span>
-        </div>
-
-        {/* Buy / Sell Buttons */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={() => openMut.mutate("buy")}
-            disabled={openMut.isPending || !canTrade}
-            className="relative group overflow-hidden py-4 rounded-2xl font-bold text-base tracking-wide transition-all disabled:opacity-45 disabled:cursor-not-allowed"
-            style={{
-              background: "linear-gradient(145deg, oklch(0.68 0.15 156), oklch(0.58 0.14 150))",
-              boxShadow: "0 14px 36px -14px oklch(0.60 0.15 156 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
-              color: "oklch(0.10 0.01 260)",
-            }}
-          >
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition" />
-            <div className="relative flex items-center justify-center gap-2">
-              <ArrowUp className="size-5" strokeWidth={2.5} />
-              <span>BUY</span>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={() => openMut.mutate("sell")}
-            disabled={openMut.isPending || !canTrade}
-            className="relative group overflow-hidden py-4 rounded-2xl font-bold text-base tracking-wide transition-all disabled:opacity-45 disabled:cursor-not-allowed"
-            style={{
-              background: "linear-gradient(145deg, oklch(0.66 0.18 22), oklch(0.56 0.17 18))",
-              boxShadow: "0 14px 36px -14px oklch(0.60 0.18 22 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
-              color: "oklch(0.98 0.005 250)",
-            }}
-          >
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition" />
-            <div className="relative flex items-center justify-center gap-2">
-              <ArrowDown className="size-5" strokeWidth={2.5} />
-              <span>SELL</span>
-            </div>
-          </motion.button>
-        </div>
-
-        {!canTrade && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-[11px] text-destructive text-center"
-          >
-            Insufficient balance. Fund your wallet to trade.
-          </motion.p>
-        )}
-      </motion.div>
+        </motion.button>
+      </div>
 
       {/* Active positions mini bar */}
       {!!positions?.length && (
@@ -340,11 +242,154 @@ function TradePage() {
               {positions.length} active position{positions.length > 1 ? "s" : ""}
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">
-            Settling automatically
-          </span>
+          <span className="text-[11px] text-muted-foreground">Settling automatically</span>
         </motion.div>
       )}
+
+      {/* Bottom Sheet */}
+      <AnimatePresence>
+        {sheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !openMut.isPending && setSheet(null)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-border/50 bg-surface-elevated p-5 pb-7 shadow-2xl"
+              style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}
+            >
+              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border/60" />
+
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    {sheet === "buy" ? "Open Long" : "Open Short"}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span
+                      className={`text-lg font-bold ${
+                        sheet === "buy" ? "text-success" : "text-destructive"
+                      }`}
+                    >
+                      {sheet === "buy" ? "BUY" : "SELL"}
+                    </span>
+                    <span className="text-sm text-muted-foreground num">@ ${fmtUSD(price)}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Balance</div>
+                  <div className="text-sm font-semibold num">${fmtUSD(balance)}</div>
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div className="mb-4">
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                  Amount
+                </div>
+                <div className="flex gap-2">
+                  {AMOUNT_PRESETS.map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setAmount(v)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold num transition-all active:scale-95 ${
+                        amount === v
+                          ? "bg-gold/15 text-gold border border-gold/40"
+                          : "bg-surface border border-border/40 text-foreground"
+                      }`}
+                    >
+                      ${v}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setAmount(Math.min(amount * 2, 100000))}
+                    className="px-3 py-2.5 rounded-xl text-sm font-semibold bg-surface border border-border/40"
+                  >
+                    ×2
+                  </button>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="mb-5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock className="size-3 text-muted-foreground" />
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Duration
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {DURATIONS.map((d) => (
+                    <button
+                      key={d.s}
+                      onClick={() => setDuration(d.s)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                        duration === d.s
+                          ? "bg-gradient-gold text-primary-foreground shadow-gold-soft"
+                          : "bg-surface border border-border/40 text-foreground"
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payout */}
+              <div className="flex items-center justify-between px-1 mb-4">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Activity className="size-3.5" />
+                  <span>Estimated payout</span>
+                </div>
+                <span className="text-sm font-bold text-gold num">
+                  +${fmtUSD(amount * 0.85)}
+                </span>
+              </div>
+
+              {/* Confirm */}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => openMut.mutate(sheet)}
+                disabled={openMut.isPending || !canTrade}
+                className="w-full py-4 rounded-2xl font-bold text-base tracking-wide disabled:opacity-45 disabled:cursor-not-allowed"
+                style={
+                  sheet === "buy"
+                    ? {
+                        background: "linear-gradient(145deg, oklch(0.68 0.15 156), oklch(0.58 0.14 150))",
+                        boxShadow: "0 14px 36px -14px oklch(0.60 0.15 156 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
+                        color: "oklch(0.10 0.01 260)",
+                      }
+                    : {
+                        background: "linear-gradient(145deg, oklch(0.66 0.18 22), oklch(0.56 0.17 18))",
+                        boxShadow: "0 14px 36px -14px oklch(0.60 0.18 22 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
+                        color: "oklch(0.98 0.005 250)",
+                      }
+                }
+              >
+                {openMut.isPending
+                  ? "Opening..."
+                  : `Confirm ${sheet === "buy" ? "BUY" : "SELL"} • $${fmtUSD(amount)}`}
+              </motion.button>
+
+              {!canTrade && (
+                <p className="text-[11px] text-destructive text-center mt-3">
+                  Insufficient balance. Fund your wallet to trade.
+                </p>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
+// silence unused import warning if TrendingUp removed later
+void TrendingUp;
