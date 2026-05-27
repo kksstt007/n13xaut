@@ -22,9 +22,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { data, price, changePct } = usePriceFeed(80);
-  const up = changePct >= 0;
-
   return (
     <div className="min-h-screen">
       {/* Top bar */}
@@ -47,6 +44,16 @@ function Landing() {
         </div>
       </header>
 
+      <LandingContent />
+    </div>
+  );
+}
+
+export function LandingContent() {
+  const { data, price, changePct } = usePriceFeed(80);
+  const up = changePct >= 0;
+  return (
+    <>
       <Hero data={data} price={price} changePct={changePct} up={up} />
       <MarketOverview price={price} changePct={changePct} up={up} />
       <About />
@@ -60,7 +67,7 @@ function Landing() {
       <FAQ />
       <CTA />
       <Footer />
-    </div>
+    </>
   );
 }
 
