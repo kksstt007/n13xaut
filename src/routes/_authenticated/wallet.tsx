@@ -23,7 +23,42 @@ function WalletPage() {
     queryFn: async () => (await supabase.from("wallets").select("*").eq("user_id", user!.id).single()).data,
     enabled: !!user,
   });
-...
+  const { data: methods } = useQuery({
+    queryKey: ["methods"],
+    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true)).data ?? [],
+  });
+  const { data: deposits } = useQuery({
+    queryKey: ["deposits", user?.id],
+    queryFn: async () => (await supabase.from("deposits").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
+    enabled: !!user,
+  });
+  const { data: withdrawals } = useQuery({
+    queryKey: ["withdrawals", user?.id],
+    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
+    enabled: !!user,
+  });
+
+  const [selectedMethod, setSelectedMethod] = React.useState<any>(null);
+  React.useEffect(() => { if (methods?.length && !selectedMethod) setSelectedMethod(methods[0]); }, [methods, selectedMethod]);
+  const [depAmount, setDepAmount] = React.useState(100);
+  const [txHash, setTxHash] = React.useState("");
+
+  const submitDeposit = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("deposits").insert({
+        user_id: user!.id, method_id: selectedMethod.id, network: selectedMethod.network,
+        amount: depAmount, tx_hash: txHash || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Deposit submitted for review"); setTxHash(""); qc.invalidateQueries({ queryKey: ["deposits"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const [wdNetwork, setWdNetwork] = React.useState("TRC20");
+  const [wdAddress, setWdAddress] = React.useState("");
+  const [wdAmount, setWdAmount] = React.useState(50);
+
   const submitWithdrawal = useMutation({
     mutationFn: async () => {
       if (wdAmount > Number(wallet?.usdt_balance ?? 0)) throw new Error("Insufficient balance");
