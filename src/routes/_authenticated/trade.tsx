@@ -376,17 +376,17 @@ function TradePage() {
                   <span className="text-xl leading-none">−</span>
                 </button>
                 <input
-                  type="number"
-                  min={1}
-                  max={100000}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={amount}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val)) setAmount(Math.min(100000, Math.max(1, val)));
-                    else if (e.target.value === "") setAmount(1);
+                    const raw = e.target.value.replace(/\D/g, "");
+                    if (raw === "") setAmount(1);
+                    else setAmount(Math.min(100000, Math.max(1, parseInt(raw, 10))));
                   }}
                   disabled={openMut.isPending}
-                  className="w-32 text-center bg-transparent text-xl font-semibold text-white num tabular-nums outline-none border-none focus:ring-0 disabled:opacity-50"
+                  className="w-32 text-center bg-transparent text-xl font-semibold text-white num tabular-nums outline-none border-none focus:ring-0 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
                   onClick={() => setAmount(Math.min(100000, amount + 1))}
