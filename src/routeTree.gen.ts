@@ -15,8 +15,10 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTradeRouteImport } from './routes/_authenticated/trade'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedMarketRouteImport } from './routes/_authenticated/market'
 import { Route as AuthenticatedKycRouteImport } from './routes/_authenticated/kyc'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -51,6 +53,11 @@ const AuthenticatedTradeRoute = AuthenticatedTradeRouteImport.update({
   path: '/trade',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
   id: '/referrals',
   path: '/referrals',
@@ -59,6 +66,11 @@ const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMarketRoute = AuthenticatedMarketRouteImport.update({
+  id: '/market',
+  path: '/market',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedKycRoute = AuthenticatedKycRouteImport.update({
@@ -90,8 +102,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/kyc': typeof AuthenticatedKycRoute
+  '/market': typeof AuthenticatedMarketRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/trade': typeof AuthenticatedTradeRoute
   '/wallet': typeof AuthenticatedWalletRoute
 }
@@ -103,8 +117,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/kyc': typeof AuthenticatedKycRoute
+  '/market': typeof AuthenticatedMarketRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/trade': typeof AuthenticatedTradeRoute
   '/wallet': typeof AuthenticatedWalletRoute
 }
@@ -118,8 +134,10 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/kyc': typeof AuthenticatedKycRoute
+  '/_authenticated/market': typeof AuthenticatedMarketRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/referrals': typeof AuthenticatedReferralsRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/trade': typeof AuthenticatedTradeRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
 }
@@ -133,8 +151,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/kyc'
+    | '/market'
     | '/profile'
     | '/referrals'
+    | '/support'
     | '/trade'
     | '/wallet'
   fileRoutesByTo: FileRoutesByTo
@@ -146,8 +166,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/kyc'
+    | '/market'
     | '/profile'
     | '/referrals'
+    | '/support'
     | '/trade'
     | '/wallet'
   id:
@@ -160,8 +182,10 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
     | '/_authenticated/kyc'
+    | '/_authenticated/market'
     | '/_authenticated/profile'
     | '/_authenticated/referrals'
+    | '/_authenticated/support'
     | '/_authenticated/trade'
     | '/_authenticated/wallet'
   fileRoutesById: FileRoutesById
@@ -217,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTradeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/referrals': {
       id: '/_authenticated/referrals'
       path: '/referrals'
@@ -229,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/market': {
+      id: '/_authenticated/market'
+      path: '/market'
+      fullPath: '/market'
+      preLoaderRoute: typeof AuthenticatedMarketRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/kyc': {
@@ -267,8 +305,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedKycRoute: typeof AuthenticatedKycRoute
+  AuthenticatedMarketRoute: typeof AuthenticatedMarketRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReferralsRoute: typeof AuthenticatedReferralsRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTradeRoute: typeof AuthenticatedTradeRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
 }
@@ -278,8 +318,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedKycRoute: AuthenticatedKycRoute,
+  AuthenticatedMarketRoute: AuthenticatedMarketRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReferralsRoute: AuthenticatedReferralsRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTradeRoute: AuthenticatedTradeRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
 }
