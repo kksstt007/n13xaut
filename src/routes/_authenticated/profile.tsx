@@ -31,7 +31,7 @@ function ProfilePage() {
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
-    queryFn: async () => (await supabase.from("wallets").select("balance").eq("user_id", user!.id).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle()).data,
     enabled: !!user,
   });
 
