@@ -37,7 +37,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { title: "XAUT.trade — Premium XAU/USDT Trading Platform" },
       { name: "description", content: "Trade Tether Gold (XAUT) against USDT with live charts, real-time execution, and institutional-grade tooling." },
       { name: "theme-color", content: "#0B0E11" },

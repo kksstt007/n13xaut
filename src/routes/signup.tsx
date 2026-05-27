@@ -19,15 +19,32 @@ function SignupPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
         data: { display_name: name },
       },
     });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+    // If a session was returned, the user is already logged in (email confirmation disabled)
+    if (data.session) {
+      toast.success("Welcome to XAUT.trade!");
+      setLoading(false);
+      nav({ to: "/dashboard" });
+      return;
+    }
+    // Otherwise try to sign in immediately (in case confirmation is not required but no session returned)
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (!signInError) {
+      toast.success("Welcome to XAUT.trade!");
+      nav({ to: "/dashboard" });
+      return;
+    }
     toast.success("Account created. Check your email to verify.");
     nav({ to: "/login" });
   };
