@@ -166,3 +166,10 @@
 
 @keyframes ticker-up { 0% { transform: translateY(6px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 .animate-ticker { animation: ticker-up 0.3s ease-out; }
+
+/* Prevent iOS Safari auto-zoom when focusing form fields (requires font-size >= 16px) */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
