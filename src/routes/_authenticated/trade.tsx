@@ -375,9 +375,19 @@ function TradePage() {
                 >
                   <span className="text-xl leading-none">−</span>
                 </button>
-                <div className="text-xl font-semibold text-white num tabular-nums">
-                  {amount}
-                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={amount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) setAmount(Math.min(100000, Math.max(1, val)));
+                    else if (e.target.value === "") setAmount(1);
+                  }}
+                  disabled={openMut.isPending}
+                  className="w-32 text-center bg-transparent text-xl font-semibold text-white num tabular-nums outline-none border-none focus:ring-0 disabled:opacity-50"
+                />
                 <button
                   onClick={() => setAmount(Math.min(100000, amount + 1))}
                   disabled={openMut.isPending}
