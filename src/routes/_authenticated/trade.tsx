@@ -245,7 +245,7 @@ function TradePage() {
         </motion.div>
       )}
 
-      {/* Bottom Sheet */}
+      {/* Bottom Sheet — Option Trade */}
       <AnimatePresence>
         {sheet && (
           <>
@@ -254,134 +254,167 @@ function TradePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => !openMut.isPending && setSheet(null)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
             />
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-border/50 bg-surface-elevated p-5 pb-7 shadow-2xl"
-              style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] px-5 pt-3 shadow-2xl"
+              style={{
+                background: "oklch(0.16 0.03 265)",
+                paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+              }}
             >
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border/60" />
+              {/* Grabber */}
+              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
 
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                    {sheet === "buy" ? "Open Long" : "Open Short"}
+              {/* Asset Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="size-12 rounded-xl grid place-items-center font-bold text-base shrink-0"
+                  style={{
+                    background: "linear-gradient(145deg, #E8C657, #B8862F)",
+                    color: "oklch(0.18 0.04 265)",
+                    clipPath:
+                      "polygon(50% 0%, 100% 30%, 100% 70%, 50% 100%, 0% 70%, 0% 30%)",
+                  }}
+                >
+                  ₮
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-white leading-tight">
+                    Tether Gold
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span
-                      className={`text-lg font-bold ${
-                        sheet === "buy" ? "text-success" : "text-destructive"
-                      }`}
-                    >
-                      {sheet === "buy" ? "BUY" : "SELL"}
-                    </span>
-                    <span className="text-sm text-muted-foreground num">@ ${fmtUSD(price)}</span>
+                  <div className="text-[11px] text-white/40 tracking-wide mt-0.5">
+                    XAUTUSDT
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Balance</div>
-                  <div className="text-sm font-semibold num">${fmtUSD(balance)}</div>
-                </div>
-              </div>
-
-              {/* Amount */}
-              <div className="mb-4">
-                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Amount
-                </div>
-                <div className="flex gap-2">
-                  {AMOUNT_PRESETS.map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setAmount(v)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold num transition-all active:scale-95 ${
-                        amount === v
-                          ? "bg-gold/15 text-gold border border-gold/40"
-                          : "bg-surface border border-border/40 text-foreground"
-                      }`}
-                    >
-                      ${v}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setAmount(Math.min(amount * 2, 100000))}
-                    className="px-3 py-2.5 rounded-xl text-sm font-semibold bg-surface border border-border/40"
+                  <div className="text-base font-semibold text-white num">
+                    ${fmtUSD(price)}
+                  </div>
+                  <div
+                    className={`text-[11px] font-medium num mt-0.5 flex items-center justify-end gap-1 ${
+                      up ? "text-success" : "text-destructive"
+                    }`}
                   >
-                    ×2
-                  </button>
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="mb-5">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Clock className="size-3 text-muted-foreground" />
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Duration
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  {DURATIONS.map((d) => (
-                    <button
-                      key={d.s}
-                      onClick={() => setDuration(d.s)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                        duration === d.s
-                          ? "bg-gradient-gold text-primary-foreground shadow-gold-soft"
-                          : "bg-surface border border-border/40 text-foreground"
+                    <span
+                      className={`inline-block size-1.5 rounded-full ${
+                        up ? "bg-success" : "bg-destructive"
                       }`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
+                    />
+                    {fmtPct(changePct)}
+                  </div>
                 </div>
               </div>
 
-              {/* Payout */}
-              <div className="flex items-center justify-between px-1 mb-4">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Activity className="size-3.5" />
-                  <span>Estimated payout</span>
+              <div className="h-px bg-white/8 mb-5" />
+
+              {/* Time */}
+              <div className="mb-5">
+                <div className="text-[15px] font-semibold text-white mb-3">
+                  Time
                 </div>
-                <span className="text-sm font-bold text-gold num">
-                  +${fmtUSD(amount * 0.85)}
+                <div className="grid grid-cols-4 gap-2.5">
+                  {DURATIONS.map((d) => {
+                    const active = duration === d.s;
+                    return (
+                      <button
+                        key={d.s}
+                        onClick={() => setDuration(d.s)}
+                        className="rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all active:scale-95"
+                        style={
+                          active
+                            ? {
+                                background: "linear-gradient(145deg, #E8C657, #B8862F)",
+                                boxShadow:
+                                  "0 8px 24px -8px oklch(0.75 0.15 85 / 0.5)",
+                              }
+                            : { background: "oklch(0.22 0.03 265)" }
+                        }
+                      >
+                        <span
+                          className={`text-[15px] font-bold num ${
+                            active ? "text-[#1a1a2e]" : "text-white"
+                          }`}
+                        >
+                          {d.label}
+                        </span>
+                        <span
+                          className={`text-[10px] num ${
+                            active ? "text-[#1a1a2e]/70" : "text-white/40"
+                          }`}
+                        >
+                          Ror:{d.ror}%
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Transaction Fees */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[13px] text-white/50">Transaction Fees:</span>
+                <span className="text-[13px] font-semibold text-gold num">$ 0.00</span>
+              </div>
+
+              {/* Quantity stepper */}
+              <div
+                className="flex items-center justify-between rounded-xl px-3 py-3 mb-4"
+                style={{ background: "oklch(0.22 0.03 265)" }}
+              >
+                <button
+                  onClick={() => setAmount(Math.max(1, amount - 1))}
+                  disabled={openMut.isPending}
+                  className="size-9 rounded-lg grid place-items-center text-white transition active:scale-90 disabled:opacity-50"
+                  style={{ background: "oklch(0.28 0.03 265)" }}
+                  aria-label="Decrease"
+                >
+                  <span className="text-xl leading-none">−</span>
+                </button>
+                <div className="text-xl font-semibold text-white num tabular-nums">
+                  {amount}
+                </div>
+                <button
+                  onClick={() => setAmount(Math.min(100000, amount + 1))}
+                  disabled={openMut.isPending}
+                  className="size-9 rounded-lg grid place-items-center text-white transition active:scale-90 disabled:opacity-50"
+                  style={{ background: "oklch(0.28 0.03 265)" }}
+                  aria-label="Increase"
+                >
+                  <span className="text-xl leading-none">+</span>
+                </button>
+              </div>
+
+              {/* Available balance */}
+              <div className="flex items-center justify-between mb-5">
+                <span className="text-[13px] text-white/50">Available Balance:</span>
+                <span className="text-[13px] font-semibold text-gold num">
+                  {fmtUSD(balance)} USDT
                 </span>
               </div>
 
-              {/* Confirm */}
+              {/* Continue */}
               <motion.button
-                whileTap={{ scale: 0.97 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => openMut.mutate(sheet)}
                 disabled={openMut.isPending || !canTrade}
                 className="w-full py-4 rounded-2xl font-bold text-base tracking-wide disabled:opacity-45 disabled:cursor-not-allowed"
-                style={
-                  sheet === "buy"
-                    ? {
-                        background: "linear-gradient(145deg, oklch(0.68 0.15 156), oklch(0.58 0.14 150))",
-                        boxShadow: "0 14px 36px -14px oklch(0.60 0.15 156 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
-                        color: "oklch(0.10 0.01 260)",
-                      }
-                    : {
-                        background: "linear-gradient(145deg, oklch(0.66 0.18 22), oklch(0.56 0.17 18))",
-                        boxShadow: "0 14px 36px -14px oklch(0.60 0.18 22 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.12)",
-                        color: "oklch(0.98 0.005 250)",
-                      }
-                }
+                style={{
+                  background: "linear-gradient(145deg, #F0CD5C, #C99634)",
+                  color: "oklch(0.18 0.04 265)",
+                  boxShadow: "0 10px 30px -10px oklch(0.75 0.15 85 / 0.45)",
+                }}
               >
                 {openMut.isPending
                   ? "Opening..."
-                  : `Confirm ${sheet === "buy" ? "BUY" : "SELL"} • $${fmtUSD(amount)}`}
+                  : !canTrade
+                  ? "Insufficient Balance"
+                  : "Continue"}
               </motion.button>
-
-              {!canTrade && (
-                <p className="text-[11px] text-destructive text-center mt-3">
-                  Insufficient balance. Fund your wallet to trade.
-                </p>
-              )}
             </motion.div>
           </>
         )}
@@ -390,5 +423,8 @@ function TradePage() {
   );
 }
 
-// silence unused import warning if TrendingUp removed later
 void TrendingUp;
+void Clock;
+void Activity;
+void ArrowUp;
+void ArrowDown;
