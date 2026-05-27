@@ -293,6 +293,31 @@ function TradePage() {
         </motion.div>
       )}
 
+      {/* Active trade modal — countdown + result */}
+      <AnimatePresence>
+        {active && (
+          <ActiveTradeModal
+            active={active}
+            now={now}
+            livePrice={price}
+            result={result}
+            onClose={() => {
+              setActive(null);
+              setResult(null);
+              settlingRef.current = false;
+            }}
+            onTradeAgain={() => {
+              const dir = active.direction;
+              setActive(null);
+              setResult(null);
+              settlingRef.current = false;
+              setSheet(dir);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+
       {/* Bottom Sheet — Option Trade */}
       <AnimatePresence>
         {sheet && (
