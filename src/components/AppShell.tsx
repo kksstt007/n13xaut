@@ -12,14 +12,14 @@ const bottomNav = [
   { to: "/market", label: "Market", icon: LineChart },
   { to: "/trade", label: "Trade", icon: CandlestickChart, primary: true },
   { to: "/support", label: "Support", icon: LifeBuoy },
-  { to: "/wallet", label: "Asset", icon: WalletIcon },
+  { to: "/profile", label: "Profile", icon: User },
 ];
 
 const moreNav = [
+  { to: "/wallet", label: "Assets", icon: WalletIcon },
   { to: "/history", label: "Trade history", icon: History },
   { to: "/kyc", label: "Identity (KYC)", icon: ShieldCheck },
   { to: "/referrals", label: "Referrals", icon: Users },
-  { to: "/profile", label: "Profile", icon: User },
 ];
 
 function isActive(pathname: string, to: string) {
