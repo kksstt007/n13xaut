@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
+import { Copy, Search, Bell, Eye, EyeOff, Plus, ArrowUpRight, ArrowLeftRight, Repeat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
@@ -16,48 +16,14 @@ function WalletPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = React.useState<"deposit" | "withdraw">("deposit");
+  const [hidden, setHidden] = React.useState(false);
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
     queryFn: async () => (await supabase.from("wallets").select("*").eq("user_id", user!.id).single()).data,
     enabled: !!user,
   });
-  const { data: methods } = useQuery({
-    queryKey: ["methods"],
-    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true)).data ?? [],
-  });
-  const { data: deposits } = useQuery({
-    queryKey: ["deposits", user?.id],
-    queryFn: async () => (await supabase.from("deposits").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
-    enabled: !!user,
-  });
-  const { data: withdrawals } = useQuery({
-    queryKey: ["withdrawals", user?.id],
-    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
-    enabled: !!user,
-  });
-
-  const [selectedMethod, setSelectedMethod] = React.useState<any>(null);
-  React.useEffect(() => { if (methods?.length && !selectedMethod) setSelectedMethod(methods[0]); }, [methods, selectedMethod]);
-  const [depAmount, setDepAmount] = React.useState(100);
-  const [txHash, setTxHash] = React.useState("");
-
-  const submitDeposit = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("deposits").insert({
-        user_id: user!.id, method_id: selectedMethod.id, network: selectedMethod.network,
-        amount: depAmount, tx_hash: txHash || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Deposit submitted for review"); setTxHash(""); qc.invalidateQueries({ queryKey: ["deposits"] }); },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const [wdNetwork, setWdNetwork] = React.useState("TRC20");
-  const [wdAddress, setWdAddress] = React.useState("");
-  const [wdAmount, setWdAmount] = React.useState(50);
-
+...
   const submitWithdrawal = useMutation({
     mutationFn: async () => {
       if (wdAmount > Number(wallet?.usdt_balance ?? 0)) throw new Error("Insufficient balance");
@@ -70,18 +36,108 @@ function WalletPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const available = Number(wallet?.usdt_balance ?? 0);
+  const locked = Number(wallet?.locked ?? 0);
+  const total = available + locked;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning!" : hour < 18 ? "Good afternoon!" : "Good evening!";
+  const name = (user?.user_metadata?.full_name as string)
+    || (user?.email ? user.email.split("@")[0] : "Trader");
+  const initials = name.slice(0, 2).toUpperCase();
+  const mask = (v: string) => hidden ? "••••••" : v;
+
+  const actions = [
+    { i: Plus, t: "Deposit", onClick: () => setTab("deposit") },
+    { i: ArrowUpRight, t: "Withdraw", onClick: () => setTab("withdraw") },
+    { i: ArrowLeftRight, t: "Transfer", onClick: () => toast.info("Transfer is coming soon") },
+    { i: Repeat, t: "Swap", onClick: () => toast.info("Swap is coming soon") },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="glass rounded-xl p-5 flex flex-wrap justify-between gap-4">
-        <div>
-          <div className="text-xs text-muted-foreground">Available balance</div>
-          <div className="num text-3xl font-bold mt-1">${fmtUSD(Number(wallet?.usdt_balance ?? 0))} <span className="text-base text-gold">USDT</span></div>
-          <div className="text-xs text-muted-foreground mt-1">In positions: ${fmtUSD(Number(wallet?.locked ?? 0))}</div>
+      {/* Hero balance card — emerald gradient */}
+      <div
+        className="relative overflow-hidden rounded-3xl p-5 sm:p-6 text-white shadow-elevated"
+        style={{
+          background:
+            "radial-gradient(120% 90% at 100% 0%, oklch(0.55 0.13 155 / 0.55), transparent 60%), linear-gradient(155deg, oklch(0.28 0.07 158) 0%, oklch(0.18 0.05 158) 55%, oklch(0.12 0.03 160) 100%)",
+        }}
+      >
+        {/* decorative dots */}
+        <div
+          className="pointer-events-none absolute -top-10 right-0 size-56 opacity-40"
+          style={{
+            backgroundImage:
+              "radial-gradient(oklch(0.85 0.08 150 / 0.18) 1px, transparent 1.5px)",
+            backgroundSize: "12px 12px",
+            maskImage: "radial-gradient(ellipse at top right, black, transparent 70%)",
+          }}
+        />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 size-72 rounded-full bg-emerald-400/15 blur-3xl" />
+
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="size-10 rounded-full bg-gradient-to-br from-emerald-200/90 to-emerald-500/80 grid place-items-center text-emerald-950 text-xs font-bold shadow-inner ring-2 ring-white/15">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12px] text-emerald-100/80 leading-tight">{greet}</div>
+              <div className="text-sm font-semibold truncate">{name}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="size-9 rounded-full bg-white/10 hover:bg-white/15 grid place-items-center transition" aria-label="Search">
+              <Search className="size-4" />
+            </button>
+            <button className="relative size-9 rounded-full bg-white/10 hover:bg-white/15 grid place-items-center transition" aria-label="Notifications">
+              <Bell className="size-4" />
+              <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-rose-400" />
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setTab("deposit")} className={`px-5 py-2.5 rounded-lg text-sm font-medium ${tab === "deposit" ? "bg-gradient-gold text-primary-foreground" : "bg-surface-elevated"}`}>Deposit</button>
-          <button onClick={() => setTab("withdraw")} className={`px-5 py-2.5 rounded-lg text-sm font-medium ${tab === "withdraw" ? "bg-gradient-gold text-primary-foreground" : "bg-surface-elevated"}`}>Withdraw</button>
+
+        <div className="relative mt-6">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-emerald-100/75">Total Balance</span>
+            <button
+              onClick={() => setHidden((h) => !h)}
+              className="size-8 rounded-full bg-white/10 hover:bg-white/15 grid place-items-center transition"
+              aria-label={hidden ? "Show balance" : "Hide balance"}
+            >
+              {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          <div className="num mt-1 text-4xl sm:text-[40px] font-bold tracking-tight">
+            ${mask(fmtUSD(total))}
+          </div>
+          <div className="mt-1 text-[12.5px] flex items-center gap-1.5">
+            <span className="num text-emerald-100/80">{hidden ? "••••" : `Available $${fmtUSD(available)}`}</span>
+            {locked > 0 && (
+              <span className="num text-emerald-300/90">· In positions ${hidden ? "••••" : fmtUSD(locked)}</span>
+            )}
+          </div>
         </div>
+
+        <div className="relative mt-6 grid grid-cols-4 gap-2 sm:gap-3">
+          {actions.map((a) => (
+            <button
+              key={a.t}
+              onClick={a.onClick}
+              className="group flex flex-col items-center gap-1.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-[0.97] transition"
+            >
+              <span className="size-9 rounded-xl bg-white/10 grid place-items-center group-hover:bg-white/20 transition">
+                <a.i className="size-4" />
+              </span>
+              <span className="text-[11.5px] font-medium">{a.t}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs switcher (kept for clarity) */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setTab("deposit")} className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${tab === "deposit" ? "bg-gradient-gold text-primary-foreground shadow-gold-soft" : "bg-surface-elevated text-muted-foreground hover:text-foreground"}`}>Deposit</button>
+        <button onClick={() => setTab("withdraw")} className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${tab === "withdraw" ? "bg-gradient-gold text-primary-foreground shadow-gold-soft" : "bg-surface-elevated text-muted-foreground hover:text-foreground"}`}>Withdraw</button>
       </div>
 
       {tab === "deposit" ? (
