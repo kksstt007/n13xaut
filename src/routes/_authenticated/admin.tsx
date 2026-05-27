@@ -94,9 +94,24 @@ function UsersAdmin() {
   );
 }
 
+function useRealtimeInvalidate(table: string, queryKey: string, onNewPending?: (row: any) => void) {
+  const qc = useQueryClient();
+  React.useEffect(() => {
+    const ch = supabase
+      .channel(`admin-${table}`)
+      .on("postgres_changes", { event: "*", schema: "public", table }, (payload: any) => {
+        qc.invalidateQueries({ queryKey: [queryKey] });
+        if (payload.eventType === "INSERT" && payload.new?.status === "pending") onNewPending?.(payload.new);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc, table, queryKey, onNewPending]);
+}
+
 function DepositsAdmin() {
   const qc = useQueryClient();
   const { data } = useAdminQuery(["admin-deposits"], async () => (await supabase.from("deposits").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  useRealtimeInvalidate("deposits", "admin-deposits", (row) => toast.info(`New deposit · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, deposit }: any) => {
       const { error } = await supabase.from("deposits").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
@@ -106,15 +121,17 @@ function DepositsAdmin() {
         await supabase.from("wallets").update({ usdt_balance: Number(w!.usdt_balance) + Number(deposit.amount) }).eq("user_id", deposit.user_id);
       }
     },
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-deposits"] }); },
+    onSuccess: (_d, v) => { toast.success(v.status === "approved" ? "Deposit approved & credited" : "Deposit rejected"); qc.invalidateQueries({ queryKey: ["admin-deposits"] }); },
     onError: (e: any) => toast.error(e.message),
   });
-  return <ReviewTable rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} />;
+  const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
+  return <ReviewTable title="Deposits" pending={pending} rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} busy={review.isPending} />;
 }
 
 function WithdrawalsAdmin() {
   const qc = useQueryClient();
   const { data } = useAdminQuery(["admin-withdrawals"], async () => (await supabase.from("withdrawals").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  useRealtimeInvalidate("withdrawals", "admin-withdrawals", (row) => toast.info(`New withdrawal · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, w }: any) => {
       const { error } = await supabase.from("withdrawals").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
@@ -124,9 +141,11 @@ function WithdrawalsAdmin() {
         await supabase.from("wallets").update({ usdt_balance: Math.max(0, Number(wal!.usdt_balance) - Number(w.amount)) }).eq("user_id", w.user_id);
       }
     },
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-withdrawals"] }); },
+    onSuccess: (_d, v) => { toast.success(v.status === "approved" ? "Withdrawal approved" : "Withdrawal rejected"); qc.invalidateQueries({ queryKey: ["admin-withdrawals"] }); },
+    onError: (e: any) => toast.error(e.message),
   });
-  return <ReviewTable rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} />;
+  const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
+  return <ReviewTable title="Withdrawals" pending={pending} rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} busy={review.isPending} />;
 }
 
 function ReviewTable({ rows, onApprove, onReject, addr }: any) {
