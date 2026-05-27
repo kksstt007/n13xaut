@@ -148,30 +148,47 @@ function WithdrawalsAdmin() {
   return <ReviewTable title="Withdrawals" pending={pending} rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} busy={review.isPending} />;
 }
 
-function ReviewTable({ rows, onApprove, onReject, addr }: any) {
+function ReviewTable({ rows, onApprove, onReject, addr, title, pending, busy }: any) {
+  const [filter, setFilter] = React.useState<"pending" | "all">("pending");
+  const filtered = (rows ?? []).filter((r: any) => filter === "all" || r.status === "pending");
   return (
-    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground border-b border-border/50">
-          <tr>{["User","Network","Amount", addr && "Address","Status","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
-        </thead>
-        <tbody>{rows.map((r: any) => (
-          <tr key={r.id} className="border-b border-border/30">
-            <td className="py-2.5">{r.profiles?.display_name ?? "—"}</td>
-            <td>{r.network}</td>
-            <td className="num">${fmtUSD(Number(r.amount))}</td>
-            {addr && <td className="font-mono text-xs truncate max-w-[200px]">{r.address}</td>}
-            <td><span className={`text-xs ${r.status === "approved" ? "text-success" : r.status === "rejected" ? "text-destructive" : "text-gold"}`}>{r.status}</span></td>
-            <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-            <td>{r.status === "pending" && (
-              <div className="flex gap-1.5">
-                <button onClick={() => onApprove(r)} className="text-xs px-2 py-1 rounded bg-success/15 text-success hover:bg-success/25">Approve</button>
-                <button onClick={() => onReject(r)} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Reject</button>
-              </div>
-            )}</td>
-          </tr>
-        ))}{!rows.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">None</td></tr>}</tbody>
-      </table>
+    <div className="space-y-3">
+      {title && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold">{title}</h2>
+            {pending > 0 && <span className="px-1.5 py-0.5 rounded text-[10px] bg-gold/15 text-gold font-semibold">{pending} pending</span>}
+          </div>
+          <div className="flex gap-1 text-xs">
+            {(["pending","all"] as const).map((f) => (
+              <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 rounded transition ${filter === f ? "bg-gold/15 text-gold" : "text-muted-foreground hover:text-foreground"}`}>{f === "pending" ? "Pending" : "All"}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50">
+            <tr>{["User","Network","Amount", addr && "Address","Status","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
+          </thead>
+          <tbody>{filtered.map((r: any) => (
+            <tr key={r.id} className="border-b border-border/30">
+              <td className="py-2.5">{r.profiles?.display_name ?? "—"}</td>
+              <td>{r.network}</td>
+              <td className="num">${fmtUSD(Number(r.amount))}</td>
+              {addr && <td className="font-mono text-xs truncate max-w-[200px]">{r.address}</td>}
+              <td><span className={`text-xs ${r.status === "approved" ? "text-success" : r.status === "rejected" ? "text-destructive" : "text-gold"}`}>{r.status}</span></td>
+              <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+              <td>{r.status === "pending" && (
+                <div className="flex gap-1.5">
+                  <button disabled={busy} onClick={() => onApprove(r)} className="text-xs px-2 py-1 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50">Approve</button>
+                  <button disabled={busy} onClick={() => onReject(r)} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25 disabled:opacity-50">Reject</button>
+                </div>
+              )}</td>
+            </tr>
+          ))}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">{filter === "pending" ? "No pending requests" : "None"}</td></tr>}</tbody>
+        </table>
+      </div>
     </div>
   );
 }
