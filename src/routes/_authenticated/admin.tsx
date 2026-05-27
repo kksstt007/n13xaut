@@ -28,7 +28,12 @@ function AdminPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Admin Console</h1>
-        <span className="px-2 py-1 rounded text-xs bg-destructive/15 text-destructive">Elevated access</span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-success/15 text-success">
+            <span className="size-1.5 rounded-full bg-success animate-pulse" /> Live
+          </span>
+          <span className="px-2 py-1 rounded text-xs bg-destructive/15 text-destructive">Elevated access</span>
+        </div>
       </div>
       <div className="flex gap-1 border-b border-border overflow-x-auto scrollbar-thin">
         {tabs.map((t) => (
