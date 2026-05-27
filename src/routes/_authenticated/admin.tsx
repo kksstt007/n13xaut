@@ -28,7 +28,12 @@ function AdminPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Admin Console</h1>
-        <span className="px-2 py-1 rounded text-xs bg-destructive/15 text-destructive">Elevated access</span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-success/15 text-success">
+            <span className="size-1.5 rounded-full bg-success animate-pulse" /> Live
+          </span>
+          <span className="px-2 py-1 rounded text-xs bg-destructive/15 text-destructive">Elevated access</span>
+        </div>
       </div>
       <div className="flex gap-1 border-b border-border overflow-x-auto scrollbar-thin">
         {tabs.map((t) => (
@@ -89,9 +94,24 @@ function UsersAdmin() {
   );
 }
 
+function useRealtimeInvalidate(table: string, queryKey: string, onNewPending?: (row: any) => void) {
+  const qc = useQueryClient();
+  React.useEffect(() => {
+    const ch = supabase
+      .channel(`admin-${table}`)
+      .on("postgres_changes", { event: "*", schema: "public", table }, (payload: any) => {
+        qc.invalidateQueries({ queryKey: [queryKey] });
+        if (payload.eventType === "INSERT" && payload.new?.status === "pending") onNewPending?.(payload.new);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc, table, queryKey, onNewPending]);
+}
+
 function DepositsAdmin() {
   const qc = useQueryClient();
   const { data } = useAdminQuery(["admin-deposits"], async () => (await supabase.from("deposits").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  useRealtimeInvalidate("deposits", "admin-deposits", (row) => toast.info(`New deposit · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, deposit }: any) => {
       const { error } = await supabase.from("deposits").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
@@ -101,15 +121,17 @@ function DepositsAdmin() {
         await supabase.from("wallets").update({ usdt_balance: Number(w!.usdt_balance) + Number(deposit.amount) }).eq("user_id", deposit.user_id);
       }
     },
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-deposits"] }); },
+    onSuccess: (_d, v) => { toast.success(v.status === "approved" ? "Deposit approved & credited" : "Deposit rejected"); qc.invalidateQueries({ queryKey: ["admin-deposits"] }); },
     onError: (e: any) => toast.error(e.message),
   });
-  return <ReviewTable rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} />;
+  const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
+  return <ReviewTable title="Deposits" pending={pending} rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} busy={review.isPending} />;
 }
 
 function WithdrawalsAdmin() {
   const qc = useQueryClient();
   const { data } = useAdminQuery(["admin-withdrawals"], async () => (await supabase.from("withdrawals").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  useRealtimeInvalidate("withdrawals", "admin-withdrawals", (row) => toast.info(`New withdrawal · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, w }: any) => {
       const { error } = await supabase.from("withdrawals").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
@@ -119,35 +141,54 @@ function WithdrawalsAdmin() {
         await supabase.from("wallets").update({ usdt_balance: Math.max(0, Number(wal!.usdt_balance) - Number(w.amount)) }).eq("user_id", w.user_id);
       }
     },
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-withdrawals"] }); },
+    onSuccess: (_d, v) => { toast.success(v.status === "approved" ? "Withdrawal approved" : "Withdrawal rejected"); qc.invalidateQueries({ queryKey: ["admin-withdrawals"] }); },
+    onError: (e: any) => toast.error(e.message),
   });
-  return <ReviewTable rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} />;
+  const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
+  return <ReviewTable title="Withdrawals" pending={pending} rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} busy={review.isPending} />;
 }
 
-function ReviewTable({ rows, onApprove, onReject, addr }: any) {
+function ReviewTable({ rows, onApprove, onReject, addr, title, pending, busy }: any) {
+  const [filter, setFilter] = React.useState<"pending" | "all">("pending");
+  const filtered = (rows ?? []).filter((r: any) => filter === "all" || r.status === "pending");
   return (
-    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground border-b border-border/50">
-          <tr>{["User","Network","Amount", addr && "Address","Status","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
-        </thead>
-        <tbody>{rows.map((r: any) => (
-          <tr key={r.id} className="border-b border-border/30">
-            <td className="py-2.5">{r.profiles?.display_name ?? "—"}</td>
-            <td>{r.network}</td>
-            <td className="num">${fmtUSD(Number(r.amount))}</td>
-            {addr && <td className="font-mono text-xs truncate max-w-[200px]">{r.address}</td>}
-            <td><span className={`text-xs ${r.status === "approved" ? "text-success" : r.status === "rejected" ? "text-destructive" : "text-gold"}`}>{r.status}</span></td>
-            <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-            <td>{r.status === "pending" && (
-              <div className="flex gap-1.5">
-                <button onClick={() => onApprove(r)} className="text-xs px-2 py-1 rounded bg-success/15 text-success hover:bg-success/25">Approve</button>
-                <button onClick={() => onReject(r)} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Reject</button>
-              </div>
-            )}</td>
-          </tr>
-        ))}{!rows.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">None</td></tr>}</tbody>
-      </table>
+    <div className="space-y-3">
+      {title && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold">{title}</h2>
+            {pending > 0 && <span className="px-1.5 py-0.5 rounded text-[10px] bg-gold/15 text-gold font-semibold">{pending} pending</span>}
+          </div>
+          <div className="flex gap-1 text-xs">
+            {(["pending","all"] as const).map((f) => (
+              <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 rounded transition ${filter === f ? "bg-gold/15 text-gold" : "text-muted-foreground hover:text-foreground"}`}>{f === "pending" ? "Pending" : "All"}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50">
+            <tr>{["User","Network","Amount", addr && "Address","Status","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
+          </thead>
+          <tbody>{filtered.map((r: any) => (
+            <tr key={r.id} className="border-b border-border/30">
+              <td className="py-2.5">{r.profiles?.display_name ?? "—"}</td>
+              <td>{r.network}</td>
+              <td className="num">${fmtUSD(Number(r.amount))}</td>
+              {addr && <td className="font-mono text-xs truncate max-w-[200px]">{r.address}</td>}
+              <td><span className={`text-xs ${r.status === "approved" ? "text-success" : r.status === "rejected" ? "text-destructive" : "text-gold"}`}>{r.status}</span></td>
+              <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+              <td>{r.status === "pending" && (
+                <div className="flex gap-1.5">
+                  <button disabled={busy} onClick={() => onApprove(r)} className="text-xs px-2 py-1 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50">Approve</button>
+                  <button disabled={busy} onClick={() => onReject(r)} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25 disabled:opacity-50">Reject</button>
+                </div>
+              )}</td>
+            </tr>
+          ))}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">{filter === "pending" ? "No pending requests" : "None"}</td></tr>}</tbody>
+        </table>
+      </div>
     </div>
   );
 }
