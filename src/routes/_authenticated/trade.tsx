@@ -41,6 +41,18 @@ const DURATIONS = [
   { s: 300, label: "300 s", ror: 30 },
 ];
 
+type ActiveTrade = {
+  id: string;
+  direction: "buy" | "sell";
+  amount: number;
+  payoutPct: number;
+  openPrice: number;
+  openedAt: number;
+  closesAt: number;
+  durationSec: number;
+};
+type TradeResult = { result: "win" | "loss"; pnl: number; closePrice: number };
+
 function TradePage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -52,6 +64,10 @@ function TradePage() {
   const [amount, setAmount] = React.useState(50);
   const [duration, setDuration] = React.useState(60);
   const [sheet, setSheet] = React.useState<null | "buy" | "sell">(null);
+  const [active, setActive] = React.useState<ActiveTrade | null>(null);
+  const [result, setResult] = React.useState<TradeResult | null>(null);
+  const [now, setNow] = React.useState(() => Date.now());
+  const settlingRef = React.useRef(false);
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
@@ -74,33 +90,65 @@ function TradePage() {
   const openMut = useMutation({
     mutationFn: (dir: "buy" | "sell") =>
       openServer({ data: { direction: dir, amount, durationSec: duration, openPrice: price } }),
-    onSuccess: () => {
-      toast.success("Trade opened");
+    onSuccess: ({ trade }: any) => {
       setSheet(null);
+      setResult(null);
+      settlingRef.current = false;
+      setActive({
+        id: trade.id,
+        direction: trade.direction,
+        amount: Number(trade.amount),
+        payoutPct: Number(trade.payout_pct),
+        openPrice: Number(trade.open_price),
+        openedAt: new Date(trade.opened_at).getTime(),
+        closesAt: new Date(trade.closes_at).getTime(),
+        durationSec: Number(trade.duration_sec),
+      });
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Tick clock for countdown / live elapsed
+  React.useEffect(() => {
+    if (!active && !positions?.length) return;
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [active, positions?.length]);
+
+  // Settle the active trade exactly once when countdown hits 0
+  React.useEffect(() => {
+    if (!active || result || settlingRef.current) return;
+    if (now < active.closesAt) return;
+    settlingRef.current = true;
+    settleServer({ data: { tradeId: active.id, closePrice: getCurrentPrice() } })
+      .then((r: any) => {
+        setResult({ result: r.result, pnl: Number(r.pnl), closePrice: getCurrentPrice() });
+        qc.invalidateQueries();
+      })
+      .catch((e: any) => {
+        toast.error(e?.message ?? "Settlement failed");
+        settlingRef.current = false;
+      });
+  }, [active, result, now, settleServer, qc]);
+
+  // Auto-settle stale background positions (excluding the active modal trade)
   React.useEffect(() => {
     if (!positions?.length) return;
     const t = setInterval(() => {
-      const now = Date.now();
+      const ts = Date.now();
       positions.forEach((p: any) => {
-        if (new Date(p.closes_at).getTime() <= now) {
+        if (active?.id === p.id) return;
+        if (new Date(p.closes_at).getTime() <= ts) {
           settleServer({ data: { tradeId: p.id, closePrice: getCurrentPrice() } })
-            .then((r: any) => {
-              toast[r.result === "win" ? "success" : "error"](
-                `Trade ${r.result.toUpperCase()} ${r.pnl >= 0 ? "+" : ""}$${fmtUSD(Number(r.pnl))}`
-              );
-              qc.invalidateQueries();
-            })
+            .then(() => qc.invalidateQueries())
             .catch(() => {});
         }
       });
-    }, 1000);
+    }, 1500);
     return () => clearInterval(t);
-  }, [positions, settleServer, qc]);
+  }, [positions, active?.id, settleServer, qc]);
+
 
   const balance = Number(wallet?.usdt_balance ?? 0);
   const canTrade = balance >= amount && amount >= 1;
