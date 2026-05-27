@@ -108,7 +108,7 @@ function ProfilePage() {
 
         {/* Quick stats */}
         <div className="relative mt-5 grid grid-cols-3 gap-2">
-          <Stat label="Total balance" value={`$${Number(wallet?.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} accent />
+          <Stat label="Total balance" value={`$${Number(wallet?.usdt_balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} accent />
           <Stat label="KYC level" value={kycVerified ? "Level 2" : kyc?.status === "pending" ? "Pending" : "Level 0"} />
           <Stat label="Referrals" value={String(refCount ?? 0)} />
         </div>
