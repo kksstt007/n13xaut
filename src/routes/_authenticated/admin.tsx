@@ -104,7 +104,7 @@ function DepositsAdmin() {
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-deposits"] }); },
     onError: (e: any) => toast.error(e.message),
   });
-  return <ReviewTable rows={data ?? []} onApprove={(d) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d) => review.mutate({ id: d.id, status: "rejected", deposit: d })} />;
+  return <ReviewTable rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} />;
 }
 
 function WithdrawalsAdmin() {
@@ -121,7 +121,7 @@ function WithdrawalsAdmin() {
     },
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-withdrawals"] }); },
   });
-  return <ReviewTable rows={data ?? []} addr onApprove={(r) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r) => review.mutate({ id: r.id, status: "rejected", w: r })} />;
+  return <ReviewTable rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} />;
 }
 
 function ReviewTable({ rows, onApprove, onReject, addr }: any) {
