@@ -506,6 +506,274 @@ function TradePage() {
   );
 }
 
+function ActiveTradeModal({
+  active,
+  now,
+  livePrice,
+  result,
+  onClose,
+  onTradeAgain,
+}: {
+  active: ActiveTrade;
+  now: number;
+  livePrice: number;
+  result: TradeResult | null;
+  onClose: () => void;
+  onTradeAgain: () => void;
+}) {
+  const total = active.durationSec * 1000;
+  const elapsed = Math.min(total, Math.max(0, now - active.openedAt));
+  const remainingMs = Math.max(0, active.closesAt - now);
+  const remainingSec = Math.ceil(remainingMs / 1000);
+  const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
+  const ss = String(remainingSec % 60).padStart(2, "0");
+  const progress = total > 0 ? elapsed / total : 0;
+
+  const isBuy = active.direction === "buy";
+  const dirColor = isBuy ? "oklch(0.70 0.16 156)" : "oklch(0.66 0.18 22)";
+  const dirLabel = isBuy ? "BUY · LONG" : "SELL · SHORT";
+
+  const projectedWin = active.amount * (active.payoutPct / 100);
+  const settling = remainingMs <= 0 && !result;
+
+  const isWin = result?.result === "win";
+  const pnl = Number(result?.pnl ?? 0);
+
+  const R = 86;
+  const C = 2 * Math.PI * R;
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/80 backdrop-blur-md"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 18 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ type: "spring", damping: 24, stiffness: 280 }}
+        className="fixed inset-0 z-50 grid place-items-center p-5"
+      >
+        <div
+          className="w-full max-w-sm rounded-[28px] overflow-hidden border border-white/10 shadow-2xl"
+          style={{ background: "oklch(0.16 0.03 265)" }}
+        >
+          <div
+            className="px-5 pt-5 pb-4 flex items-center justify-between"
+            style={{
+              background: result
+                ? isWin
+                  ? "linear-gradient(180deg, oklch(0.30 0.12 156 / 0.6), transparent)"
+                  : "linear-gradient(180deg, oklch(0.32 0.14 22 / 0.55), transparent)"
+                : "linear-gradient(180deg, oklch(0.30 0.06 265 / 0.5), transparent)",
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide"
+                style={{ background: dirColor, color: "oklch(0.10 0.01 260)" }}
+              >
+                {isBuy ? <ArrowUp className="size-3" strokeWidth={3} /> : <ArrowDown className="size-3" strokeWidth={3} />}
+                {dirLabel}
+              </span>
+              <span className="text-[11px] text-white/50 font-medium">XAU₮/USDT</span>
+            </div>
+            {result && (
+              <button
+                onClick={onClose}
+                className="size-8 rounded-full grid place-items-center text-white/70 hover:text-white hover:bg-white/10 transition"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          <div className="px-6 pb-6">
+            {!result ? (
+              <>
+                <div className="relative mx-auto mt-2 mb-5" style={{ width: 200, height: 200 }}>
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="-rotate-90">
+                    <circle cx="100" cy="100" r={R} stroke="oklch(0.26 0.03 265)" strokeWidth="10" fill="none" />
+                    <motion.circle
+                      cx="100"
+                      cy="100"
+                      r={R}
+                      stroke={dirColor}
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      fill="none"
+                      strokeDasharray={C}
+                      strokeDashoffset={C * progress}
+                      style={{ filter: `drop-shadow(0 0 12px ${dirColor})` }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 grid place-items-center">
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold">
+                        {settling ? "Settling" : "Closes in"}
+                      </div>
+                      <div
+                        className="num font-bold text-white tabular-nums mt-1"
+                        style={{ fontSize: 44, lineHeight: 1, fontFamily: "var(--font-display)" }}
+                      >
+                        {settling ? "…" : `${mm}:${ss}`}
+                      </div>
+                      <div className="text-[11px] text-white/50 num mt-1.5">
+                        of {active.durationSec}s
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 mb-4">
+                  <Stat label="Stake" value={`$${fmtUSD(active.amount)}`} />
+                  <Stat label="Payout" value={`${active.payoutPct}%`} accent />
+                  <Stat label="Open price" value={`$${fmtUSD(active.openPrice)}`} />
+                  <Stat
+                    label="Live price"
+                    value={`$${fmtUSD(livePrice)}`}
+                    valueClass={
+                      livePrice === active.openPrice
+                        ? "text-white"
+                        : (isBuy ? livePrice > active.openPrice : livePrice < active.openPrice)
+                        ? "text-success"
+                        : "text-destructive"
+                    }
+                  />
+                </div>
+
+                <div
+                  className="rounded-xl px-3.5 py-3 flex items-center justify-between"
+                  style={{ background: "oklch(0.22 0.03 265)" }}
+                >
+                  <span className="text-[12px] text-white/60">If win, you receive</span>
+                  <span className="text-[14px] font-bold num text-gold">
+                    +${fmtUSD(projectedWin)}
+                  </span>
+                </div>
+
+                <p className="text-center text-[11px] text-white/35 mt-4">
+                  Trade will settle automatically when the timer ends.
+                </p>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", damping: 14, stiffness: 220 }}
+                  className="mx-auto mt-3 mb-4 size-24 rounded-full grid place-items-center"
+                  style={{
+                    background: isWin
+                      ? "radial-gradient(circle, oklch(0.70 0.16 156 / 0.35), transparent 70%)"
+                      : "radial-gradient(circle, oklch(0.66 0.18 22 / 0.35), transparent 70%)",
+                  }}
+                >
+                  <div
+                    className="size-16 rounded-full grid place-items-center text-3xl font-black"
+                    style={{
+                      background: isWin
+                        ? "linear-gradient(145deg, oklch(0.74 0.16 156), oklch(0.58 0.14 150))"
+                        : "linear-gradient(145deg, oklch(0.70 0.18 22), oklch(0.56 0.17 18))",
+                      color: "white",
+                      boxShadow: isWin
+                        ? "0 12px 32px -10px oklch(0.60 0.15 156 / 0.7)"
+                        : "0 12px 32px -10px oklch(0.60 0.18 22 / 0.7)",
+                    }}
+                  >
+                    {isWin ? "✓" : "✕"}
+                  </div>
+                </motion.div>
+
+                <div className="text-center">
+                  <div
+                    className={`text-[11px] uppercase tracking-[0.25em] font-semibold ${
+                      isWin ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {isWin ? "Trade Won" : "Trade Lost"}
+                  </div>
+                  <motion.div
+                    initial={{ y: 8, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className={`num font-bold tabular-nums mt-1.5 ${
+                      isWin ? "text-success" : "text-destructive"
+                    }`}
+                    style={{ fontSize: 38, fontFamily: "var(--font-display)" }}
+                  >
+                    {pnl >= 0 ? "+" : "−"}${fmtUSD(Math.abs(pnl))}
+                  </motion.div>
+                  <div className="text-[12px] text-white/45 mt-1">
+                    {isWin
+                      ? `Payout at ${active.payoutPct}% of $${fmtUSD(active.amount)}`
+                      : `Stake of $${fmtUSD(active.amount)} lost`}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 mt-5">
+                  <Stat label="Open" value={`$${fmtUSD(active.openPrice)}`} />
+                  <Stat label="Close" value={`$${fmtUSD(result.closePrice)}`} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  <button
+                    onClick={onClose}
+                    className="py-3 rounded-xl text-[13px] font-semibold text-white/80 hover:text-white transition"
+                    style={{ background: "oklch(0.22 0.03 265)" }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={onTradeAgain}
+                    className="py-3 rounded-xl text-[13px] font-bold"
+                    style={{
+                      background: "linear-gradient(145deg, #F0CD5C, #C99634)",
+                      color: "oklch(0.18 0.04 265)",
+                      boxShadow: "0 10px 28px -10px oklch(0.75 0.15 85 / 0.5)",
+                    }}
+                  >
+                    Trade again
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  valueClass?: string;
+}) {
+  return (
+    <div className="rounded-xl px-3.5 py-2.5" style={{ background: "oklch(0.22 0.03 265)" }}>
+      <div className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">{label}</div>
+      <div
+        className={`text-[14px] font-semibold num tabular-nums mt-0.5 ${
+          valueClass ?? (accent ? "text-gold" : "text-white")
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 void TrendingUp;
 void Clock;
 void Activity;
