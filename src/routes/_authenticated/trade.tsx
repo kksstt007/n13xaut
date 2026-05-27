@@ -34,12 +34,11 @@ const TIMEFRAMES = [
   { id: "ALL", label: "All" },
 ];
 
-const AMOUNT_PRESETS = [10, 50, 100, 500];
 const DURATIONS = [
-  { s: 30, label: "30s" },
-  { s: 60, label: "1m" },
-  { s: 300, label: "5m" },
-  { s: 900, label: "15m" },
+  { s: 60, label: "60 s", ror: 15 },
+  { s: 120, label: "120 s", ror: 20 },
+  { s: 180, label: "180 s", ror: 25 },
+  { s: 300, label: "300 s", ror: 30 },
 ];
 
 function TradePage() {
