@@ -172,8 +172,10 @@ function DepositsAdmin() {
   const { data } = useAdminQuery(["admin-deposits"], async () => (await supabase.from("deposits").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
   useRealtimeInvalidate("deposits", "admin-deposits", (row) => toast.info(`New deposit · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
-    mutationFn: async ({ id, status, deposit }: any) => {
-      const { error } = await supabase.from("deposits").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    mutationFn: async ({ id, status, deposit, note }: any) => {
+      const patch: any = { status, reviewed_at: new Date().toISOString() };
+      if (note) patch.admin_note = note;
+      const { error } = await supabase.from("deposits").update(patch).eq("id", id);
       if (error) throw error;
       if (status === "approved") {
         const { data: w } = await supabase.from("wallets").select("usdt_balance").eq("user_id", deposit.user_id).single();
@@ -184,7 +186,7 @@ function DepositsAdmin() {
     onError: (e: any) => toast.error(e.message),
   });
   const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
-  return <ReviewTable title="Deposits" pending={pending} rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any) => review.mutate({ id: d.id, status: "rejected", deposit: d })} busy={review.isPending} />;
+  return <ReviewTable title="Deposits" pending={pending} rows={data ?? []} onApprove={(d: any) => review.mutate({ id: d.id, status: "approved", deposit: d })} onReject={(d: any, note: string) => review.mutate({ id: d.id, status: "rejected", deposit: d, note })} busy={review.isPending} />;
 }
 
 function WithdrawalsAdmin() {
