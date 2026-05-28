@@ -5,24 +5,34 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — XAUT.trade" }] }),
   component: AdminPage,
 });
 
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control" | "audit" | "logins";
+
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const nav = useNavigate();
   React.useEffect(() => { if (!loading && !isAdmin) nav({ to: "/dashboard" }); }, [loading, isAdmin, nav]);
-  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control">("users");
+  const [tab, setTab] = React.useState<TabKey>("overview");
 
   if (!isAdmin) return null;
 
-  const tabs = [
-    { k: "users", l: "Users" }, { k: "deposits", l: "Deposits" }, { k: "withdrawals", l: "Withdrawals" },
-    { k: "kyc", l: "KYC" }, { k: "trades", l: "Live Trades" }, { k: "control", l: "Trade Control" },
-  ] as const;
+  const tabs: { k: TabKey; l: string }[] = [
+    { k: "overview", l: "Overview" },
+    { k: "users", l: "Users" },
+    { k: "deposits", l: "Deposits" },
+    { k: "withdrawals", l: "Withdrawals" },
+    { k: "kyc", l: "KYC" },
+    { k: "trades", l: "Live Trades" },
+    { k: "control", l: "Trade Control" },
+    { k: "logins", l: "Login History" },
+    { k: "audit", l: "Audit Log" },
+  ];
 
   return (
     <div className="space-y-5">
@@ -43,12 +53,15 @@ function AdminPage() {
           </button>
         ))}
       </div>
+      {tab === "overview" && <OverviewAdmin />}
       {tab === "users" && <UsersAdmin />}
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
+      {tab === "logins" && <LoginHistoryAdmin />}
+      {tab === "audit" && <AuditLogAdmin />}
     </div>
   );
 }
