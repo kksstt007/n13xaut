@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as React from "react";
 import {
-  Home, LineChart, CandlestickChart, LifeBuoy, Wallet as WalletIcon,
+  Home, LineChart, CandlestickChart, LifeBuoy,
   Menu, LogOut, History, ShieldCheck, Users, Settings, User, X,
+
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,8 +17,8 @@ const bottomNav = [
 ];
 
 const moreNav = [
-  { to: "/wallet", label: "Assets", icon: WalletIcon },
   { to: "/history", label: "Trade history", icon: History },
+
   { to: "/kyc", label: "Identity (KYC)", icon: ShieldCheck },
   { to: "/referrals", label: "Referrals", icon: Users },
 ];
