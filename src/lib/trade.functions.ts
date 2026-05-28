@@ -64,7 +64,7 @@ export const settleTrade = createServerFn({ method: "POST" })
     const credit = result === "win" ? Number(trade.amount) + pnl : 0;
 
     await supabaseAdmin.from("trades").update({
-      status: "settled", result, pnl, close_price: data.closePrice, settled_at: new Date().toISOString(),
+      status: "settled", result, pnl, payout_pct: effectivePayout, close_price: data.closePrice, settled_at: new Date().toISOString(),
     }).eq("id", trade.id);
 
     const { data: w } = await supabaseAdmin.from("wallets").select("usdt_balance, locked").eq("user_id", context.userId).single();
