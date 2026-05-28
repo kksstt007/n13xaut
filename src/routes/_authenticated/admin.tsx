@@ -422,3 +422,124 @@ function LiveTradesAdmin() {
     </div>
   );
 }
+
+// ============ Overview / Stats ============
+function OverviewAdmin() {
+  const { data } = useAdminQuery(["admin-overview"], async () => {
+    const [users, deposits, withdrawals, kyc, trades, wallets] = await Promise.all([
+      supabase.from("profiles").select("id, frozen, banned, risk_score"),
+      supabase.from("deposits").select("amount, status, created_at"),
+      supabase.from("withdrawals").select("amount, status, risk_flags, created_at"),
+      supabase.from("kyc_submissions").select("status"),
+      supabase.from("trades").select("amount, status, pnl, opened_at"),
+      supabase.from("wallets").select("usdt_balance, locked"),
+    ]);
+    return {
+      users: users.data ?? [], deposits: deposits.data ?? [], withdrawals: withdrawals.data ?? [],
+      kyc: kyc.data ?? [], trades: trades.data ?? [], wallets: wallets.data ?? [],
+    };
+  });
+  useRealtimeInvalidate("deposits", "admin-overview");
+  useRealtimeInvalidate("withdrawals", "admin-overview");
+  useRealtimeInvalidate("trades", "admin-overview");
+
+  if (!data) return <div className="glass rounded-xl p-8 text-center text-muted-foreground">Loading…</div>;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayMs = today.getTime();
+  const tradesToday = data.trades.filter((t: any) => new Date(t.opened_at).getTime() >= todayMs);
+  const volumeToday = tradesToday.reduce((s: number, t: any) => s + Number(t.amount), 0);
+  const pnlToday = tradesToday.filter((t: any) => t.status === "settled").reduce((s: number, t: any) => s + Number(t.pnl ?? 0), 0);
+  const openTrades = data.trades.filter((t: any) => t.status === "open").length;
+  const pendingDeposits = data.deposits.filter((d: any) => d.status === "pending").length;
+  const pendingWithdrawals = data.withdrawals.filter((w: any) => w.status === "pending").length;
+  const flaggedWithdrawals = data.withdrawals.filter((w: any) => w.status === "pending" && Array.isArray(w.risk_flags) && w.risk_flags.length).length;
+  const pendingKyc = data.kyc.filter((k: any) => k.status === "pending").length;
+  const totalLocked = data.wallets.reduce((s: number, w: any) => s + Number(w.locked ?? 0), 0);
+  const totalBalance = data.wallets.reduce((s: number, w: any) => s + Number(w.usdt_balance ?? 0), 0);
+  const frozenUsers = data.users.filter((u: any) => u.frozen).length;
+  const highRiskUsers = data.users.filter((u: any) => (u.risk_score ?? 0) >= 70).length;
+
+  const cards = [
+    { label: "Total users", value: data.users.length, tone: "text-foreground" },
+    { label: "Open trades", value: openTrades, tone: "text-success" },
+    { label: "Volume (today)", value: `$${fmtUSD(volumeToday)}`, tone: "text-gold" },
+    { label: "Net PnL (today)", value: `${pnlToday >= 0 ? "+" : ""}$${fmtUSD(pnlToday)}`, tone: pnlToday >= 0 ? "text-success" : "text-destructive" },
+    { label: "Pending deposits", value: pendingDeposits, tone: pendingDeposits ? "text-gold" : "text-muted-foreground" },
+    { label: "Pending withdrawals", value: pendingWithdrawals, tone: pendingWithdrawals ? "text-gold" : "text-muted-foreground" },
+    { label: "Flagged withdrawals", value: flaggedWithdrawals, tone: flaggedWithdrawals ? "text-destructive" : "text-muted-foreground" },
+    { label: "Pending KYC", value: pendingKyc, tone: pendingKyc ? "text-gold" : "text-muted-foreground" },
+    { label: "Total balance", value: `$${fmtUSD(totalBalance)}`, tone: "text-foreground" },
+    { label: "Locked in trades", value: `$${fmtUSD(totalLocked)}`, tone: "text-foreground" },
+    { label: "Frozen users", value: frozenUsers, tone: frozenUsers ? "text-gold" : "text-muted-foreground" },
+    { label: "High-risk users", value: highRiskUsers, tone: highRiskUsers ? "text-destructive" : "text-muted-foreground" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {cards.map((c) => (
+        <div key={c.label} className="glass rounded-xl p-4">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">{c.label}</div>
+          <div className={`mt-1 text-2xl font-bold num ${c.tone}`}>{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============ Login history ============
+function LoginHistoryAdmin() {
+  const { data } = useAdminQuery(["admin-logins"], async () => {
+    const { data } = await supabase.from("login_history").select("*, profiles!inner(display_name)").order("created_at", { ascending: false }).limit(200);
+    return data ?? [];
+  });
+  return (
+    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+      <table className="w-full text-sm">
+        <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["User","When","Success","Device","IP"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+        <tbody>{(data ?? []).map((r: any) => (
+          <tr key={r.id} className="border-b border-border/30">
+            <td className="py-2.5 pr-3">{r.profiles?.display_name ?? r.user_id.slice(0, 8)}</td>
+            <td className="text-xs text-muted-foreground pr-3">{new Date(r.created_at).toLocaleString()}</td>
+            <td className="pr-3"><span className={`text-xs ${r.success ? "text-success" : "text-destructive"}`}>{r.success ? "OK" : r.failure_reason ?? "FAIL"}</span></td>
+            <td className="text-xs text-muted-foreground pr-3 truncate max-w-[300px]">{r.user_agent ?? "—"}</td>
+            <td className="text-xs font-mono pr-3">{r.ip ?? "—"}</td>
+          </tr>
+        ))}{!data?.length && <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No login history yet</td></tr>}</tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============ Audit log ============
+function AuditLogAdmin() {
+  const [q, setQ] = React.useState("");
+  const { data } = useAdminQuery(["admin-audit"], async () => {
+    const { data } = await supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(500);
+    return data ?? [];
+  });
+  const filtered = (data ?? []).filter((r: any) => !q || r.action.toLowerCase().includes(q.toLowerCase()) || (r.target_id ?? "").includes(q));
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by action or target id…"
+          className="flex-1 rounded-lg bg-input border border-border px-3 py-2 text-sm" />
+        <span className="text-xs text-muted-foreground">Immutable · {filtered.length} entries</span>
+      </div>
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["When","Action","Target","Prev","New","Actor"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+          <tbody>{filtered.map((r: any) => (
+            <tr key={r.id} className="border-b border-border/30 align-top">
+              <td className="py-2.5 pr-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+              <td className="pr-3 text-xs font-mono text-gold">{r.action}</td>
+              <td className="pr-3 text-xs font-mono">{r.target_type ?? ""}{r.target_id ? `·${r.target_id.slice(0,8)}` : ""}</td>
+              <td className="pr-3 text-[10px] font-mono text-muted-foreground max-w-[200px] truncate">{r.prev_value ? JSON.stringify(r.prev_value) : "—"}</td>
+              <td className="pr-3 text-[10px] font-mono max-w-[200px] truncate">{r.new_value ? JSON.stringify(r.new_value) : "—"}</td>
+              <td className="pr-3 text-[10px] font-mono text-muted-foreground">{r.actor_id?.slice(0,8)}</td>
+            </tr>
+          ))}{!filtered.length && <tr><td colSpan={6} className="text-center py-6 text-muted-foreground">No audit entries</td></tr>}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
