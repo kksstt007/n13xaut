@@ -194,8 +194,10 @@ function WithdrawalsAdmin() {
   const { data } = useAdminQuery(["admin-withdrawals"], async () => (await supabase.from("withdrawals").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
   useRealtimeInvalidate("withdrawals", "admin-withdrawals", (row) => toast.info(`New withdrawal · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
-    mutationFn: async ({ id, status, w }: any) => {
-      const { error } = await supabase.from("withdrawals").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    mutationFn: async ({ id, status, w, note }: any) => {
+      const patch: any = { status, reviewed_at: new Date().toISOString() };
+      if (note) patch.admin_note = note;
+      const { error } = await supabase.from("withdrawals").update(patch).eq("id", id);
       if (error) throw error;
       if (status === "approved") {
         const { data: wal } = await supabase.from("wallets").select("usdt_balance").eq("user_id", w.user_id).single();
@@ -206,7 +208,7 @@ function WithdrawalsAdmin() {
     onError: (e: any) => toast.error(e.message),
   });
   const pending = (data ?? []).filter((r: any) => r.status === "pending").length;
-  return <ReviewTable title="Withdrawals" pending={pending} rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any) => review.mutate({ id: r.id, status: "rejected", w: r })} busy={review.isPending} />;
+  return <ReviewTable title="Withdrawals" pending={pending} rows={data ?? []} addr onApprove={(r: any) => review.mutate({ id: r.id, status: "approved", w: r })} onReject={(r: any, note: string) => review.mutate({ id: r.id, status: "rejected", w: r, note })} busy={review.isPending} />;
 }
 
 function ReviewTable({ rows, onApprove, onReject, addr, title, pending, busy }: any) {
