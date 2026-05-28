@@ -7,10 +7,12 @@ import {
   Copy, Check, ChevronRight, ShieldCheck, KeyRound, Smartphone, Mail,
   Lock, Fingerprint, Bell, Globe, Languages, CreditCard, Users, Gift,
   LifeBuoy, FileText, LogOut, Pencil, Star, Monitor, ScanFace, X,
-  Wallet as WalletIcon, History as HistoryIcon, Settings as SettingsIcon,
+  History as HistoryIcon, Settings as SettingsIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { DepositWithdraw } from "@/components/DepositWithdraw";
+
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — XAUT.trade" }] }),
