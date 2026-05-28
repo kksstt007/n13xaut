@@ -19,18 +19,27 @@ function ensureRunning() {
 }
 
 export function usePriceFeed(historySize = 60) {
+  // Deterministic initial state so SSR markup matches the first client render.
   const [data, setData] = React.useState<{ t: number; p: number }[]>(() => {
     const arr: { t: number; p: number }[] = [];
-    let p = BASE;
-    const now = Date.now();
     for (let i = historySize; i > 0; i--) {
-      p += (Math.random() - 0.5) * 1.4;
-      arr.push({ t: now - i * 1000, p });
+      arr.push({ t: -i * 1000, p: BASE });
     }
     return arr;
   });
 
   React.useEffect(() => {
+    // Seed real history with random walk after mount (client-only).
+    setData(() => {
+      const arr: { t: number; p: number }[] = [];
+      let p = BASE;
+      const now = Date.now();
+      for (let i = historySize; i > 0; i--) {
+        p += (Math.random() - 0.5) * 1.4;
+        arr.push({ t: now - i * 1000, p });
+      }
+      return arr;
+    });
     ensureRunning();
     const cb = (p: number, t: number) => {
       setData((prev) => [...prev.slice(-(historySize - 1)), { t, p }]);
