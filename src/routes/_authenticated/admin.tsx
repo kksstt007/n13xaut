@@ -15,13 +15,13 @@ function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const nav = useNavigate();
   React.useEffect(() => { if (!loading && !isAdmin) nav({ to: "/dashboard" }); }, [loading, isAdmin, nav]);
-  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "control">("users");
+  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control">("users");
 
   if (!isAdmin) return null;
 
   const tabs = [
     { k: "users", l: "Users" }, { k: "deposits", l: "Deposits" }, { k: "withdrawals", l: "Withdrawals" },
-    { k: "kyc", l: "KYC" }, { k: "control", l: "Trade Control" },
+    { k: "kyc", l: "KYC" }, { k: "trades", l: "Live Trades" }, { k: "control", l: "Trade Control" },
   ] as const;
 
   return (
