@@ -58,7 +58,9 @@ export const settleTrade = createServerFn({ method: "POST" })
       const movedUp = data.closePrice > Number(trade.open_price);
       result = (trade.direction === "buy" ? movedUp : !movedUp) ? "win" : "loss";
     }
-    const pnl = result === "win" ? Number(trade.amount) * Number(trade.payout_pct) / 100 : -Number(trade.amount);
+    const DURATION_PAYOUT: Record<number, number> = { 60: 15, 120: 20, 180: 25, 300: 30 };
+    const effectivePayout = Number(trade.payout_pct) > 0 ? Number(trade.payout_pct) : (DURATION_PAYOUT[Number(trade.duration_sec)] ?? 15);
+    const pnl = result === "win" ? Number(trade.amount) * effectivePayout / 100 : -Number(trade.amount);
     const credit = result === "win" ? Number(trade.amount) + pnl : 0;
 
     await supabaseAdmin.from("trades").update({
