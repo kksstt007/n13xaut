@@ -117,12 +117,12 @@ function ProfilePage() {
       </section>
 
       {/* Shortcut grid */}
-      <section className="grid grid-cols-4 gap-2">
-        <Shortcut to="/wallet" icon={WalletIcon} label="Assets" />
+      <section className="grid grid-cols-3 gap-2">
         <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
         <Shortcut to="/referrals" icon={Gift} label="Rewards" />
         <Shortcut to="/support" icon={LifeBuoy} label="Support" />
       </section>
+
 
       {/* Security center */}
       <SectionCard title="Security" subtitle="Protect your account">
@@ -162,12 +162,17 @@ function ProfilePage() {
         />
       </SectionCard>
 
+      {/* Deposit & Withdrawal */}
+      <SectionCard title="Deposit & Withdrawal" subtitle="Manage your funds">
+        <DepositWithdraw />
+      </SectionCard>
+
       {/* Account */}
-      <SectionCard title="Account" subtitle="Payments, API & invites">
-        <Row icon={CreditCard} label="Payment methods" hint="Bank & crypto" to="/wallet" />
+      <SectionCard title="Account" subtitle="API & invites">
         <Row icon={Users} label="Referral program" hint={`${refCount ?? 0} invited`} to="/referrals" />
         <Row icon={KeyRound} label="API management" hint="Create API keys" onClick={() => toast.info("API management coming soon")} last />
       </SectionCard>
+
 
       {/* Preferences */}
       <SectionCard title="Preferences">
