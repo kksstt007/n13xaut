@@ -72,38 +72,83 @@ function useAdminQuery<T>(key: any[], q: () => Promise<T>) {
 
 function UsersAdmin() {
   const qc = useQueryClient();
+  const [q, setQ] = React.useState("");
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: wallets } = await supabase.from("wallets").select("*");
     return profiles?.map((p: any) => ({ ...p, wallet: wallets?.find((w: any) => w.user_id === p.id) })) ?? [];
   });
   const setBalance = useMutation({
-    mutationFn: async ({ uid, val }: any) => { const { error } = await supabase.from("wallets").update({ usdt_balance: val }).eq("user_id", uid); if (error) throw error; },
+    mutationFn: async ({ uid, val, prev }: any) => {
+      const { error } = await supabase.from("wallets").update({ usdt_balance: val }).eq("user_id", uid); if (error) throw error;
+      await logAudit({ action: "wallet.balance.update", target_type: "wallet", target_id: uid, prev_value: { usdt_balance: prev }, new_value: { usdt_balance: val } });
+    },
     onSuccess: () => { toast.success("Balance updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: any) => toast.error(e.message),
   });
-  const ban = useMutation({
-    mutationFn: async ({ uid, banned }: any) => { const { error } = await supabase.from("profiles").update({ banned }).eq("id", uid); if (error) throw error; },
-    onSuccess: () => { toast.success("User updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+  const update = useMutation({
+    mutationFn: async ({ uid, patch, prev, action }: any) => {
+      const { error } = await supabase.from("profiles").update(patch).eq("id", uid); if (error) throw error;
+      await logAudit({ action, target_type: "profile", target_id: uid, prev_value: prev, new_value: patch });
+    },
+    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const filtered = (data ?? []).filter((u: any) => {
+    if (!q) return true;
+    const s = q.toLowerCase();
+    return (u.display_name ?? "").toLowerCase().includes(s) || (u.referral_code ?? "").toLowerCase().includes(s) || u.id.toLowerCase().includes(s);
   });
   return (
-    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["Name","Code","Balance","Status","Actions"].map(c => <th key={c} className="text-left py-2">{c}</th>)}</tr></thead>
-        <tbody>{data?.map((u: any) => (
-          <tr key={u.id} className="border-b border-border/30">
-            <td className="py-2.5">{u.display_name}</td>
-            <td className="font-mono text-xs">{u.referral_code}</td>
-            <td className="num">
-              <input defaultValue={u.wallet?.usdt_balance ?? 0} type="number"
-                onBlur={(e) => setBalance.mutate({ uid: u.id, val: Number(e.target.value) })}
-                className="w-24 rounded bg-input border border-border px-2 py-1 num text-right" />
-            </td>
-            <td>{u.banned ? <span className="text-destructive text-xs">banned</span> : <span className="text-success text-xs">active</span>}</td>
-            <td><button onClick={() => ban.mutate({ uid: u.id, banned: !u.banned })} className="text-xs text-destructive hover:underline">{u.banned ? "Unban" : "Ban"}</button></td>
-          </tr>
-        ))}</tbody>
-      </table>
+    <div className="space-y-3">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, code, or user ID…"
+        className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm" />
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["User","Balance","Risk","WD limit","Status","Note","Actions"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+          <tbody>{filtered.map((u: any) => {
+            const status = u.banned ? "banned" : u.frozen ? "frozen" : "active";
+            const statusColor = u.banned ? "text-destructive" : u.frozen ? "text-gold" : "text-success";
+            return (
+              <tr key={u.id} className="border-b border-border/30 align-top">
+                <td className="py-2.5 pr-3">
+                  <div className="font-medium">{u.display_name}</div>
+                  <div className="font-mono text-[10px] text-muted-foreground">{u.referral_code}</div>
+                </td>
+                <td className="num pr-3">
+                  <input defaultValue={u.wallet?.usdt_balance ?? 0} type="number"
+                    onBlur={(e) => { const v = Number(e.target.value); if (v !== Number(u.wallet?.usdt_balance ?? 0)) setBalance.mutate({ uid: u.id, val: v, prev: u.wallet?.usdt_balance ?? 0 }); }}
+                    className="w-24 rounded bg-input border border-border px-2 py-1 num text-right" />
+                </td>
+                <td className="pr-3">
+                  <input type="number" min={0} max={100} defaultValue={u.risk_score ?? 0}
+                    onBlur={(e) => { const v = Number(e.target.value); if (v !== u.risk_score) update.mutate({ uid: u.id, patch: { risk_score: v }, prev: { risk_score: u.risk_score }, action: "profile.risk_score.update" }); }}
+                    className={`w-16 rounded bg-input border border-border px-2 py-1 text-right text-xs ${u.risk_score >= 70 ? "text-destructive" : u.risk_score >= 40 ? "text-gold" : ""}`} />
+                </td>
+                <td className="pr-3">
+                  <input type="number" defaultValue={u.withdrawal_limit ?? ""} placeholder="∞"
+                    onBlur={(e) => { const v = e.target.value === "" ? null : Number(e.target.value); if (v !== u.withdrawal_limit) update.mutate({ uid: u.id, patch: { withdrawal_limit: v }, prev: { withdrawal_limit: u.withdrawal_limit }, action: "profile.withdrawal_limit.update" }); }}
+                    className="w-20 rounded bg-input border border-border px-2 py-1 num text-right text-xs" />
+                </td>
+                <td className={`text-xs pr-3 ${statusColor}`}>{status}</td>
+                <td className="pr-3">
+                  <input defaultValue={u.internal_note ?? ""} placeholder="—"
+                    onBlur={(e) => { const v = e.target.value || null; if (v !== u.internal_note) update.mutate({ uid: u.id, patch: { internal_note: v }, prev: { internal_note: u.internal_note }, action: "profile.note.update" }); }}
+                    className="w-48 rounded bg-input border border-border px-2 py-1 text-xs" />
+                </td>
+                <td>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button onClick={() => update.mutate({ uid: u.id, patch: { frozen: !u.frozen }, prev: { frozen: u.frozen }, action: u.frozen ? "profile.unfreeze" : "profile.freeze" })}
+                      className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
+                    <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
+                      className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No users</td></tr>}</tbody>
+        </table>
+      </div>
     </div>
   );
 }
