@@ -19,25 +19,43 @@ export type Database = {
           action: string
           actor_id: string | null
           created_at: string
+          device_info: Json | null
           id: string
+          ip: string | null
           meta: Json | null
+          new_value: Json | null
+          prev_value: Json | null
           target: string | null
+          target_id: string | null
+          target_type: string | null
         }
         Insert: {
           action: string
           actor_id?: string | null
           created_at?: string
+          device_info?: Json | null
           id?: string
+          ip?: string | null
           meta?: Json | null
+          new_value?: Json | null
+          prev_value?: Json | null
           target?: string | null
+          target_id?: string | null
+          target_type?: string | null
         }
         Update: {
           action?: string
           actor_id?: string | null
           created_at?: string
+          device_info?: Json | null
           id?: string
+          ip?: string | null
           meta?: Json | null
+          new_value?: Json | null
+          prev_value?: Json | null
           target?: string | null
+          target_id?: string | null
+          target_type?: string | null
         }
         Relationships: []
       }
@@ -190,6 +208,42 @@ export type Database = {
           },
         ]
       }
+      login_history: {
+        Row: {
+          country: string | null
+          created_at: string
+          device_info: Json | null
+          failure_reason: string | null
+          id: string
+          ip: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          device_info?: Json | null
+          failure_reason?: string | null
+          id?: string
+          ip?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          device_info?: Json | null
+          failure_reason?: string | null
+          id?: string
+          ip?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       market_settings: {
         Row: {
           base_price: number
@@ -221,11 +275,15 @@ export type Database = {
           country: string | null
           created_at: string
           display_name: string | null
+          frozen: boolean
           id: string
+          internal_note: string | null
           phone: string | null
           referral_code: string | null
           referred_by: string | null
+          risk_score: number
           updated_at: string
+          withdrawal_limit: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -233,11 +291,15 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          frozen?: boolean
           id: string
+          internal_note?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          risk_score?: number
           updated_at?: string
+          withdrawal_limit?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -245,11 +307,15 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          frozen?: boolean
           id?: string
+          internal_note?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          risk_score?: number
           updated_at?: string
+          withdrawal_limit?: number | null
         }
         Relationships: []
       }
@@ -435,6 +501,7 @@ export type Database = {
           network: string
           reviewed_at: string | null
           reviewed_by: string | null
+          risk_flags: Json
           status: string
           user_id: string
         }
@@ -448,6 +515,7 @@ export type Database = {
           network: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          risk_flags?: Json
           status?: string
           user_id: string
         }
@@ -461,6 +529,7 @@ export type Database = {
           network?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          risk_flags?: Json
           status?: string
           user_id?: string
         }
@@ -488,7 +557,15 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "super_admin"
+        | "compliance"
+        | "risk_analyst"
+        | "support"
+        | "finance"
+        | "auditor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -616,7 +693,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "super_admin",
+        "compliance",
+        "risk_analyst",
+        "support",
+        "finance",
+        "auditor",
+      ],
     },
   },
 } as const

@@ -5,24 +5,34 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — XAUT.trade" }] }),
   component: AdminPage,
 });
 
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control" | "audit" | "logins";
+
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const nav = useNavigate();
   React.useEffect(() => { if (!loading && !isAdmin) nav({ to: "/dashboard" }); }, [loading, isAdmin, nav]);
-  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control">("users");
+  const [tab, setTab] = React.useState<TabKey>("overview");
 
   if (!isAdmin) return null;
 
-  const tabs = [
-    { k: "users", l: "Users" }, { k: "deposits", l: "Deposits" }, { k: "withdrawals", l: "Withdrawals" },
-    { k: "kyc", l: "KYC" }, { k: "trades", l: "Live Trades" }, { k: "control", l: "Trade Control" },
-  ] as const;
+  const tabs: { k: TabKey; l: string }[] = [
+    { k: "overview", l: "Overview" },
+    { k: "users", l: "Users" },
+    { k: "deposits", l: "Deposits" },
+    { k: "withdrawals", l: "Withdrawals" },
+    { k: "kyc", l: "KYC" },
+    { k: "trades", l: "Live Trades" },
+    { k: "control", l: "Trade Control" },
+    { k: "logins", l: "Login History" },
+    { k: "audit", l: "Audit Log" },
+  ];
 
   return (
     <div className="space-y-5">
@@ -43,12 +53,15 @@ function AdminPage() {
           </button>
         ))}
       </div>
+      {tab === "overview" && <OverviewAdmin />}
       {tab === "users" && <UsersAdmin />}
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
+      {tab === "logins" && <LoginHistoryAdmin />}
+      {tab === "audit" && <AuditLogAdmin />}
     </div>
   );
 }
@@ -59,38 +72,83 @@ function useAdminQuery<T>(key: any[], q: () => Promise<T>) {
 
 function UsersAdmin() {
   const qc = useQueryClient();
+  const [q, setQ] = React.useState("");
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: wallets } = await supabase.from("wallets").select("*");
     return profiles?.map((p: any) => ({ ...p, wallet: wallets?.find((w: any) => w.user_id === p.id) })) ?? [];
   });
   const setBalance = useMutation({
-    mutationFn: async ({ uid, val }: any) => { const { error } = await supabase.from("wallets").update({ usdt_balance: val }).eq("user_id", uid); if (error) throw error; },
+    mutationFn: async ({ uid, val, prev }: any) => {
+      const { error } = await supabase.from("wallets").update({ usdt_balance: val }).eq("user_id", uid); if (error) throw error;
+      await logAudit({ action: "wallet.balance.update", target_type: "wallet", target_id: uid, prev_value: { usdt_balance: prev }, new_value: { usdt_balance: val } });
+    },
     onSuccess: () => { toast.success("Balance updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: any) => toast.error(e.message),
   });
-  const ban = useMutation({
-    mutationFn: async ({ uid, banned }: any) => { const { error } = await supabase.from("profiles").update({ banned }).eq("id", uid); if (error) throw error; },
-    onSuccess: () => { toast.success("User updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+  const update = useMutation({
+    mutationFn: async ({ uid, patch, prev, action }: any) => {
+      const { error } = await supabase.from("profiles").update(patch).eq("id", uid); if (error) throw error;
+      await logAudit({ action, target_type: "profile", target_id: uid, prev_value: prev, new_value: patch });
+    },
+    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const filtered = (data ?? []).filter((u: any) => {
+    if (!q) return true;
+    const s = q.toLowerCase();
+    return (u.display_name ?? "").toLowerCase().includes(s) || (u.referral_code ?? "").toLowerCase().includes(s) || u.id.toLowerCase().includes(s);
   });
   return (
-    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["Name","Code","Balance","Status","Actions"].map(c => <th key={c} className="text-left py-2">{c}</th>)}</tr></thead>
-        <tbody>{data?.map((u: any) => (
-          <tr key={u.id} className="border-b border-border/30">
-            <td className="py-2.5">{u.display_name}</td>
-            <td className="font-mono text-xs">{u.referral_code}</td>
-            <td className="num">
-              <input defaultValue={u.wallet?.usdt_balance ?? 0} type="number"
-                onBlur={(e) => setBalance.mutate({ uid: u.id, val: Number(e.target.value) })}
-                className="w-24 rounded bg-input border border-border px-2 py-1 num text-right" />
-            </td>
-            <td>{u.banned ? <span className="text-destructive text-xs">banned</span> : <span className="text-success text-xs">active</span>}</td>
-            <td><button onClick={() => ban.mutate({ uid: u.id, banned: !u.banned })} className="text-xs text-destructive hover:underline">{u.banned ? "Unban" : "Ban"}</button></td>
-          </tr>
-        ))}</tbody>
-      </table>
+    <div className="space-y-3">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, code, or user ID…"
+        className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm" />
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["User","Balance","Risk","WD limit","Status","Note","Actions"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+          <tbody>{filtered.map((u: any) => {
+            const status = u.banned ? "banned" : u.frozen ? "frozen" : "active";
+            const statusColor = u.banned ? "text-destructive" : u.frozen ? "text-gold" : "text-success";
+            return (
+              <tr key={u.id} className="border-b border-border/30 align-top">
+                <td className="py-2.5 pr-3">
+                  <div className="font-medium">{u.display_name}</div>
+                  <div className="font-mono text-[10px] text-muted-foreground">{u.referral_code}</div>
+                </td>
+                <td className="num pr-3">
+                  <input defaultValue={u.wallet?.usdt_balance ?? 0} type="number"
+                    onBlur={(e) => { const v = Number(e.target.value); if (v !== Number(u.wallet?.usdt_balance ?? 0)) setBalance.mutate({ uid: u.id, val: v, prev: u.wallet?.usdt_balance ?? 0 }); }}
+                    className="w-24 rounded bg-input border border-border px-2 py-1 num text-right" />
+                </td>
+                <td className="pr-3">
+                  <input type="number" min={0} max={100} defaultValue={u.risk_score ?? 0}
+                    onBlur={(e) => { const v = Number(e.target.value); if (v !== u.risk_score) update.mutate({ uid: u.id, patch: { risk_score: v }, prev: { risk_score: u.risk_score }, action: "profile.risk_score.update" }); }}
+                    className={`w-16 rounded bg-input border border-border px-2 py-1 text-right text-xs ${u.risk_score >= 70 ? "text-destructive" : u.risk_score >= 40 ? "text-gold" : ""}`} />
+                </td>
+                <td className="pr-3">
+                  <input type="number" defaultValue={u.withdrawal_limit ?? ""} placeholder="∞"
+                    onBlur={(e) => { const v = e.target.value === "" ? null : Number(e.target.value); if (v !== u.withdrawal_limit) update.mutate({ uid: u.id, patch: { withdrawal_limit: v }, prev: { withdrawal_limit: u.withdrawal_limit }, action: "profile.withdrawal_limit.update" }); }}
+                    className="w-20 rounded bg-input border border-border px-2 py-1 num text-right text-xs" />
+                </td>
+                <td className={`text-xs pr-3 ${statusColor}`}>{status}</td>
+                <td className="pr-3">
+                  <input defaultValue={u.internal_note ?? ""} placeholder="—"
+                    onBlur={(e) => { const v = e.target.value || null; if (v !== u.internal_note) update.mutate({ uid: u.id, patch: { internal_note: v }, prev: { internal_note: u.internal_note }, action: "profile.note.update" }); }}
+                    className="w-48 rounded bg-input border border-border px-2 py-1 text-xs" />
+                </td>
+                <td>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button onClick={() => update.mutate({ uid: u.id, patch: { frozen: !u.frozen }, prev: { frozen: u.frozen }, action: u.frozen ? "profile.unfreeze" : "profile.freeze" })}
+                      className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
+                    <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
+                      className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No users</td></tr>}</tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -359,6 +417,127 @@ function LiveTradesAdmin() {
               </tr>
             );
           })}{!data?.length && <tr><td colSpan={8} className="text-center py-6 text-muted-foreground">No trades</td></tr>}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ============ Overview / Stats ============
+function OverviewAdmin() {
+  const { data } = useAdminQuery(["admin-overview"], async () => {
+    const [users, deposits, withdrawals, kyc, trades, wallets] = await Promise.all([
+      supabase.from("profiles").select("id, frozen, banned, risk_score"),
+      supabase.from("deposits").select("amount, status, created_at"),
+      supabase.from("withdrawals").select("amount, status, risk_flags, created_at"),
+      supabase.from("kyc_submissions").select("status"),
+      supabase.from("trades").select("amount, status, pnl, opened_at"),
+      supabase.from("wallets").select("usdt_balance, locked"),
+    ]);
+    return {
+      users: users.data ?? [], deposits: deposits.data ?? [], withdrawals: withdrawals.data ?? [],
+      kyc: kyc.data ?? [], trades: trades.data ?? [], wallets: wallets.data ?? [],
+    };
+  });
+  useRealtimeInvalidate("deposits", "admin-overview");
+  useRealtimeInvalidate("withdrawals", "admin-overview");
+  useRealtimeInvalidate("trades", "admin-overview");
+
+  if (!data) return <div className="glass rounded-xl p-8 text-center text-muted-foreground">Loading…</div>;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayMs = today.getTime();
+  const tradesToday = data.trades.filter((t: any) => new Date(t.opened_at).getTime() >= todayMs);
+  const volumeToday = tradesToday.reduce((s: number, t: any) => s + Number(t.amount), 0);
+  const pnlToday = tradesToday.filter((t: any) => t.status === "settled").reduce((s: number, t: any) => s + Number(t.pnl ?? 0), 0);
+  const openTrades = data.trades.filter((t: any) => t.status === "open").length;
+  const pendingDeposits = data.deposits.filter((d: any) => d.status === "pending").length;
+  const pendingWithdrawals = data.withdrawals.filter((w: any) => w.status === "pending").length;
+  const flaggedWithdrawals = data.withdrawals.filter((w: any) => w.status === "pending" && Array.isArray(w.risk_flags) && w.risk_flags.length).length;
+  const pendingKyc = data.kyc.filter((k: any) => k.status === "pending").length;
+  const totalLocked = data.wallets.reduce((s: number, w: any) => s + Number(w.locked ?? 0), 0);
+  const totalBalance = data.wallets.reduce((s: number, w: any) => s + Number(w.usdt_balance ?? 0), 0);
+  const frozenUsers = data.users.filter((u: any) => u.frozen).length;
+  const highRiskUsers = data.users.filter((u: any) => (u.risk_score ?? 0) >= 70).length;
+
+  const cards = [
+    { label: "Total users", value: data.users.length, tone: "text-foreground" },
+    { label: "Open trades", value: openTrades, tone: "text-success" },
+    { label: "Volume (today)", value: `$${fmtUSD(volumeToday)}`, tone: "text-gold" },
+    { label: "Net PnL (today)", value: `${pnlToday >= 0 ? "+" : ""}$${fmtUSD(pnlToday)}`, tone: pnlToday >= 0 ? "text-success" : "text-destructive" },
+    { label: "Pending deposits", value: pendingDeposits, tone: pendingDeposits ? "text-gold" : "text-muted-foreground" },
+    { label: "Pending withdrawals", value: pendingWithdrawals, tone: pendingWithdrawals ? "text-gold" : "text-muted-foreground" },
+    { label: "Flagged withdrawals", value: flaggedWithdrawals, tone: flaggedWithdrawals ? "text-destructive" : "text-muted-foreground" },
+    { label: "Pending KYC", value: pendingKyc, tone: pendingKyc ? "text-gold" : "text-muted-foreground" },
+    { label: "Total balance", value: `$${fmtUSD(totalBalance)}`, tone: "text-foreground" },
+    { label: "Locked in trades", value: `$${fmtUSD(totalLocked)}`, tone: "text-foreground" },
+    { label: "Frozen users", value: frozenUsers, tone: frozenUsers ? "text-gold" : "text-muted-foreground" },
+    { label: "High-risk users", value: highRiskUsers, tone: highRiskUsers ? "text-destructive" : "text-muted-foreground" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {cards.map((c) => (
+        <div key={c.label} className="glass rounded-xl p-4">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">{c.label}</div>
+          <div className={`mt-1 text-2xl font-bold num ${c.tone}`}>{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============ Login history ============
+function LoginHistoryAdmin() {
+  const { data } = useAdminQuery(["admin-logins"], async () => {
+    const { data } = await supabase.from("login_history").select("*, profiles!inner(display_name)").order("created_at", { ascending: false }).limit(200);
+    return data ?? [];
+  });
+  return (
+    <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+      <table className="w-full text-sm">
+        <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["User","When","Success","Device","IP"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+        <tbody>{(data ?? []).map((r: any) => (
+          <tr key={r.id} className="border-b border-border/30">
+            <td className="py-2.5 pr-3">{r.profiles?.display_name ?? r.user_id.slice(0, 8)}</td>
+            <td className="text-xs text-muted-foreground pr-3">{new Date(r.created_at).toLocaleString()}</td>
+            <td className="pr-3"><span className={`text-xs ${r.success ? "text-success" : "text-destructive"}`}>{r.success ? "OK" : r.failure_reason ?? "FAIL"}</span></td>
+            <td className="text-xs text-muted-foreground pr-3 truncate max-w-[300px]">{r.user_agent ?? "—"}</td>
+            <td className="text-xs font-mono pr-3">{r.ip ?? "—"}</td>
+          </tr>
+        ))}{!data?.length && <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No login history yet</td></tr>}</tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============ Audit log ============
+function AuditLogAdmin() {
+  const [q, setQ] = React.useState("");
+  const { data } = useAdminQuery(["admin-audit"], async () => {
+    const { data } = await supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(500);
+    return data ?? [];
+  });
+  const filtered = (data ?? []).filter((r: any) => !q || r.action.toLowerCase().includes(q.toLowerCase()) || (r.target_id ?? "").includes(q));
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by action or target id…"
+          className="flex-1 rounded-lg bg-input border border-border px-3 py-2 text-sm" />
+        <span className="text-xs text-muted-foreground">Immutable · {filtered.length} entries</span>
+      </div>
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{["When","Action","Target","Prev","New","Actor"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr></thead>
+          <tbody>{filtered.map((r: any) => (
+            <tr key={r.id} className="border-b border-border/30 align-top">
+              <td className="py-2.5 pr-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+              <td className="pr-3 text-xs font-mono text-gold">{r.action}</td>
+              <td className="pr-3 text-xs font-mono">{r.target_type ?? ""}{r.target_id ? `·${r.target_id.slice(0,8)}` : ""}</td>
+              <td className="pr-3 text-[10px] font-mono text-muted-foreground max-w-[200px] truncate">{r.prev_value ? JSON.stringify(r.prev_value) : "—"}</td>
+              <td className="pr-3 text-[10px] font-mono max-w-[200px] truncate">{r.new_value ? JSON.stringify(r.new_value) : "—"}</td>
+              <td className="pr-3 text-[10px] font-mono text-muted-foreground">{r.actor_id?.slice(0,8)}</td>
+            </tr>
+          ))}{!filtered.length && <tr><td colSpan={6} className="text-center py-6 text-muted-foreground">No audit entries</td></tr>}</tbody>
         </table>
       </div>
     </div>
