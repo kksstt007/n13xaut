@@ -16,8 +16,12 @@ export const openTrade = createServerFn({ method: "POST" })
     const { data: wallet } = await supabaseAdmin.from("wallets").select("usdt_balance").eq("user_id", userId).single();
     if (!wallet || Number(wallet.usdt_balance) < data.amount) throw new Error("Insufficient balance");
 
+    // Payout is derived from the chosen duration so the UI's "Ror" matches settlement exactly.
+    const DURATION_PAYOUT: Record<number, number> = { 60: 15, 120: 20, 180: 25, 300: 30 };
     const { data: ov } = await supabaseAdmin.from("trade_overrides").select("win_payout_pct").eq("user_id", userId).maybeSingle();
-    const payout = Number(ov?.win_payout_pct ?? 85);
+    const overridePct = ov?.win_payout_pct == null ? null : Number(ov.win_payout_pct);
+    // Treat the legacy default (85) as "no override" so duration-based payout takes effect.
+    const payout = overridePct != null && overridePct !== 85 ? overridePct : (DURATION_PAYOUT[data.durationSec] ?? 15);
 
     await supabaseAdmin.from("wallets").update({
       usdt_balance: Number(wallet.usdt_balance) - data.amount,

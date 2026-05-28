@@ -15,13 +15,13 @@ function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const nav = useNavigate();
   React.useEffect(() => { if (!loading && !isAdmin) nav({ to: "/dashboard" }); }, [loading, isAdmin, nav]);
-  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "control">("users");
+  const [tab, setTab] = React.useState<"users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control">("users");
 
   if (!isAdmin) return null;
 
   const tabs = [
     { k: "users", l: "Users" }, { k: "deposits", l: "Deposits" }, { k: "withdrawals", l: "Withdrawals" },
-    { k: "kyc", l: "KYC" }, { k: "control", l: "Trade Control" },
+    { k: "kyc", l: "KYC" }, { k: "trades", l: "Live Trades" }, { k: "control", l: "Trade Control" },
   ] as const;
 
   return (
@@ -47,6 +47,7 @@ function AdminPage() {
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
       {tab === "kyc" && <KycAdmin />}
+      {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
     </div>
   );
@@ -263,6 +264,101 @@ function TradeControlAdmin() {
               </tr>
             );
           })}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function LiveTradesAdmin() {
+  const qc = useQueryClient();
+  const [filter, setFilter] = React.useState<"open" | "settled" | "all">("open");
+
+  const { data } = useAdminQuery(["admin-trades", filter], async () => {
+    let q = supabase.from("trades").select("*, profiles(display_name)").order("opened_at", { ascending: false }).limit(200);
+    if (filter !== "all") q = q.eq("status", filter);
+    return (await q).data ?? [];
+  });
+
+  React.useEffect(() => {
+    const ch = supabase
+      .channel("admin-trades-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trades" }, (payload: any) => {
+        qc.invalidateQueries({ queryKey: ["admin-trades"] });
+        if (payload.eventType === "INSERT") {
+          const r = payload.new;
+          toast.info(`New ${String(r.direction).toUpperCase()} · $${fmtUSD(Number(r.amount))} · ${r.duration_sec}s`);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
+  const [, force] = React.useReducer((x: number) => x + 1, 0);
+  React.useEffect(() => {
+    const t = setInterval(force, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const openCount = (data ?? []).filter((t: any) => t.status === "open").length;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold">Live Trades</h2>
+          {openCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-success/15 text-success font-semibold inline-flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-success animate-pulse" /> {openCount} open
+            </span>
+          )}
+        </div>
+        <div className="flex gap-1 text-xs">
+          {(["open", "settled", "all"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 rounded capitalize transition ${filter === f ? "bg-gold/15 text-gold" : "text-muted-foreground hover:text-foreground"}`}>{f}</button>
+          ))}
+        </div>
+      </div>
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50">
+            <tr>{["User","Dir","Amount","Duration","Payout","Open price","Status / PnL","Time"].map(c => <th key={c} className="text-left py-2">{c}</th>)}</tr>
+          </thead>
+          <tbody>{(data ?? []).map((t: any) => {
+            const closes = new Date(t.closes_at).getTime();
+            const remain = Math.max(0, Math.ceil((closes - Date.now()) / 1000));
+            const mm = String(Math.floor(remain / 60)).padStart(2, "0");
+            const ss = String(remain % 60).padStart(2, "0");
+            const isOpen = t.status === "open";
+            const isWin = t.result === "win";
+            return (
+              <tr key={t.id} className="border-b border-border/30">
+                <td className="py-2.5">{t.profiles?.display_name ?? "—"}</td>
+                <td>
+                  <span className={`text-xs font-semibold ${t.direction === "buy" ? "text-success" : "text-destructive"}`}>
+                    {String(t.direction).toUpperCase()}
+                  </span>
+                </td>
+                <td className="num">${fmtUSD(Number(t.amount))}</td>
+                <td className="num text-xs">{t.duration_sec}s</td>
+                <td className="num text-xs text-gold">{Number(t.payout_pct)}%</td>
+                <td className="num text-xs">${fmtUSD(Number(t.open_price))}</td>
+                <td>
+                  {isOpen ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs">
+                      <span className="size-1.5 rounded-full bg-success animate-pulse" />
+                      <span className="num tabular-nums text-gold">{mm}:{ss}</span>
+                    </span>
+                  ) : (
+                    <span className={`text-xs font-semibold num ${isWin ? "text-success" : "text-destructive"}`}>
+                      {isWin ? "+" : ""}${fmtUSD(Number(t.pnl ?? 0))}
+                    </span>
+                  )}
+                </td>
+                <td className="text-xs text-muted-foreground">{new Date(t.opened_at).toLocaleTimeString()}</td>
+              </tr>
+            );
+          })}{!data?.length && <tr><td colSpan={8} className="text-center py-6 text-muted-foreground">No trades</td></tr>}</tbody>
         </table>
       </div>
     </div>
