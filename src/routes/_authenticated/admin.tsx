@@ -213,7 +213,14 @@ function WithdrawalsAdmin() {
 
 function ReviewTable({ rows, onApprove, onReject, addr, title, pending, busy }: any) {
   const [filter, setFilter] = React.useState<"pending" | "all">("pending");
+  const [rejectFor, setRejectFor] = React.useState<any>(null);
+  const [note, setNote] = React.useState("");
   const filtered = (rows ?? []).filter((r: any) => filter === "all" || r.status === "pending");
+  const submitReject = () => {
+    if (!note.trim()) { toast.error("Please provide a rejection reason"); return; }
+    onReject(rejectFor, note.trim());
+    setRejectFor(null); setNote("");
+  };
   return (
     <div className="space-y-3">
       {title && (
@@ -232,26 +239,52 @@ function ReviewTable({ rows, onApprove, onReject, addr, title, pending, busy }: 
       <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
         <table className="w-full text-sm">
           <thead className="text-xs text-muted-foreground border-b border-border/50">
-            <tr>{["User","Network","Amount", addr && "Address","Status","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
+            <tr>{["User","Network","Amount", addr && "Address","Status","Note","Date","Actions"].filter(Boolean).map((c: any) => <th key={c} className="text-left py-2">{c}</th>)}</tr>
           </thead>
           <tbody>{filtered.map((r: any) => (
-            <tr key={r.id} className="border-b border-border/30">
+            <tr key={r.id} className="border-b border-border/30 align-top">
               <td className="py-2.5">{r.profiles?.display_name ?? "—"}</td>
               <td>{r.network}</td>
               <td className="num">${fmtUSD(Number(r.amount))}</td>
               {addr && <td className="font-mono text-xs truncate max-w-[200px]">{r.address}</td>}
               <td><span className={`text-xs ${r.status === "approved" ? "text-success" : r.status === "rejected" ? "text-destructive" : "text-gold"}`}>{r.status}</span></td>
+              <td className="text-xs text-muted-foreground max-w-[200px] truncate" title={r.admin_note ?? ""}>{r.admin_note ?? "—"}</td>
               <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
               <td>{r.status === "pending" && (
                 <div className="flex gap-1.5">
                   <button disabled={busy} onClick={() => onApprove(r)} className="text-xs px-2 py-1 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50">Approve</button>
-                  <button disabled={busy} onClick={() => onReject(r)} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25 disabled:opacity-50">Reject</button>
+                  <button disabled={busy} onClick={() => { setRejectFor(r); setNote(""); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25 disabled:opacity-50">Reject</button>
                 </div>
               )}</td>
             </tr>
-          ))}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">{filter === "pending" ? "No pending requests" : "None"}</td></tr>}</tbody>
+          ))}{!filtered.length && <tr><td colSpan={8} className="text-center py-6 text-muted-foreground">{filter === "pending" ? "No pending requests" : "None"}</td></tr>}</tbody>
         </table>
       </div>
+
+      {rejectFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setRejectFor(null)}>
+          <div className="glass rounded-xl p-5 w-full max-w-md space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold">Reject {title?.toLowerCase()}</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {rejectFor.profiles?.display_name ?? "User"} · ${fmtUSD(Number(rejectFor.amount))} · {rejectFor.network}
+              </p>
+            </div>
+            <textarea
+              autoFocus
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Reason for rejection (visible to user)"
+              rows={4}
+              className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-gold/50"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setRejectFor(null)} className="text-xs px-3 py-1.5 rounded text-muted-foreground hover:text-foreground">Cancel</button>
+              <button disabled={busy || !note.trim()} onClick={submitReject} className="text-xs px-3 py-1.5 rounded bg-destructive/20 text-destructive hover:bg-destructive/30 disabled:opacity-50">Confirm reject</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
