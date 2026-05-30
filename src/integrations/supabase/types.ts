@@ -61,37 +61,61 @@ export type Database = {
       }
       deposit_methods: {
         Row: {
+          account_name: string | null
+          account_number: string | null
           asset: string
+          bank_name: string | null
+          country: string | null
           created_at: string
-          deposit_address: string
+          deposit_address: string | null
+          display_name: string | null
           enabled: boolean
           fee: number
           id: string
+          instructions: string | null
+          method_type: string
           min_deposit: number
           network: string
           notes: string | null
+          updated_at: string
         }
         Insert: {
+          account_name?: string | null
+          account_number?: string | null
           asset?: string
+          bank_name?: string | null
+          country?: string | null
           created_at?: string
-          deposit_address: string
+          deposit_address?: string | null
+          display_name?: string | null
           enabled?: boolean
           fee?: number
           id?: string
+          instructions?: string | null
+          method_type?: string
           min_deposit?: number
           network: string
           notes?: string | null
+          updated_at?: string
         }
         Update: {
+          account_name?: string | null
+          account_number?: string | null
           asset?: string
+          bank_name?: string | null
+          country?: string | null
           created_at?: string
-          deposit_address?: string
+          deposit_address?: string | null
+          display_name?: string | null
           enabled?: boolean
           fee?: number
           id?: string
+          instructions?: string | null
+          method_type?: string
           min_deposit?: number
           network?: string
           notes?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -492,12 +516,16 @@ export type Database = {
       }
       withdrawals: {
         Row: {
+          account_name: string | null
           address: string
           admin_note: string | null
           amount: number
+          bank_name: string | null
+          country: string | null
           created_at: string
           fee: number
           id: string
+          method_id: string | null
           network: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -506,12 +534,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_name?: string | null
           address: string
           admin_note?: string | null
           amount: number
+          bank_name?: string | null
+          country?: string | null
           created_at?: string
           fee?: number
           id?: string
+          method_id?: string | null
           network: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -520,12 +552,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_name?: string | null
           address?: string
           admin_note?: string | null
           amount?: number
+          bank_name?: string | null
+          country?: string | null
           created_at?: string
           fee?: number
           id?: string
+          method_id?: string | null
           network?: string
           reviewed_at?: string | null
           reviewed_by?: string | null

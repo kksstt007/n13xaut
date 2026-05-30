@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control" | "audit" | "logins";
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins";
 
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
@@ -27,6 +27,7 @@ function AdminPage() {
     { k: "users", l: "Users" },
     { k: "deposits", l: "Deposits" },
     { k: "withdrawals", l: "Withdrawals" },
+    { k: "methods", l: "Payment Methods" },
     { k: "kyc", l: "KYC" },
     { k: "trades", l: "Live Trades" },
     { k: "control", l: "Trade Control" },
@@ -57,6 +58,7 @@ function AdminPage() {
       {tab === "users" && <UsersAdmin />}
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
+      {tab === "methods" && <MethodsAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
@@ -580,3 +582,191 @@ function AuditLogAdmin() {
     </div>
   );
 }
+
+/* --------------------------- Payment methods --------------------------- */
+
+function MethodsAdmin() {
+  const qc = useQueryClient();
+  const { data: methods } = useAdminQuery(["admin-methods"], async () =>
+    (await supabase.from("deposit_methods").select("*").order("country").order("network")).data ?? []
+  );
+
+  React.useEffect(() => {
+    const ch = supabase
+      .channel("admin-methods-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "deposit_methods" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-methods"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
+  const [editing, setEditing] = React.useState<any | null>(null);
+
+  const save = useMutation({
+    mutationFn: async (row: any) => {
+      const payload: any = {
+        country: row.country || null,
+        display_name: row.display_name || null,
+        method_type: row.method_type || "crypto",
+        network: row.network,
+        asset: row.asset || "USDT",
+        enabled: !!row.enabled,
+        min_deposit: Number(row.min_deposit) || 0,
+        fee: Number(row.fee) || 0,
+        deposit_address: row.deposit_address || null,
+        bank_name: row.bank_name || null,
+        account_name: row.account_name || null,
+        account_number: row.account_number || null,
+        instructions: row.instructions || null,
+        notes: row.notes || null,
+      };
+      if (row.id) {
+        const { error } = await supabase.from("deposit_methods").update(payload).eq("id", row.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("deposit_methods").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Method saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-methods"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => { const { error } = await supabase.from("deposit_methods").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-methods"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const { error } = await supabase.from("deposit_methods").update({ enabled }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-methods"] }),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Changes go live for all users in real time.</p>
+        <button onClick={() => setEditing({ method_type: "crypto", enabled: true, min_deposit: 10, fee: 0, asset: "USDT" })}
+          className="text-xs px-3 py-1.5 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold">+ New method</button>
+      </div>
+
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50">
+            <tr>{["Country","Type","Name","Network","Min","Status","Actions"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr>
+          </thead>
+          <tbody>{methods?.map((m: any) => (
+            <tr key={m.id} className="border-b border-border/30">
+              <td className="py-2.5 pr-3">{m.country ?? "Global"}</td>
+              <td className="pr-3 text-xs"><span className={`px-1.5 py-0.5 rounded ${m.method_type === "bank" ? "bg-blue-500/15 text-blue-400" : "bg-gold/15 text-gold"}`}>{m.method_type}</span></td>
+              <td className="pr-3">{m.display_name ?? m.bank_name ?? m.network}</td>
+              <td className="pr-3 text-xs">{m.network}</td>
+              <td className="pr-3 num">${fmtUSD(Number(m.min_deposit))}</td>
+              <td className="pr-3">
+                <button onClick={() => toggle.mutate({ id: m.id, enabled: !m.enabled })} className={`text-xs px-2 py-0.5 rounded ${m.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>
+                  {m.enabled ? "Enabled" : "Disabled"}
+                </button>
+              </td>
+              <td className="flex gap-1.5 py-2.5">
+                <button onClick={() => setEditing(m)} className="text-xs px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
+                <button onClick={() => { if (confirm("Delete this method?")) remove.mutate(m.id); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Delete</button>
+              </td>
+            </tr>
+          ))}{!methods?.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No methods yet. Add one to start accepting deposits.</td></tr>}</tbody>
+        </table>
+      </div>
+
+      {editing && <MethodEditor row={editing} onCancel={() => setEditing(null)} onSave={(r) => save.mutate(r)} saving={save.isPending} />}
+    </div>
+  );
+}
+
+function MethodEditor({ row, onCancel, onSave, saving }: { row: any; onCancel: () => void; onSave: (r: any) => void; saving: boolean }) {
+  const [f, setF] = React.useState<any>(row);
+  const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
+  const isBank = (f.method_type ?? "crypto") === "bank";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto" onClick={onCancel}>
+      <div className="glass rounded-2xl p-6 w-full max-w-lg space-y-4 my-8" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-semibold">{f.id ? "Edit method" : "New payment method"}</h3>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Fld label="Method type">
+            <select value={f.method_type ?? "crypto"} onChange={(e) => set("method_type", e.target.value)} className="adm-input">
+              <option value="crypto">Crypto / Wallet</option>
+              <option value="bank">Bank transfer</option>
+            </select>
+          </Fld>
+          <Fld label="Country (blank = Global)">
+            <input value={f.country ?? ""} onChange={(e) => set("country", e.target.value)} placeholder="e.g. Myanmar" className="adm-input" />
+          </Fld>
+          <Fld label="Display name (optional)">
+            <input value={f.display_name ?? ""} onChange={(e) => set("display_name", e.target.value)} placeholder="e.g. KBZ Bank" className="adm-input" />
+          </Fld>
+          <Fld label="Network / channel">
+            <input value={f.network ?? ""} onChange={(e) => set("network", e.target.value)} placeholder={isBank ? "BANK / KBZ Pay" : "TRC20"} className="adm-input" />
+          </Fld>
+          <Fld label="Asset">
+            <input value={f.asset ?? "USDT"} onChange={(e) => set("asset", e.target.value)} className="adm-input" />
+          </Fld>
+          <Fld label="Min deposit (USDT)">
+            <input type="number" value={f.min_deposit ?? 10} onChange={(e) => set("min_deposit", e.target.value)} className="adm-input num" />
+          </Fld>
+        </div>
+
+        {isBank ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Fld label="Bank name">
+              <input value={f.bank_name ?? ""} onChange={(e) => set("bank_name", e.target.value)} className="adm-input" />
+            </Fld>
+            <Fld label="Account name">
+              <input value={f.account_name ?? ""} onChange={(e) => set("account_name", e.target.value)} className="adm-input" />
+            </Fld>
+            <div className="col-span-2">
+              <Fld label="Account number">
+                <input value={f.account_number ?? ""} onChange={(e) => set("account_number", e.target.value)} className="adm-input font-mono" />
+              </Fld>
+            </div>
+          </div>
+        ) : (
+          <Fld label="Deposit address">
+            <input value={f.deposit_address ?? ""} onChange={(e) => set("deposit_address", e.target.value)} className="adm-input font-mono text-xs" />
+          </Fld>
+        )}
+
+        <Fld label="Instructions (shown to user)">
+          <textarea value={f.instructions ?? ""} onChange={(e) => set("instructions", e.target.value)} rows={3} className="adm-input resize-none" />
+        </Fld>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!f.enabled} onChange={(e) => set("enabled", e.target.checked)} />
+          Enabled (visible to users)
+        </label>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onCancel} className="text-xs px-3 py-2 rounded text-muted-foreground hover:text-foreground">Cancel</button>
+          <button disabled={saving || !f.network} onClick={() => onSave(f)} className="text-xs px-4 py-2 rounded bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground font-semibold disabled:opacity-50">
+            {saving ? "Saving…" : "Save method"}
+          </button>
+        </div>
+        <style>{`.adm-input{width:100%;border-radius:.5rem;background:var(--color-input);border:1px solid var(--color-border);padding:.5rem .75rem;font-size:.875rem;outline:none;color:var(--color-foreground)}.adm-input:focus{border-color:var(--gold)}`}</style>
+      </div>
+    </div>
+  );
+}
+
+function Fld({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
+
