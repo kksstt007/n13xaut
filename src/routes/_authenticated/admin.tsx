@@ -58,6 +58,7 @@ function AdminPage() {
       {tab === "users" && <UsersAdmin />}
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
+      {tab === "methods" && <MethodsAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
