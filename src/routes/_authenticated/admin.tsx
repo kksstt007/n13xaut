@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "kyc" | "trades" | "control" | "audit" | "logins";
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins";
 
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
