@@ -1,178 +1,381 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Building2, Wallet as WalletIcon, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 
+type Method = {
+  id: string;
+  network: string;
+  asset: string;
+  enabled: boolean;
+  min_deposit: number;
+  fee: number;
+  notes: string | null;
+  country: string | null;
+  display_name: string | null;
+  method_type: string;
+  deposit_address: string | null;
+  bank_name: string | null;
+  account_name: string | null;
+  account_number: string | null;
+  instructions: string | null;
+};
+
 export function DepositWithdraw() {
+  const [open, setOpen] = React.useState<null | "deposit" | "withdraw">(null);
   const { user } = useAuth();
-  const qc = useQueryClient();
-  const [tab, setTab] = React.useState<"deposit" | "withdraw">("deposit");
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
-    queryFn: async () => (await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle()).data,
     enabled: !!user,
   });
+  const available = Number(wallet?.usdt_balance ?? 0);
 
-  const { data: methods } = useQuery({
-    queryKey: ["methods"],
-    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true)).data ?? [],
+  return (
+    <>
+      <div className="p-4 space-y-3">
+        <div className="rounded-2xl bg-background/50 border border-border/50 px-4 py-3 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Available balance</div>
+            <div className="text-lg font-semibold text-gold mt-0.5 num">${fmtUSD(available)}</div>
+          </div>
+          <WalletIcon className="size-5 text-muted-foreground" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <ActionButton
+            kind="deposit"
+            onClick={() => setOpen("deposit")}
+          />
+          <ActionButton
+            kind="withdraw"
+            onClick={() => setOpen("withdraw")}
+          />
+        </div>
+      </div>
+
+      <FundsSheet open={open === "deposit"} mode="deposit" onClose={() => setOpen(null)} available={available} />
+      <FundsSheet open={open === "withdraw"} mode="withdraw" onClose={() => setOpen(null)} available={available} />
+    </>
+  );
+}
+
+function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick: () => void }) {
+  const isDep = kind === "deposit";
+  const Icon = isDep ? ArrowDownToLine : ArrowUpFromLine;
+  return (
+    <button
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-2xl border border-border/60 bg-surface-elevated p-4 text-left transition active:scale-[0.98] hover:border-gold/40"
+    >
+      <div className="absolute -right-6 -top-6 size-20 rounded-full opacity-20 blur-2xl transition group-hover:opacity-40"
+        style={{ background: isDep ? "var(--gold)" : "oklch(0.7 0.18 25)" }} />
+      <div className={`size-10 rounded-xl grid place-items-center ${isDep ? "bg-gold/15 text-gold" : "bg-destructive/15 text-destructive"}`}>
+        <Icon className="size-5" />
+      </div>
+      <div className="mt-3 text-sm font-semibold">{isDep ? "Deposit" : "Withdraw"}</div>
+      <div className="text-[11px] text-muted-foreground mt-0.5">{isDep ? "Add funds to your wallet" : "Send funds to your account"}</div>
+    </button>
+  );
+}
+
+/* ----------------------------- Funds sheet ---------------------------- */
+
+function FundsSheet({
+  open, mode, onClose, available,
+}: { open: boolean; mode: "deposit" | "withdraw"; onClose: () => void; available: number }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: methods = [] } = useQuery<Method[]>({
+    queryKey: ["deposit-methods"],
+    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true).order("country").order("network")).data as Method[] ?? [],
   });
 
-  const { data: deposits } = useQuery({
-    queryKey: ["deposits", user?.id],
-    queryFn: async () => (await supabase.from("deposits").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
-    enabled: !!user,
-  });
+  // Realtime: refresh methods when admin updates them
+  React.useEffect(() => {
+    const ch = supabase
+      .channel("deposit-methods-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "deposit_methods" }, () => {
+        qc.invalidateQueries({ queryKey: ["deposit-methods"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
-  const { data: withdrawals } = useQuery({
-    queryKey: ["withdrawals", user?.id],
-    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
-    enabled: !!user,
-  });
+  const countries = React.useMemo(() => {
+    const set = new Set<string>();
+    methods.forEach((m) => set.add(m.country?.trim() || "Global"));
+    return Array.from(set);
+  }, [methods]);
 
-  const [selectedMethod, setSelectedMethod] = React.useState<any>(null);
-  React.useEffect(() => { if (methods?.length && !selectedMethod) setSelectedMethod(methods[0]); }, [methods, selectedMethod]);
-  const [depAmount, setDepAmount] = React.useState(100);
+  const [country, setCountry] = React.useState<string>("");
+  React.useEffect(() => {
+    if (open && countries.length && !countries.includes(country)) setCountry(countries[0]);
+  }, [open, countries, country]);
+
+  const filtered = methods.filter((m) => (m.country?.trim() || "Global") === country);
+  const [selected, setSelected] = React.useState<Method | null>(null);
+  React.useEffect(() => { setSelected(filtered[0] ?? null); /* eslint-disable-next-line */ }, [country, methods.length]);
+
+  // Forms
+  const [depAmount, setDepAmount] = React.useState<number>(100);
   const [txHash, setTxHash] = React.useState("");
+  const [wdAddress, setWdAddress] = React.useState("");
+  const [wdAmount, setWdAmount] = React.useState<number>(50);
+
+  React.useEffect(() => { if (open) { setDepAmount(100); setWdAmount(50); setTxHash(""); setWdAddress(""); } }, [open, mode]);
 
   const submitDeposit = useMutation({
     mutationFn: async () => {
+      if (!selected) throw new Error("Select a method");
+      if (depAmount < Number(selected.min_deposit)) throw new Error(`Minimum deposit is $${selected.min_deposit}`);
       const { error } = await supabase.from("deposits").insert({
-        user_id: user!.id, method_id: selectedMethod.id, network: selectedMethod.network,
+        user_id: user!.id, method_id: selected.id, network: selected.network,
         amount: depAmount, tx_hash: txHash || null,
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Deposit submitted for review"); setTxHash(""); qc.invalidateQueries({ queryKey: ["deposits"] }); },
+    onSuccess: () => { toast.success("Deposit submitted for review"); qc.invalidateQueries({ queryKey: ["deposits"] }); onClose(); },
     onError: (e: any) => toast.error(e.message),
   });
-
-  const [wdNetwork, setWdNetwork] = React.useState("TRC20");
-  const [wdAddress, setWdAddress] = React.useState("");
-  const [wdAmount, setWdAmount] = React.useState(50);
 
   const submitWithdrawal = useMutation({
     mutationFn: async () => {
-      if (wdAmount > Number(wallet?.usdt_balance ?? 0)) throw new Error("Insufficient balance");
-      const { error } = await supabase.from("withdrawals").insert({
-        user_id: user!.id, network: wdNetwork, address: wdAddress, amount: wdAmount,
-      });
+      if (!selected) throw new Error("Select a method");
+      if (wdAmount > available) throw new Error("Insufficient balance");
+      if (!wdAddress.trim()) throw new Error(selected.method_type === "bank" ? "Enter account number" : "Enter wallet address");
+      const payload: any = {
+        user_id: user!.id,
+        network: selected.network,
+        address: wdAddress.trim(),
+        amount: wdAmount,
+        country: selected.country,
+        method_id: selected.id,
+      };
+      if (selected.method_type === "bank") {
+        payload.bank_name = selected.bank_name;
+      }
+      const { error } = await supabase.from("withdrawals").insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Withdrawal request submitted"); qc.invalidateQueries({ queryKey: ["withdrawals"] }); },
+    onSuccess: () => { toast.success("Withdrawal request submitted"); qc.invalidateQueries({ queryKey: ["withdrawals"] }); onClose(); },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const available = Number(wallet?.usdt_balance ?? 0);
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <button onClick={() => setTab("deposit")} className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${tab === "deposit" ? "bg-gradient-gold text-primary-foreground shadow-gold-soft" : "bg-surface-elevated text-muted-foreground hover:text-foreground"}`}>Deposit</button>
-        <button onClick={() => setTab("withdraw")} className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${tab === "withdraw" ? "bg-gradient-gold text-primary-foreground shadow-gold-soft" : "bg-surface-elevated text-muted-foreground hover:text-foreground"}`}>Withdraw</button>
-      </div>
-
-      {tab === "deposit" ? (
-        <div className="space-y-4">
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold mb-3">1. Select network</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {methods?.map((m: any) => (
-                <button key={m.id} onClick={() => setSelectedMethod(m)}
-                  className={`p-3 rounded-lg border text-sm transition ${selectedMethod?.id === m.id ? "border-gold bg-gold/10" : "border-border bg-surface-elevated"}`}>
-                  <div className="font-semibold">{m.network}</div>
-                  <div className="text-xs text-muted-foreground mt-1">min ${m.min_deposit}</div>
-                </button>
-              ))}
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            className="fixed bottom-0 inset-x-0 z-50 max-h-[92vh] overflow-y-auto rounded-t-3xl bg-surface border-t border-border"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-surface/95 backdrop-blur border-b border-border/60">
+              <div>
+                <h3 className="font-display text-base font-semibold">{mode === "deposit" ? "Deposit funds" : "Withdraw funds"}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {mode === "deposit" ? "Choose your country & method to add funds" : `Available: $${fmtUSD(available)}`}
+                </p>
+              </div>
+              <button onClick={onClose} className="size-8 grid place-items-center rounded-full hover:bg-surface-elevated">
+                <X className="size-4" />
+              </button>
             </div>
-            {selectedMethod && (
-              <div className="mt-5 space-y-3">
+
+            <div className="px-5 py-4 space-y-5">
+              {/* Country selector */}
+              <div>
+                <Label icon={<Globe2 className="size-3.5" />}>Country / region</Label>
+                {countries.length === 0 ? (
+                  <EmptyHint>No methods configured yet. Please check back later.</EmptyHint>
+                ) : (
+                  <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-thin -mx-1 px-1 pb-1">
+                    {countries.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCountry(c)}
+                        className={`px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap border transition ${
+                          country === c
+                            ? "bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground border-transparent shadow-md"
+                            : "bg-background/40 text-muted-foreground border-border/60 hover:text-foreground"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Method picker */}
+              {filtered.length > 0 && (
                 <div>
-                  <label className="text-xs text-muted-foreground">Deposit address</label>
-                  <div className="mt-1 flex items-center gap-2 p-3 rounded-lg bg-surface-elevated font-mono text-xs break-all">
-                    {selectedMethod.deposit_address}
-                    <button onClick={() => { navigator.clipboard.writeText(selectedMethod.deposit_address); toast.success("Copied"); }}>
-                      <Copy className="size-4 text-gold flex-shrink-0" />
-                    </button>
+                  <Label icon={<Building2 className="size-3.5" />}>Payment method</Label>
+                  <div className="mt-2 space-y-2">
+                    {filtered.map((m) => {
+                      const isSel = selected?.id === m.id;
+                      const title = m.display_name || (m.method_type === "bank" ? (m.bank_name || m.network) : m.network);
+                      const subtitle = m.method_type === "bank"
+                        ? `${m.asset} · min $${m.min_deposit}`
+                        : `${m.asset} · ${m.network} · min $${m.min_deposit}`;
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => setSelected(m)}
+                          className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                            isSel ? "border-gold bg-gold/5" : "border-border/60 bg-background/30 hover:border-border"
+                          }`}
+                        >
+                          <div className={`size-10 rounded-lg grid place-items-center ${m.method_type === "bank" ? "bg-blue-500/15 text-blue-400" : "bg-gold/15 text-gold"}`}>
+                            {m.method_type === "bank" ? <Building2 className="size-5" /> : <WalletIcon className="size-5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{title}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</div>
+                          </div>
+                          {isSel ? <CheckCircle2 className="size-5 text-gold" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Send only USDT on {selectedMethod.network}. Other assets may be lost.</p>
-              </div>
-            )}
-          </div>
+              )}
 
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold mb-3">2. Confirm your deposit</h3>
-            <label className="text-xs text-muted-foreground">Amount (USDT)</label>
-            <input type="number" value={depAmount} onChange={(e) => setDepAmount(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg bg-input border border-border px-3 py-2.5 num outline-none focus:border-gold" />
-            <label className="block mt-3 text-xs text-muted-foreground">Tx hash (optional)</label>
-            <input value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder="0x…"
-              className="mt-1 w-full rounded-lg bg-input border border-border px-3 py-2.5 text-xs font-mono outline-none focus:border-gold" />
-            <button onClick={() => submitDeposit.mutate()} disabled={submitDeposit.isPending}
-              className="mt-4 w-full rounded-lg bg-gradient-gold py-3 font-semibold text-primary-foreground shadow-gold disabled:opacity-60">
-              Submit deposit
-            </button>
-            <p className="mt-2 text-xs text-muted-foreground">Funds credit after admin verifies on-chain.</p>
-          </div>
+              {/* Mode-specific body */}
+              {selected && mode === "deposit" && <DepositBody method={selected} amount={depAmount} setAmount={setDepAmount} txHash={txHash} setTxHash={setTxHash} />}
+              {selected && mode === "withdraw" && <WithdrawBody method={selected} amount={wdAmount} setAmount={setWdAmount} address={wdAddress} setAddress={setWdAddress} available={available} />}
 
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold mb-3">Deposit history</h3>
-            <HistoryTable rows={deposits ?? []} cols={["Network","Amount","Status","Date"]} render={(d: any) => [d.network, `$${fmtUSD(Number(d.amount))}`, <StatusPill key="s" s={d.status} />, new Date(d.created_at).toLocaleString()]} />
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold mb-3">Withdraw USDT</h3>
-            <label className="text-xs text-muted-foreground">Network</label>
-            <select value={wdNetwork} onChange={(e) => setWdNetwork(e.target.value)} className="mt-1 w-full rounded-lg bg-input border border-border px-3 py-2.5 outline-none focus:border-gold">
-              {["TRC20","ERC20","BEP20"].map((n) => <option key={n}>{n}</option>)}
-            </select>
-            <label className="block mt-3 text-xs text-muted-foreground">Destination address</label>
-            <input value={wdAddress} onChange={(e) => setWdAddress(e.target.value)} placeholder="Wallet address"
-              className="mt-1 w-full rounded-lg bg-input border border-border px-3 py-2.5 text-xs font-mono outline-none focus:border-gold" />
-            <label className="block mt-3 text-xs text-muted-foreground">Amount (USDT)</label>
-            <input type="number" value={wdAmount} onChange={(e) => setWdAmount(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg bg-input border border-border px-3 py-2.5 num outline-none focus:border-gold" />
-            <div className="mt-1 text-xs text-muted-foreground">Available: ${fmtUSD(available)}</div>
-            <button onClick={() => submitWithdrawal.mutate()} disabled={submitWithdrawal.isPending || !wdAddress}
-              className="mt-4 w-full rounded-lg bg-gradient-gold py-3 font-semibold text-primary-foreground shadow-gold disabled:opacity-60">
-              Request withdrawal
-            </button>
-          </div>
-
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold mb-3">Withdrawal history</h3>
-            <HistoryTable rows={withdrawals ?? []} cols={["Network","Amount","Status","Date"]} render={(w: any) => [w.network, `$${fmtUSD(Number(w.amount))}`, <StatusPill key="s" s={w.status} />, new Date(w.created_at).toLocaleString()]} />
-          </div>
-        </div>
+              {/* Submit */}
+              {selected && (
+                <button
+                  onClick={() => (mode === "deposit" ? submitDeposit.mutate() : submitWithdrawal.mutate())}
+                  disabled={mode === "deposit" ? submitDeposit.isPending : submitWithdrawal.isPending}
+                  className="w-full rounded-xl py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-60 active:scale-[0.99] transition"
+                  style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}
+                >
+                  {mode === "deposit"
+                    ? (submitDeposit.isPending ? "Submitting…" : "Confirm deposit")
+                    : (submitWithdrawal.isPending ? "Submitting…" : "Request withdrawal")}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </>
       )}
-    </div>
+    </AnimatePresence>
   );
 }
 
-function StatusPill({ s }: { s: string }) {
-  const map: Record<string, string> = { pending: "bg-gold/15 text-gold", approved: "bg-success/15 text-success", rejected: "bg-destructive/15 text-destructive" };
-  return <span className={`px-2 py-0.5 rounded text-xs ${map[s] ?? ""}`}>{s}</span>;
-}
+/* --------------------------- Mode bodies --------------------------- */
 
-function HistoryTable({ rows, cols, render }: { rows: any[]; cols: string[]; render: (r: any) => React.ReactNode[] }) {
-  if (!rows.length) return <p className="text-sm text-muted-foreground">No history yet.</p>;
+function DepositBody({ method, amount, setAmount, txHash, setTxHash }: any) {
+  const isBank = method.method_type === "bank";
   return (
-    <div className="overflow-x-auto scrollbar-thin">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground border-b border-border/50"><tr>{cols.map((c) => <th key={c} className="text-left py-2">{c}</th>)}</tr></thead>
-        <tbody>{rows.map((r, i) => (
-          <tr key={r.id ?? i} className="border-b border-border/30">
-            {render(r).map((cell, j) => <td key={j} className="py-2.5">{cell}</td>)}
-          </tr>
-        ))}</tbody>
-      </table>
+    <div className="space-y-3">
+      <Label>{isBank ? "Bank details" : "Deposit address"}</Label>
+      <div className="rounded-xl bg-background/40 border border-border/60 p-4 space-y-2.5">
+        {isBank ? (
+          <>
+            <DetailRow label="Bank" value={method.bank_name ?? "—"} />
+            <DetailRow label="Account name" value={method.account_name ?? "—"} copy />
+            <DetailRow label="Account number" value={method.account_number ?? "—"} copy mono />
+          </>
+        ) : (
+          <DetailRow label={method.network} value={method.deposit_address ?? "—"} copy mono break />
+        )}
+        {method.instructions && (
+          <p className="text-[11px] text-muted-foreground pt-2 border-t border-border/50">{method.instructions}</p>
+        )}
+      </div>
+
+      <Field label="Amount (USDT)">
+        <input type="number" min={method.min_deposit} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="input num" />
+      </Field>
+      <Field label={isBank ? "Reference / receipt no. (optional)" : "Transaction hash (optional)"}>
+        <input value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder={isBank ? "Bank reference" : "0x…"} className="input font-mono text-xs" />
+      </Field>
+      <p className="text-[11px] text-muted-foreground">Your balance will be credited after admin verification.</p>
+      <Styles />
     </div>
   );
+}
+
+function WithdrawBody({ method, amount, setAmount, address, setAddress, available }: any) {
+  const isBank = method.method_type === "bank";
+  return (
+    <div className="space-y-3">
+      <Field label={isBank ? "Your bank account number" : "Destination wallet address"}>
+        <input value={address} onChange={(e) => setAddress(e.target.value)}
+          placeholder={isBank ? "Account number" : "Wallet address"}
+          className="input font-mono text-xs" />
+      </Field>
+      <Field label="Amount (USDT)">
+        <input type="number" max={available} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="input num" />
+      </Field>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>Available ${fmtUSD(available)}</span>
+        <button onClick={() => setAmount(available)} className="text-gold font-medium">Max</button>
+      </div>
+      {method.instructions && (
+        <p className="text-[11px] text-muted-foreground p-3 rounded-lg bg-background/40 border border-border/50">{method.instructions}</p>
+      )}
+      <Styles />
+    </div>
+  );
+}
+
+/* --------------------------- UI primitives --------------------------- */
+
+function Label({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+      {icon}{children}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="mt-1.5">{children}</div>
+    </label>
+  );
+}
+
+function DetailRow({ label, value, copy, mono, break: brk }: { label: string; value: string; copy?: boolean; mono?: boolean; break?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-[11px] text-muted-foreground shrink-0">{label}</span>
+      <div className={`flex items-center gap-2 text-right text-xs ${mono ? "font-mono" : "font-medium"} ${brk ? "break-all" : ""}`}>
+        <span>{value}</span>
+        {copy && value !== "—" && (
+          <button onClick={() => { navigator.clipboard.writeText(value); toast.success("Copied"); }} className="text-gold shrink-0">
+            <Copy className="size-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyHint({ children }: { children: React.ReactNode }) {
+  return <div className="mt-2 rounded-xl border border-dashed border-border/60 px-4 py-6 text-center text-xs text-muted-foreground">{children}</div>;
+}
+
+function Styles() {
+  return <style>{`.input{width:100%;border-radius:.75rem;background:var(--color-background);border:1px solid var(--color-border);padding:.75rem .875rem;font-size:.875rem;outline:none;color:var(--color-foreground)}.input:focus{border-color:var(--gold)}`}</style>;
 }
