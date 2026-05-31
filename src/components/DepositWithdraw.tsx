@@ -196,28 +196,30 @@ function FundsSheet({
             </div>
 
             <div className="px-5 py-4 space-y-5">
-              {/* Country selector */}
+              {/* Country selector (dropdown) */}
               <div>
                 <Label icon={<Globe2 className="size-3.5" />}>Country / region</Label>
                 {countries.length === 0 ? (
                   <EmptyHint>No methods configured yet. Please check back later.</EmptyHint>
                 ) : (
-                  <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-thin -mx-1 px-1 pb-1">
-                    {countries.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setCountry(c)}
-                        className={`px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap border transition ${
-                          country === c
-                            ? "bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground border-transparent shadow-md"
-                            : "bg-background/40 text-muted-foreground border-border/60 hover:text-foreground"
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                  <div className="mt-2 relative">
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full appearance-none rounded-xl bg-background/40 border border-border/60 px-4 py-3 pr-10 text-sm font-medium text-foreground focus:border-gold outline-none cursor-pointer"
+                    >
+                      {countries.map((c) => (
+                        <option key={c} value={c} className="bg-surface">{c}</option>
+                      ))}
+                    </select>
+                    <ChevronRight className="size-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
                   </div>
                 )}
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {filtered.length > 0
+                    ? `${filtered.length} method${filtered.length > 1 ? "s" : ""} available for ${country}`
+                    : "No methods for this country yet"}
+                </p>
               </div>
 
               {/* Method picker */}
