@@ -219,7 +219,9 @@ function FundsSheet({
                       className="w-full appearance-none rounded-xl bg-background/40 border border-border/60 px-4 py-3 pr-10 text-sm font-medium text-foreground focus:border-gold outline-none cursor-pointer"
                     >
                       {countries.map((c) => (
-                        <option key={c} value={c} className="bg-surface">{c}</option>
+                        <option key={c.code} value={c.name} className="bg-surface">
+                          {c.flag_emoji ? `${c.flag_emoji} ` : ""}{c.name}
+                        </option>
                       ))}
                     </select>
                     <ChevronRight className="size-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
