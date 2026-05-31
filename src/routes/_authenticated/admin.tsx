@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins";
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "countries" | "kyc" | "trades" | "control" | "audit" | "logins";
 
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
@@ -28,6 +28,7 @@ function AdminPage() {
     { k: "deposits", l: "Deposits" },
     { k: "withdrawals", l: "Withdrawals" },
     { k: "methods", l: "Payment Methods" },
+    { k: "countries", l: "Countries" },
     { k: "kyc", l: "KYC" },
     { k: "trades", l: "Live Trades" },
     { k: "control", l: "Trade Control" },
@@ -59,6 +60,7 @@ function AdminPage() {
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
       {tab === "methods" && <MethodsAdmin />}
+      {tab === "countries" && <CountriesAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
@@ -767,6 +769,101 @@ function Fld({ label, children }: { label: string; children: React.ReactNode }) 
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
+  );
+}
+
+/* --------------------------- Countries admin --------------------------- */
+
+function CountriesAdmin() {
+  const qc = useQueryClient();
+  const { data: countries } = useAdminQuery(["admin-countries"], async () =>
+    (await supabase.from("countries").select("*").order("sort_order")).data ?? []
+  );
+
+  const [editing, setEditing] = React.useState<any | null>(null);
+
+  const save = useMutation({
+    mutationFn: async (row: any) => {
+      const payload = {
+        code: row.code?.trim(),
+        name: row.name?.trim(),
+        flag_emoji: row.flag_emoji?.trim() || null,
+        sort_order: Number(row.sort_order) || 0,
+        enabled: !!row.enabled,
+      };
+      if (!payload.code || !payload.name) throw new Error("Code and name are required");
+      const { error } = await supabase.from("countries").upsert(payload, { onConflict: "code" });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Country saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-countries"] }); qc.invalidateQueries({ queryKey: ["countries"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (code: string) => { const { error } = await supabase.from("countries").delete().eq("code", code); if (error) throw error; },
+    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-countries"] }); qc.invalidateQueries({ queryKey: ["countries"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Define countries, set display order, and enable/disable for the deposit/withdraw flow.</p>
+        <button onClick={() => setEditing({ code: "", name: "", flag_emoji: "", sort_order: 0, enabled: true })}
+          className="text-xs px-3 py-1.5 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold">+ New country</button>
+      </div>
+      <div className="glass rounded-xl p-5 overflow-x-auto scrollbar-thin">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-b border-border/50">
+            <tr>{["Order","Code","Name","Flag","Status","Actions"].map(c => <th key={c} className="text-left py-2 pr-3">{c}</th>)}</tr>
+          </thead>
+          <tbody>{(countries ?? []).map((c: any) => (
+            <tr key={c.code} className="border-b border-border/30">
+              <td className="py-2.5 pr-3 num">{c.sort_order}</td>
+              <td className="pr-3 font-mono text-xs">{c.code}</td>
+              <td className="pr-3">{c.name}</td>
+              <td className="pr-3 text-lg">{c.flag_emoji ?? "—"}</td>
+              <td className="pr-3">
+                <span className={`text-xs px-2 py-0.5 rounded ${c.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>{c.enabled ? "Enabled" : "Disabled"}</span>
+              </td>
+              <td className="flex gap-1.5 py-2.5">
+                <button onClick={() => setEditing(c)} className="text-xs px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
+                <button onClick={() => { if (confirm(`Delete ${c.name}?`)) remove.mutate(c.code); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Delete</button>
+              </td>
+            </tr>
+          ))}{!countries?.length && <tr><td colSpan={6} className="text-center py-6 text-muted-foreground">No countries yet.</td></tr>}</tbody>
+        </table>
+      </div>
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setEditing(null)}>
+          <div className="glass rounded-2xl p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold">{editing.code ? "Edit country" : "New country"}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <Fld label="Code (e.g. MM)">
+                <input value={editing.code ?? ""} onChange={(e) => setEditing({ ...editing, code: e.target.value })} className="adm-input font-mono" disabled={!!editing.code && editing.code !== ""} />
+              </Fld>
+              <Fld label="Name">
+                <input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="adm-input" />
+              </Fld>
+              <Fld label="Flag emoji">
+                <input value={editing.flag_emoji ?? ""} onChange={(e) => setEditing({ ...editing, flag_emoji: e.target.value })} placeholder="🇲🇲" className="adm-input" />
+              </Fld>
+              <Fld label="Sort order">
+                <input type="number" value={editing.sort_order ?? 0} onChange={(e) => setEditing({ ...editing, sort_order: e.target.value })} className="adm-input num" />
+              </Fld>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!editing.enabled} onChange={(e) => setEditing({ ...editing, enabled: e.target.checked })} />
+              Enabled
+            </label>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setEditing(null)} className="text-xs px-3 py-2 rounded text-muted-foreground hover:text-foreground">Cancel</button>
+              <button disabled={save.isPending} onClick={() => save.mutate(editing)} className="text-xs px-4 py-2 rounded bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground font-semibold disabled:opacity-50">{save.isPending ? "Saving…" : "Save country"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

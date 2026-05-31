@@ -25,6 +25,14 @@ type Method = {
   instructions: string | null;
 };
 
+type CountryRow = {
+  code: string;
+  name: string;
+  flag_emoji: string | null;
+  sort_order: number;
+  enabled: boolean;
+};
+
 export function DepositWithdraw() {
   const [open, setOpen] = React.useState<null | "deposit" | "withdraw">(null);
   const { user } = useAuth();
@@ -97,7 +105,13 @@ function FundsSheet({
     queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true).order("country").order("network")).data as Method[] ?? [],
   });
 
-  // Realtime: refresh methods when admin updates them
+  const { data: countries = [] } = useQuery<CountryRow[]>({
+    queryKey: ["countries"],
+    queryFn: async () =>
+      (await supabase.from("countries").select("*").eq("enabled", true).order("sort_order")).data as CountryRow[] ?? [],
+  });
+
+  // Realtime: refresh methods and countries when admin updates them
   React.useEffect(() => {
     const ch = supabase
       .channel(`deposit-methods-rt-${Math.random().toString(36).slice(2)}`)
@@ -108,15 +122,21 @@ function FundsSheet({
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const countries = React.useMemo(() => {
-    const set = new Set<string>();
-    methods.forEach((m) => set.add(m.country?.trim() || "Global"));
-    return Array.from(set);
-  }, [methods]);
+  React.useEffect(() => {
+    const ch = supabase
+      .channel(`countries-rt-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "countries" }, () => {
+        qc.invalidateQueries({ queryKey: ["countries"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
   const [country, setCountry] = React.useState<string>("");
   React.useEffect(() => {
-    if (open && countries.length && !countries.includes(country)) setCountry(countries[0]);
+    if (open && countries.length && !countries.find((c) => c.name === country)) {
+      setCountry(countries[0].name);
+    }
   }, [open, countries, country]);
 
   const filtered = methods.filter((m) => (m.country?.trim() || "Global") === country);
@@ -209,7 +229,9 @@ function FundsSheet({
                       className="w-full appearance-none rounded-xl bg-background/40 border border-border/60 px-4 py-3 pr-10 text-sm font-medium text-foreground focus:border-gold outline-none cursor-pointer"
                     >
                       {countries.map((c) => (
-                        <option key={c} value={c} className="bg-surface">{c}</option>
+                        <option key={c.code} value={c.name} className="bg-surface">
+                          {c.flag_emoji ? `${c.flag_emoji} ` : ""}{c.name}
+                        </option>
                       ))}
                     </select>
                     <ChevronRight className="size-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
