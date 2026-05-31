@@ -97,6 +97,12 @@ function FundsSheet({
     queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true).order("country").order("network")).data as Method[] ?? [],
   });
 
+  const { data: countries = [] } = useQuery<CountryRow[]>({
+    queryKey: ["countries"],
+    queryFn: async () =>
+      (await supabase.from("countries").select("*").eq("enabled", true).order("sort_order")).data as CountryRow[] ?? [],
+  });
+
   // Realtime: refresh methods when admin updates them
   React.useEffect(() => {
     const ch = supabase
@@ -108,15 +114,11 @@ function FundsSheet({
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const countries = React.useMemo(() => {
-    const set = new Set<string>();
-    methods.forEach((m) => set.add(m.country?.trim() || "Global"));
-    return Array.from(set);
-  }, [methods]);
-
   const [country, setCountry] = React.useState<string>("");
   React.useEffect(() => {
-    if (open && countries.length && !countries.includes(country)) setCountry(countries[0]);
+    if (open && countries.length && !countries.find((c) => c.name === country)) {
+      setCountry(countries[0].name);
+    }
   }, [open, countries, country]);
 
   const filtered = methods.filter((m) => (m.country?.trim() || "Global") === country);
