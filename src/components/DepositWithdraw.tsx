@@ -25,6 +25,14 @@ type Method = {
   instructions: string | null;
 };
 
+type CountryRow = {
+  code: string;
+  name: string;
+  flag_emoji: string | null;
+  sort_order: number;
+  enabled: boolean;
+};
+
 export function DepositWithdraw() {
   const [open, setOpen] = React.useState<null | "deposit" | "withdraw">(null);
   const { user } = useAuth();
