@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery as useCountriesQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
