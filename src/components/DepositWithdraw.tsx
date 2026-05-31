@@ -100,7 +100,7 @@ function FundsSheet({
   // Realtime: refresh methods when admin updates them
   React.useEffect(() => {
     const ch = supabase
-      .channel("deposit-methods-rt")
+      .channel(`deposit-methods-rt-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "deposit_methods" }, () => {
         qc.invalidateQueries({ queryKey: ["deposit-methods"] });
       })
