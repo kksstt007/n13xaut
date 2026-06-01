@@ -59,7 +59,6 @@ function AdminPage() {
       {tab === "deposits" && <DepositsAdmin />}
       {tab === "withdrawals" && <WithdrawalsAdmin />}
       {tab === "methods" && <MethodsAdmin />}
-      {tab === "countries" && <CountriesAdmin />}
       {tab === "kyc" && <KycAdmin />}
       {tab === "trades" && <LiveTradesAdmin />}
       {tab === "control" && <TradeControlAdmin />}
