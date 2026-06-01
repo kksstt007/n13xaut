@@ -28,7 +28,6 @@ function AdminPage() {
     { k: "deposits", l: "Deposits" },
     { k: "withdrawals", l: "Withdrawals" },
     { k: "methods", l: "Payment Methods" },
-    { k: "countries", l: "Countries" },
     { k: "kyc", l: "KYC" },
     { k: "trades", l: "Live Trades" },
     { k: "control", l: "Trade Control" },
