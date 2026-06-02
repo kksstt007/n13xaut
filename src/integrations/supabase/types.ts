@@ -96,17 +96,20 @@ export type Database = {
           asset: string
           bank_name: string | null
           country: string | null
+          country_code: string | null
           created_at: string
           deposit_address: string | null
           display_name: string | null
           enabled: boolean
           fee: number
+          flow: string
           id: string
           instructions: string | null
           method_type: string
           min_deposit: number
           network: string
           notes: string | null
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -115,17 +118,20 @@ export type Database = {
           asset?: string
           bank_name?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
           deposit_address?: string | null
           display_name?: string | null
           enabled?: boolean
           fee?: number
+          flow?: string
           id?: string
           instructions?: string | null
           method_type?: string
           min_deposit?: number
           network: string
           notes?: string | null
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -134,20 +140,31 @@ export type Database = {
           asset?: string
           bank_name?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
           deposit_address?: string | null
           display_name?: string | null
           enabled?: boolean
           fee?: number
+          flow?: string
           id?: string
           instructions?: string | null
           method_type?: string
           min_deposit?: number
           network?: string
           notes?: string | null
+          sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "deposit_methods_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       deposits: {
         Row: {
