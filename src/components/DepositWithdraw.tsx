@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Building2, Wallet as WalletIcon, CheckCircle2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Building2, Wallet as WalletIcon, CheckCircle2, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
@@ -16,6 +16,9 @@ type Method = {
   fee: number;
   notes: string | null;
   country: string | null;
+  country_code: string | null;
+  sort_order: number;
+  flow: "deposit" | "withdraw" | "both";
   display_name: string | null;
   method_type: string;
   deposit_address: string | null;
@@ -56,14 +59,8 @@ export function DepositWithdraw() {
           <WalletIcon className="size-5 text-muted-foreground" />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <ActionButton
-            kind="deposit"
-            onClick={() => setOpen("deposit")}
-          />
-          <ActionButton
-            kind="withdraw"
-            onClick={() => setOpen("withdraw")}
-          />
+          <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
+          <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
         </div>
       </div>
 
@@ -102,29 +99,23 @@ function FundsSheet({
 
   const { data: methods = [] } = useQuery<Method[]>({
     queryKey: ["deposit-methods"],
-    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true).order("country").order("network")).data as Method[] ?? [],
+    queryFn: async () =>
+      ((await supabase.from("deposit_methods").select("*").eq("enabled", true).order("sort_order").order("network")).data as Method[]) ?? [],
   });
 
   const { data: countries = [] } = useQuery<CountryRow[]>({
     queryKey: ["countries"],
     queryFn: async () =>
-      (await supabase.from("countries").select("*").eq("enabled", true).order("sort_order")).data as CountryRow[] ?? [],
+      ((await supabase.from("countries").select("*").eq("enabled", true).order("sort_order")).data as CountryRow[]) ?? [],
   });
 
   // Realtime: refresh methods and countries when admin updates them
   React.useEffect(() => {
     const ch = supabase
-      .channel(`deposit-methods-rt-${Math.random().toString(36).slice(2)}`)
+      .channel(`funds-rt-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "deposit_methods" }, () => {
         qc.invalidateQueries({ queryKey: ["deposit-methods"] });
       })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [qc]);
-
-  React.useEffect(() => {
-    const ch = supabase
-      .channel(`countries-rt-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "countries" }, () => {
         qc.invalidateQueries({ queryKey: ["countries"] });
       })
@@ -132,16 +123,25 @@ function FundsSheet({
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const [country, setCountry] = React.useState<string>("");
+  const [countryCode, setCountryCode] = React.useState<string>("");
   React.useEffect(() => {
-    if (open && countries.length && !countries.find((c) => c.name === country)) {
-      setCountry(countries[0].name);
+    if (open && countries.length && !countries.find((c) => c.code === countryCode)) {
+      setCountryCode(countries[0].code);
     }
-  }, [open, countries, country]);
+  }, [open, countries, countryCode]);
 
-  const filtered = methods.filter((m) => (m.country?.trim() || "Global") === country);
+  const selectedCountry = countries.find((c) => c.code === countryCode) ?? null;
+
+  // Filter methods: must match country_code AND flow must allow current mode
+  const filtered = React.useMemo(() => {
+    return methods
+      .filter((m) => m.country_code === countryCode)
+      .filter((m) => m.flow === "both" || m.flow === mode)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [methods, countryCode, mode]);
+
   const [selected, setSelected] = React.useState<Method | null>(null);
-  React.useEffect(() => { setSelected(filtered[0] ?? null); /* eslint-disable-next-line */ }, [country, methods.length]);
+  React.useEffect(() => { setSelected(filtered[0] ?? null); /* eslint-disable-next-line */ }, [countryCode, methods.length, mode]);
 
   // Forms
   const [depAmount, setDepAmount] = React.useState<number>(100);
@@ -175,7 +175,7 @@ function FundsSheet({
         network: selected.network,
         address: wdAddress.trim(),
         amount: wdAmount,
-        country: selected.country,
+        country: selected.country ?? selectedCountry?.name ?? null,
         method_id: selected.id,
       };
       if (selected.method_type === "bank") {
@@ -216,20 +216,20 @@ function FundsSheet({
             </div>
 
             <div className="px-5 py-4 space-y-5">
-              {/* Country selector (dropdown) */}
+              {/* Country selector */}
               <div>
                 <Label icon={<Globe2 className="size-3.5" />}>Country / region</Label>
                 {countries.length === 0 ? (
-                  <EmptyHint>No methods configured yet. Please check back later.</EmptyHint>
+                  <EmptyHint>No countries configured yet. Please check back later.</EmptyHint>
                 ) : (
                   <div className="mt-2 relative">
                     <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
                       className="w-full appearance-none rounded-xl bg-background/40 border border-border/60 px-4 py-3 pr-10 text-sm font-medium text-foreground focus:border-gold outline-none cursor-pointer"
                     >
                       {countries.map((c) => (
-                        <option key={c.code} value={c.name} className="bg-surface">
+                        <option key={c.code} value={c.code} className="bg-surface">
                           {c.flag_emoji ? `${c.flag_emoji} ` : ""}{c.name}
                         </option>
                       ))}
@@ -237,15 +237,17 @@ function FundsSheet({
                     <ChevronRight className="size-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
                   </div>
                 )}
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  {filtered.length > 0
-                    ? `${filtered.length} method${filtered.length > 1 ? "s" : ""} available for ${country}`
-                    : "No methods for this country yet"}
-                </p>
+                {selectedCountry && (
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    {filtered.length > 0
+                      ? `${filtered.length} ${mode} method${filtered.length > 1 ? "s" : ""} available for ${selectedCountry.name}`
+                      : `No ${mode} methods for ${selectedCountry.name} yet`}
+                  </p>
+                )}
               </div>
 
               {/* Method picker */}
-              {filtered.length > 0 && (
+              {filtered.length > 0 ? (
                 <div>
                   <Label icon={<Building2 className="size-3.5" />}>Payment method</Label>
                   <div className="mt-2 space-y-2">
@@ -275,6 +277,12 @@ function FundsSheet({
                       );
                     })}
                   </div>
+                </div>
+              ) : selectedCountry && (
+                <div className="rounded-xl border border-dashed border-border/60 p-6 flex flex-col items-center justify-center text-center gap-2">
+                  <Inbox className="size-6 text-muted-foreground" />
+                  <p className="text-sm font-medium">No payment methods available for this country.</p>
+                  <p className="text-[11px] text-muted-foreground">Please choose another country or check back later.</p>
                 </div>
               )}
 

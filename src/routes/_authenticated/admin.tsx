@@ -590,7 +590,7 @@ function AuditLogAdmin() {
 function MethodsAdmin() {
   const qc = useQueryClient();
   const { data: methods } = useAdminQuery(["admin-methods"], async () =>
-    (await supabase.from("deposit_methods").select("*").order("country").order("network")).data ?? []
+    (await supabase.from("deposit_methods").select("*").order("sort_order").order("network")).data ?? []
   );
   const { data: countries } = useAdminQuery(["admin-countries"], async () =>
     (await supabase.from("countries").select("*").order("sort_order")).data ?? []
@@ -601,6 +601,7 @@ function MethodsAdmin() {
       .channel(`admin-methods-rt-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "deposit_methods" }, () => {
         qc.invalidateQueries({ queryKey: ["admin-methods"] });
+        qc.invalidateQueries({ queryKey: ["deposit-methods"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "countries" }, () => {
         qc.invalidateQueries({ queryKey: ["admin-countries"] });
@@ -615,8 +616,12 @@ function MethodsAdmin() {
 
   const save = useMutation({
     mutationFn: async (row: any) => {
+      const country = (countries ?? []).find((c: any) => c.code === row.country_code);
       const payload: any = {
-        country: row.country || null,
+        country_code: row.country_code || null,
+        country: country?.name ?? null,
+        flow: row.flow || "both",
+        sort_order: Number(row.sort_order) || 0,
         display_name: row.display_name || null,
         method_type: row.method_type || "crypto",
         network: row.network,
@@ -654,11 +659,28 @@ function MethodsAdmin() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-methods"] }),
   });
 
+  const updateMethodSort = useMutation({
+    mutationFn: async ({ id, sort_order }: { id: string; sort_order: number }) => {
+      const { error } = await supabase.from("deposit_methods").update({ sort_order }).eq("id", id); if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-methods"] }),
+  });
+
+  const moveMethod = (list: any[], id: string, delta: number) => {
+    const ordered = [...list].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const i = ordered.findIndex((m) => m.id === id);
+    const j = i + delta;
+    if (i < 0 || j < 0 || j >= ordered.length) return;
+    const a = ordered[i], b = ordered[j];
+    updateMethodSort.mutate({ id: a.id, sort_order: b.sort_order ?? 0 });
+    updateMethodSort.mutate({ id: b.id, sort_order: a.sort_order ?? 0 });
+  };
+
   /* country mutations */
   const saveCountry = useMutation({
     mutationFn: async (row: any) => {
       const payload = {
-        code: row.code?.trim(),
+        code: row.code?.trim()?.toUpperCase(),
         name: row.name?.trim(),
         flag_emoji: row.flag_emoji?.trim() || null,
         sort_order: Number(row.sort_order) || 0,
@@ -693,7 +715,7 @@ function MethodsAdmin() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const move = (code: string, delta: number) => {
+  const moveCountry = (code: string, delta: number) => {
     const list = [...(countries ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order);
     const i = list.findIndex((c: any) => c.code === code);
     const j = i + delta;
@@ -703,109 +725,148 @@ function MethodsAdmin() {
     updateCountrySort.mutate({ code: b.code, sort_order: a.sort_order });
   };
 
-  /* group methods by country */
+  /* group methods by country_code (with "Unassigned" bucket) */
   const grouped = React.useMemo(() => {
     const map = new Map<string, any[]>();
     (methods ?? []).forEach((m: any) => {
-      const key = m.country?.trim() || "Global";
+      const key = m.country_code || "__none__";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(m);
     });
     return map;
   }, [methods]);
 
-  const sortedCountryKeys = React.useMemo(() => {
-    const orderMap = new Map<string, number>();
-    (countries ?? []).forEach((c: any) => orderMap.set(c.name, c.sort_order));
-    return Array.from(grouped.keys()).sort((a, b) => {
-      const oa = orderMap.get(a) ?? 9999;
-      const ob = orderMap.get(b) ?? 9999;
-      if (oa !== ob) return oa - ob;
-      return a.localeCompare(b);
-    });
-  }, [grouped, countries]);
+  const sortedCountries = React.useMemo(
+    () => [...(countries ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order),
+    [countries]
+  );
 
   return (
     <div className="space-y-5">
-      <p className="text-xs text-muted-foreground">Manage payment methods and the order of countries that users see — changes go live in real time.</p>
+      <p className="text-xs text-muted-foreground">Manage countries and their payment methods. Changes go live in real time.</p>
 
-      {/* Country ordering panel */}
+      {/* Countries panel */}
       <div className="glass rounded-xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold">Countries</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Reorder how countries appear in the user deposit/withdraw dropdown.</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Each country has its own list of deposit & withdrawal methods.</p>
           </div>
           <button onClick={() => setCountryEditor({ code: "", name: "", flag_emoji: "", sort_order: ((countries?.length ?? 0) + 1) * 10, enabled: true })}
             className="text-xs px-3 py-1.5 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold">+ Add country</button>
         </div>
         <div className="space-y-1.5">
-          {[...(countries ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order).map((c: any, idx: number, arr: any[]) => (
-            <div key={c.code} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/40 border border-border/50">
-              <div className="flex flex-col gap-0.5">
-                <button onClick={() => move(c.code, -1)} disabled={idx === 0} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▲</button>
-                <button onClick={() => move(c.code, 1)} disabled={idx === arr.length - 1} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▼</button>
+          {sortedCountries.map((c: any, idx: number, arr: any[]) => {
+            const methodCount = grouped.get(c.code)?.length ?? 0;
+            return (
+              <div key={c.code} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/40 border border-border/50">
+                <div className="flex flex-col gap-0.5">
+                  <button onClick={() => moveCountry(c.code, -1)} disabled={idx === 0} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▲</button>
+                  <button onClick={() => moveCountry(c.code, 1)} disabled={idx === arr.length - 1} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▼</button>
+                </div>
+                <span className="text-xl w-7 text-center">{c.flag_emoji ?? "🏳️"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{c.name}</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">{c.code} · {methodCount} method{methodCount === 1 ? "" : "s"}</div>
+                </div>
+                <input type="number" defaultValue={c.sort_order}
+                  onBlur={(e) => { const v = Number(e.target.value); if (v !== c.sort_order) updateCountrySort.mutate({ code: c.code, sort_order: v }); }}
+                  className="w-16 rounded bg-input border border-border px-2 py-1 num text-right text-xs" />
+                <button onClick={() => toggleCountry.mutate({ code: c.code, enabled: !c.enabled })}
+                  className={`text-[10px] px-2 py-1 rounded ${c.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>
+                  {c.enabled ? "Enabled" : "Disabled"}
+                </button>
+                <button onClick={() => setEditing({ country_code: c.code, method_type: "crypto", flow: "both", enabled: true, min_deposit: 10, fee: 0, asset: "USDT", sort_order: (methodCount + 1) * 10 })}
+                  className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold whitespace-nowrap">+ Method</button>
+                <button onClick={() => setCountryEditor(c)} className="text-[10px] px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
+                <button onClick={() => { if (confirm(`Delete ${c.name}? Its payment methods will be unassigned.`)) removeCountry.mutate(c.code); }} className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">×</button>
               </div>
-              <span className="text-xl w-7 text-center">{c.flag_emoji ?? "🏳️"}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{c.name}</div>
-                <div className="text-[10px] text-muted-foreground font-mono">{c.code} · {(grouped.get(c.name)?.length ?? 0)} method{(grouped.get(c.name)?.length ?? 0) === 1 ? "" : "s"}</div>
-              </div>
-              <input type="number" defaultValue={c.sort_order}
-                onBlur={(e) => { const v = Number(e.target.value); if (v !== c.sort_order) updateCountrySort.mutate({ code: c.code, sort_order: v }); }}
-                className="w-16 rounded bg-input border border-border px-2 py-1 num text-right text-xs" />
-              <button onClick={() => toggleCountry.mutate({ code: c.code, enabled: !c.enabled })}
-                className={`text-[10px] px-2 py-1 rounded ${c.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>
-                {c.enabled ? "Enabled" : "Disabled"}
-              </button>
-              <button onClick={() => setCountryEditor(c)} className="text-[10px] px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
-              <button onClick={() => { if (confirm(`Delete ${c.name}?`)) removeCountry.mutate(c.code); }} className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">×</button>
-            </div>
-          ))}
+            );
+          })}
           {!countries?.length && <p className="text-center text-xs text-muted-foreground py-4">No countries yet. Add one to start.</p>}
         </div>
       </div>
 
-      {/* Methods, grouped by country */}
+      {/* Methods grouped by country */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Payment methods</h3>
-          <button onClick={() => setEditing({ method_type: "crypto", enabled: true, min_deposit: 10, fee: 0, asset: "USDT" })}
+          <button onClick={() => setEditing({ method_type: "crypto", flow: "both", enabled: true, min_deposit: 10, fee: 0, asset: "USDT", sort_order: 10 })}
             className="text-xs px-3 py-1.5 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold">+ New method</button>
         </div>
 
-        {sortedCountryKeys.map((key) => {
-          const country = (countries ?? []).find((c: any) => c.name === key);
+        {sortedCountries.map((c: any) => {
+          const list = (grouped.get(c.code) ?? []).slice().sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
           return (
-            <div key={key} className="glass rounded-xl p-5 space-y-2">
+            <div key={c.code} className="glass rounded-xl p-5 space-y-2">
               <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-                <span className="text-lg">{country?.flag_emoji ?? "🌐"}</span>
-                <span className="text-sm font-semibold">{key}</span>
-                <span className="text-[10px] text-muted-foreground">· {grouped.get(key)!.length} method{grouped.get(key)!.length === 1 ? "" : "s"}</span>
+                <span className="text-lg">{c.flag_emoji ?? "🌐"}</span>
+                <span className="text-sm font-semibold">{c.name}</span>
+                <span className="text-[10px] text-muted-foreground">· {list.length} method{list.length === 1 ? "" : "s"}</span>
+                <button onClick={() => setEditing({ country_code: c.code, method_type: "crypto", flow: "both", enabled: true, min_deposit: 10, fee: 0, asset: "USDT", sort_order: (list.length + 1) * 10 })}
+                  className="ml-auto text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25 font-semibold">+ Add</button>
               </div>
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted-foreground"><tr>{["Type","Name","Network","Min","Status","Actions"].map(c => <th key={c} className="text-left py-1.5 pr-3">{c}</th>)}</tr></thead>
-                <tbody>{grouped.get(key)!.map((m: any) => (
-                  <tr key={m.id} className="border-b border-border/20 last:border-0">
-                    <td className="py-2 pr-3 text-xs"><span className={`px-1.5 py-0.5 rounded ${m.method_type === "bank" ? "bg-blue-500/15 text-blue-400" : "bg-gold/15 text-gold"}`}>{m.method_type}</span></td>
-                    <td className="pr-3">{m.display_name ?? m.bank_name ?? m.network}</td>
-                    <td className="pr-3 text-xs">{m.network}</td>
-                    <td className="pr-3 num">${fmtUSD(Number(m.min_deposit))}</td>
-                    <td className="pr-3">
-                      <button onClick={() => toggle.mutate({ id: m.id, enabled: !m.enabled })} className={`text-xs px-2 py-0.5 rounded ${m.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>
-                        {m.enabled ? "Enabled" : "Disabled"}
-                      </button>
-                    </td>
-                    <td className="flex gap-1.5 py-2">
-                      <button onClick={() => setEditing(m)} className="text-xs px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
-                      <button onClick={() => { if (confirm("Delete this method?")) remove.mutate(m.id); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Delete</button>
-                    </td>
-                  </tr>
-                ))}</tbody>
-              </table>
+              {list.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-3 text-center">No methods for {c.name} yet.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="text-xs text-muted-foreground"><tr>{["Order","Flow","Type","Name","Network","Min","Status","Actions"].map(col => <th key={col} className="text-left py-1.5 pr-3">{col}</th>)}</tr></thead>
+                  <tbody>{list.map((m: any, idx: number) => (
+                    <tr key={m.id} className="border-b border-border/20 last:border-0">
+                      <td className="py-2 pr-3">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => moveMethod(list, m.id, -1)} disabled={idx === 0} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▲</button>
+                          <button onClick={() => moveMethod(list, m.id, 1)} disabled={idx === list.length - 1} className="text-[10px] leading-none px-1.5 py-0.5 rounded bg-surface-elevated hover:bg-surface disabled:opacity-30">▼</button>
+                          <span className="text-[10px] text-muted-foreground ml-1 num">{m.sort_order ?? 0}</span>
+                        </div>
+                      </td>
+                      <td className="pr-3 text-xs">
+                        <span className={`px-1.5 py-0.5 rounded ${m.flow === "deposit" ? "bg-emerald-500/15 text-emerald-400" : m.flow === "withdraw" ? "bg-rose-500/15 text-rose-400" : "bg-muted/30 text-muted-foreground"}`}>{m.flow ?? "both"}</span>
+                      </td>
+                      <td className="py-2 pr-3 text-xs"><span className={`px-1.5 py-0.5 rounded ${m.method_type === "bank" ? "bg-blue-500/15 text-blue-400" : "bg-gold/15 text-gold"}`}>{m.method_type}</span></td>
+                      <td className="pr-3">{m.display_name ?? m.bank_name ?? m.network}</td>
+                      <td className="pr-3 text-xs">{m.network}</td>
+                      <td className="pr-3 num">${fmtUSD(Number(m.min_deposit))}</td>
+                      <td className="pr-3">
+                        <button onClick={() => toggle.mutate({ id: m.id, enabled: !m.enabled })} className={`text-xs px-2 py-0.5 rounded ${m.enabled ? "bg-success/15 text-success" : "bg-muted/30 text-muted-foreground"}`}>
+                          {m.enabled ? "Enabled" : "Disabled"}
+                        </button>
+                      </td>
+                      <td className="flex gap-1.5 py-2">
+                        <button onClick={() => setEditing(m)} className="text-xs px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Edit</button>
+                        <button onClick={() => { if (confirm("Delete this method?")) remove.mutate(m.id); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Delete</button>
+                      </td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              )}
             </div>
           );
         })}
+
+        {/* Unassigned methods */}
+        {grouped.get("__none__") && grouped.get("__none__")!.length > 0 && (
+          <div className="glass rounded-xl p-5 space-y-2 border border-amber-500/30">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+              <span className="text-lg">⚠️</span>
+              <span className="text-sm font-semibold">Unassigned (no country)</span>
+              <span className="text-[10px] text-muted-foreground">· {grouped.get("__none__")!.length} method(s)</span>
+            </div>
+            <table className="w-full text-sm">
+              <tbody>{grouped.get("__none__")!.map((m: any) => (
+                <tr key={m.id} className="border-b border-border/20 last:border-0">
+                  <td className="pr-3">{m.display_name ?? m.bank_name ?? m.network}</td>
+                  <td className="pr-3 text-xs">{m.network}</td>
+                  <td className="flex gap-1.5 py-2">
+                    <button onClick={() => setEditing(m)} className="text-xs px-2 py-1 rounded bg-surface-elevated hover:bg-surface">Assign country</button>
+                    <button onClick={() => { if (confirm("Delete this method?")) remove.mutate(m.id); }} className="text-xs px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">Delete</button>
+                  </td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+
         {!methods?.length && <div className="glass rounded-xl p-8 text-center text-sm text-muted-foreground">No methods yet. Add one to start accepting deposits.</div>}
       </div>
 
@@ -826,19 +887,29 @@ function MethodEditor({ row, countries, onCancel, onSave, saving }: { row: any; 
         <h3 className="text-base font-semibold">{f.id ? "Edit method" : "New payment method"}</h3>
 
         <div className="grid grid-cols-2 gap-3">
+          <Fld label="Country *">
+            <select value={f.country_code ?? ""} onChange={(e) => set("country_code", e.target.value)} className="adm-input">
+              <option value="">— Select country —</option>
+              {[...countries].sort((a, b) => a.sort_order - b.sort_order).map((c) => (
+                <option key={c.code} value={c.code}>{c.flag_emoji ? `${c.flag_emoji} ` : ""}{c.name}</option>
+              ))}
+            </select>
+          </Fld>
+          <Fld label="Flow">
+            <select value={f.flow ?? "both"} onChange={(e) => set("flow", e.target.value)} className="adm-input">
+              <option value="both">Both (deposit & withdraw)</option>
+              <option value="deposit">Deposit only</option>
+              <option value="withdraw">Withdraw only</option>
+            </select>
+          </Fld>
           <Fld label="Method type">
             <select value={f.method_type ?? "crypto"} onChange={(e) => set("method_type", e.target.value)} className="adm-input">
               <option value="crypto">Crypto / Wallet</option>
               <option value="bank">Bank transfer</option>
             </select>
           </Fld>
-          <Fld label="Country">
-            <select value={f.country ?? ""} onChange={(e) => set("country", e.target.value)} className="adm-input">
-              <option value="">Global</option>
-              {[...countries].sort((a, b) => a.sort_order - b.sort_order).map((c) => (
-                <option key={c.code} value={c.name}>{c.flag_emoji ? `${c.flag_emoji} ` : ""}{c.name}</option>
-              ))}
-            </select>
+          <Fld label="Sort order">
+            <input type="number" value={f.sort_order ?? 0} onChange={(e) => set("sort_order", e.target.value)} className="adm-input num" />
           </Fld>
           <Fld label="Display name (optional)">
             <input value={f.display_name ?? ""} onChange={(e) => set("display_name", e.target.value)} placeholder="e.g. KBZ Bank" className="adm-input" />
@@ -885,7 +956,7 @@ function MethodEditor({ row, countries, onCancel, onSave, saving }: { row: any; 
 
         <div className="flex justify-end gap-2 pt-2">
           <button onClick={onCancel} className="text-xs px-3 py-2 rounded text-muted-foreground hover:text-foreground">Cancel</button>
-          <button disabled={saving || !f.network} onClick={() => onSave(f)} className="text-xs px-4 py-2 rounded bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground font-semibold disabled:opacity-50">
+          <button disabled={saving || !f.network || !f.country_code} onClick={() => onSave(f)} className="text-xs px-4 py-2 rounded bg-gradient-to-r from-[#E8C657] to-[#B8862F] text-primary-foreground font-semibold disabled:opacity-50">
             {saving ? "Saving…" : "Save method"}
           </button>
         </div>
