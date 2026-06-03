@@ -116,6 +116,18 @@ function ProfilePage() {
         </div>
       </section>
 
+      {/* Premium Deposit & Withdrawal — right under identity card */}
+      <section className="relative overflow-hidden rounded-3xl border border-gold/25 bg-gradient-to-br from-[oklch(0.16_0.018_85)] via-[oklch(0.14_0.012_75)] to-[oklch(0.12_0.008_60)] shadow-[0_8px_32px_-12px_rgba(232,198,87,0.35)]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-10 -bottom-10 size-48 rounded-full opacity-25 blur-3xl"
+          style={{ background: "radial-gradient(circle, oklch(0.80 0.115 86 / 0.6), transparent 70%)" }}
+        />
+        <div className="relative">
+          <DepositWithdraw />
+        </div>
+      </section>
+
       {/* Shortcut grid */}
       <section className="grid grid-cols-3 gap-2">
         <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
@@ -124,8 +136,13 @@ function ProfilePage() {
       </section>
 
 
-      {/* Security center */}
-      <SectionCard title="Security" subtitle="Protect your account">
+      {/* Security center — collapsible */}
+      <CollapsibleSection
+        title="Security"
+        subtitle="Protect your account"
+        icon={Shield}
+        defaultOpen={false}
+      >
         <Row
           icon={Mail}
           label="Email"
@@ -143,7 +160,7 @@ function ProfilePage() {
         <Row icon={Fingerprint} label="Two-factor (2FA)" hint="Authenticator app" status="off" actionLabel="Enable" onClick={() => toast.info("2FA setup coming soon")} />
         <Row icon={KeyRound} label="Anti-phishing code" hint="Recognize official emails" actionLabel="Set" onClick={() => toast.info("Anti-phishing setup coming soon")} />
         <Row icon={Monitor} label="Devices & sessions" hint="Manage signed-in devices" onClick={() => toast.info("Session manager coming soon")} last />
-      </SectionCard>
+      </CollapsibleSection>
 
       {/* Verification */}
       <SectionCard title="Identity verification" subtitle="Increase limits and unlock features">
