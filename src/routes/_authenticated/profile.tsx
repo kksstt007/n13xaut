@@ -4,10 +4,10 @@ import * as React from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Copy, Check, ChevronRight, ShieldCheck, KeyRound, Smartphone, Mail,
+  Copy, Check, ChevronRight, ChevronDown, ShieldCheck, KeyRound, Smartphone, Mail,
   Lock, Fingerprint, Bell, Globe, Languages, CreditCard, Users, Gift,
   LifeBuoy, FileText, LogOut, Pencil, Star, Monitor, ScanFace, X,
-  History as HistoryIcon, Settings as SettingsIcon,
+  History as HistoryIcon, Settings as SettingsIcon, Shield,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
