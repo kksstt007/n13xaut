@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl border-b border-border/60">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between"
           style={{ paddingTop: "env(safe-area-inset-top)" }}>
-          <Link to="/dashboard"><Logo size={26} /></Link>
+          <Link to="/dashboard"><Logo size={28} showWordmark={false} /></Link>
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
