@@ -179,10 +179,6 @@ function ProfilePage() {
         />
       </SectionCard>
 
-      {/* Deposit & Withdrawal */}
-      <SectionCard title="Deposit & Withdrawal" subtitle="Manage your funds">
-        <DepositWithdraw />
-      </SectionCard>
 
       {/* Account */}
       <SectionCard title="Account" subtitle="API & invites">
