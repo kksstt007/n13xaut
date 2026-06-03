@@ -27,26 +27,50 @@ function ProfilePage() {
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
-    queryFn: async () => (await supabase.from("profiles").select("*").eq("id", user!.id).single()).data,
-    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 30_000,
+    retry: 1,
   });
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", user?.id],
-    queryFn: async () => (await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle()).data,
-    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 30_000,
+    retry: 1,
   });
 
   const { data: kyc } = useQuery({
     queryKey: ["kyc", user?.id],
-    queryFn: async () => (await supabase.from("kyc_submissions").select("status").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data,
-    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("kyc_submissions").select("status").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 30_000,
+    retry: 1,
   });
 
   const { data: refCount } = useQuery({
     queryKey: ["ref-count", user?.id],
-    queryFn: async () => (await supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user!.id)).count ?? 0,
-    enabled: !!user,
+    queryFn: async () => {
+      const { count, error } = await supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user!.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 30_000,
+    retry: 1,
   });
 
   const [editOpen, setEditOpen] = React.useState(false);
