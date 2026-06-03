@@ -273,6 +273,55 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
   );
 }
 
+function CollapsibleSection({
+  title, subtitle, icon: Icon, defaultOpen = false, children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: any;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  return (
+    <section>
+      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          aria-expanded={open}
+        >
+          {Icon && (
+            <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
+              <Icon className="size-[17px]" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-sm font-semibold tracking-wide">{title}</div>
+            {subtitle && <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</div>}
+          </div>
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              key="content"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-border/50">{children}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
 type RowProps = {
   icon: any;
   label: string;
