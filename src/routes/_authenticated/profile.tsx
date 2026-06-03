@@ -4,10 +4,10 @@ import * as React from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Copy, Check, ChevronRight, ShieldCheck, KeyRound, Smartphone, Mail,
+  Copy, Check, ChevronRight, ChevronDown, ShieldCheck, KeyRound, Smartphone, Mail,
   Lock, Fingerprint, Bell, Globe, Languages, CreditCard, Users, Gift,
   LifeBuoy, FileText, LogOut, Pencil, Star, Monitor, ScanFace, X,
-  History as HistoryIcon, Settings as SettingsIcon,
+  History as HistoryIcon, Settings as SettingsIcon, Shield,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -116,6 +116,18 @@ function ProfilePage() {
         </div>
       </section>
 
+      {/* Premium Deposit & Withdrawal — right under identity card */}
+      <section className="relative overflow-hidden rounded-3xl border border-gold/25 bg-gradient-to-br from-[oklch(0.16_0.018_85)] via-[oklch(0.14_0.012_75)] to-[oklch(0.12_0.008_60)] shadow-[0_8px_32px_-12px_rgba(232,198,87,0.35)]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-10 -bottom-10 size-48 rounded-full opacity-25 blur-3xl"
+          style={{ background: "radial-gradient(circle, oklch(0.80 0.115 86 / 0.6), transparent 70%)" }}
+        />
+        <div className="relative">
+          <DepositWithdraw />
+        </div>
+      </section>
+
       {/* Shortcut grid */}
       <section className="grid grid-cols-3 gap-2">
         <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
@@ -124,8 +136,13 @@ function ProfilePage() {
       </section>
 
 
-      {/* Security center */}
-      <SectionCard title="Security" subtitle="Protect your account">
+      {/* Security center — collapsible */}
+      <CollapsibleSection
+        title="Security"
+        subtitle="Protect your account"
+        icon={Shield}
+        defaultOpen={false}
+      >
         <Row
           icon={Mail}
           label="Email"
@@ -143,7 +160,7 @@ function ProfilePage() {
         <Row icon={Fingerprint} label="Two-factor (2FA)" hint="Authenticator app" status="off" actionLabel="Enable" onClick={() => toast.info("2FA setup coming soon")} />
         <Row icon={KeyRound} label="Anti-phishing code" hint="Recognize official emails" actionLabel="Set" onClick={() => toast.info("Anti-phishing setup coming soon")} />
         <Row icon={Monitor} label="Devices & sessions" hint="Manage signed-in devices" onClick={() => toast.info("Session manager coming soon")} last />
-      </SectionCard>
+      </CollapsibleSection>
 
       {/* Verification */}
       <SectionCard title="Identity verification" subtitle="Increase limits and unlock features">
@@ -162,10 +179,6 @@ function ProfilePage() {
         />
       </SectionCard>
 
-      {/* Deposit & Withdrawal */}
-      <SectionCard title="Deposit & Withdrawal" subtitle="Manage your funds">
-        <DepositWithdraw />
-      </SectionCard>
 
       {/* Account */}
       <SectionCard title="Account" subtitle="API & invites">
@@ -255,6 +268,55 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
       </div>
       <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
         {children}
+      </div>
+    </section>
+  );
+}
+
+function CollapsibleSection({
+  title, subtitle, icon: Icon, defaultOpen = false, children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: any;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  return (
+    <section>
+      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          aria-expanded={open}
+        >
+          {Icon && (
+            <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
+              <Icon className="size-[17px]" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-sm font-semibold tracking-wide">{title}</div>
+            {subtitle && <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</div>}
+          </div>
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              key="content"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-border/50">{children}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
