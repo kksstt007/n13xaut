@@ -50,13 +50,14 @@ export function DepositWithdraw() {
 
   return (
     <>
-      <div className="p-4 space-y-3">
-        <div className="rounded-2xl bg-background/50 border border-border/50 px-4 py-3 flex items-center justify-between">
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Available balance</div>
-            <div className="text-lg font-semibold text-gold mt-0.5 num">${fmtUSD(available)}</div>
+      <div className="p-6 space-y-6">
+        <div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Available Balance
           </div>
-          <WalletIcon className="size-5 text-muted-foreground" />
+          <div className="mt-2 text-[34px] leading-none font-bold tracking-tight text-foreground tabular-nums">
+            ${fmtUSD(available)}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
@@ -76,15 +77,14 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl border border-border/60 bg-surface-elevated p-4 text-left transition active:scale-[0.98] hover:border-gold/40"
+      className={
+        isDep
+          ? "h-12 rounded-xl bg-[#D4AF37] text-black text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition"
+          : "h-12 rounded-xl border border-white/10 bg-transparent text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-white/[0.04] active:bg-white/[0.06] transition"
+      }
     >
-      <div className="absolute -right-6 -top-6 size-20 rounded-full opacity-20 blur-2xl transition group-hover:opacity-40"
-        style={{ background: isDep ? "var(--gold)" : "oklch(0.7 0.18 25)" }} />
-      <div className={`size-10 rounded-xl grid place-items-center ${isDep ? "bg-gold/15 text-gold" : "bg-destructive/15 text-destructive"}`}>
-        <Icon className="size-5" />
-      </div>
-      <div className="mt-3 text-sm font-semibold">{isDep ? "Deposit" : "Withdraw"}</div>
-      <div className="text-[11px] text-muted-foreground mt-0.5">{isDep ? "Add funds to your wallet" : "Send funds to your account"}</div>
+      <Icon className="size-4" />
+      {isDep ? "Deposit" : "Withdraw"}
     </button>
   );
 }
