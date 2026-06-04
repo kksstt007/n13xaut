@@ -1,21 +1,16 @@
-import logoAsset from "@/assets/tether-gold-logo.png.asset.json";
+import logoAsset from "@/assets/xaut-trade-logo.svg.asset.json";
 
-export function Logo({ size = 28, showWordmark = true }: { size?: number; showWordmark?: boolean }) {
+export function Logo({ height = 32 }: { height?: number; size?: number; showWordmark?: boolean }) {
+  // SVG intrinsic ratio is 137:43 (~3.186)
+  const width = Math.round(height * (137 / 43));
   return (
-    <div className="flex items-center gap-2">
-      <img
-        src={logoAsset.url}
-        alt="XAUT.trade"
-        width={size}
-        height={size}
-        className="object-contain drop-shadow-[0_2px_8px_rgba(232,198,87,0.25)]"
-        style={{ width: size, height: size }}
-      />
-      {showWordmark && (
-        <span className="font-display text-lg font-semibold tracking-tight leading-none">
-          XAUT<span className="text-gradient-gold">.trade</span>
-        </span>
-      )}
-    </div>
+    <img
+      src={logoAsset.url}
+      alt="XAUT.trade"
+      width={width}
+      height={height}
+      className="block object-contain drop-shadow-[0_2px_8px_rgba(232,198,87,0.25)]"
+      style={{ width, height }}
+    />
   );
 }
