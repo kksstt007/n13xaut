@@ -85,71 +85,51 @@ function ProfilePage() {
   const memberSince = profile?.created_at ? new Date(profile.created_at) : null;
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* Identity header */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-[oklch(0.18_0.012_265)] to-[oklch(0.13_0.008_260)] p-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-30 blur-3xl"
-          style={{ background: "radial-gradient(circle, oklch(0.80 0.115 86 / 0.5), transparent 70%)" }}
-        />
-        <div className="relative flex items-start gap-4">
+    <div className="space-y-4 pb-6">
+      {/* Identity header — minimal */}
+      <section className="rounded-2xl bg-surface border border-border p-5">
+        <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="size-16 rounded-2xl grid place-items-center text-lg font-bold text-primary-foreground shadow-lg"
-              style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}>
+            <div className="size-14 rounded-full grid place-items-center text-base font-semibold bg-[#1a1a1a] text-foreground border border-border">
               {initials}
             </div>
             <button
               onClick={() => setEditOpen(true)}
               aria-label="Edit profile"
-              className="absolute -bottom-1 -right-1 size-6 rounded-full bg-surface-elevated border border-border grid place-items-center hover:scale-105 transition"
+              className="absolute -bottom-0.5 -right-0.5 size-5 rounded-full bg-surface-elevated border border-border grid place-items-center hover:bg-[#1a1a1a] transition"
             >
-              <Pencil className="size-3" />
+              <Pencil className="size-2.5" />
             </button>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-semibold truncate">
+              <h1 className="text-[15px] font-semibold truncate text-foreground">
                 {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
               </h1>
               {kycVerified && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 border border-success/20 rounded-full px-1.5 py-0.5">
-                  <ShieldCheck className="size-3" /> Verified
-                </span>
+                <ShieldCheck className="size-3.5 text-gold shrink-0" />
               )}
             </div>
-            <UidRow uid={uid} />
-            <div className="mt-2 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-md bg-gold/10 text-gold border border-gold/20 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide">
-                <Star className="size-3 fill-gold" /> VIP 0
-              </span>
-              {memberSince && (
-                <span className="text-[11px] text-muted-foreground">
-                  Member since {memberSince.toLocaleDateString(undefined, { month: "short", year: "numeric" })}
-                </span>
-              )}
+            <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="font-mono tracking-wider">UID {uid}</span>
+              <button
+                onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
+                className="hover:text-foreground transition"
+                aria-label="Copy UID"
+              >
+                <Copy className="size-3" />
+              </button>
+            </div>
+            <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium tracking-wide text-gold border border-gold/30 rounded px-1.5 py-0.5">
+              VIP 0
             </div>
           </div>
         </div>
-
-        {/* Quick stats */}
-        <div className="relative mt-5 grid grid-cols-3 gap-2">
-          <Stat label="Total balance" value={`$${Number(wallet?.usdt_balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} accent />
-          <Stat label="KYC level" value={kycVerified ? "Level 2" : kyc?.status === "pending" ? "Pending" : "Level 0"} />
-          <Stat label="Referrals" value={String(refCount ?? 0)} />
-        </div>
       </section>
 
-      {/* Premium Deposit & Withdrawal — right under identity card */}
-      <section className="relative overflow-hidden rounded-3xl border border-gold/25 bg-gradient-to-br from-[oklch(0.16_0.018_85)] via-[oklch(0.14_0.012_75)] to-[oklch(0.12_0.008_60)] shadow-[0_8px_32px_-12px_rgba(232,198,87,0.35)]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-10 -bottom-10 size-48 rounded-full opacity-25 blur-3xl"
-          style={{ background: "radial-gradient(circle, oklch(0.80 0.115 86 / 0.6), transparent 70%)" }}
-        />
-        <div className="relative">
-          <DepositWithdraw />
-        </div>
+      {/* Premium Deposit & Withdrawal — clean card */}
+      <section className="rounded-2xl bg-surface border border-border">
+        <DepositWithdraw />
       </section>
 
       {/* Shortcut grid */}
