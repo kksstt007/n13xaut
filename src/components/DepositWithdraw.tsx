@@ -50,16 +50,69 @@ export function DepositWithdraw() {
 
   return (
     <>
-      <div className="p-6 space-y-6">
-        <div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 p-6 space-y-6"
+        style={{
+          background:
+            "linear-gradient(140deg, #1A1610 0%, #0F0E0C 45%, #14110B 100%)",
+          boxShadow:
+            "0 10px 40px -20px rgba(212,175,55,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
+        }}
+      >
+        {/* hairline gold top */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent" />
+        {/* flowing abstract waves */}
+        <svg
+          className="pointer-events-none absolute inset-0 w-full h-full opacity-[0.18]"
+          viewBox="0 0 400 200"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="waveGold" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,120 C80,70 160,180 240,110 C320,50 380,150 400,100 L400,200 L0,200 Z"
+            fill="url(#waveGold)"
+          />
+          <path
+            d="M0,150 C100,110 180,200 260,140 C340,90 380,170 400,140 L400,200 L0,200 Z"
+            fill="url(#waveGold)"
+            opacity="0.5"
+          />
+        </svg>
+        {/* warm gold glow corner */}
+        <div
+          className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgba(212,175,55,0.22), transparent)",
+          }}
+        />
+
+        <div className="relative">
+          <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#D4AF37]/80">
             Available Balance
           </div>
-          <div className="mt-2 text-[34px] leading-none font-bold tracking-tight text-foreground tabular-nums">
+          <div
+            className="mt-2 text-[38px] leading-none font-bold tracking-tight tabular-nums"
+            style={{
+              background:
+                "linear-gradient(180deg, #FFFFFF 0%, #F5E6B8 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             ${fmtUSD(available)}
           </div>
+          <div className="mt-1 text-[11px] text-white/40 tracking-wide">USDT · Tether Gold</div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+
+        <div className="relative grid grid-cols-2 gap-3">
           <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
           <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
         </div>
@@ -79,8 +132,13 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
       onClick={onClick}
       className={
         isDep
-          ? "h-12 rounded-xl bg-[#D4AF37] text-black text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition"
-          : "h-12 rounded-xl border border-white/10 bg-transparent text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-white/[0.04] active:bg-white/[0.06] transition"
+          ? "h-12 rounded-full text-black text-sm font-semibold inline-flex items-center justify-center gap-2 hover:brightness-105 active:brightness-95 transition"
+          : "h-12 rounded-full border border-white/15 bg-white/[0.02] text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-white/[0.06] hover:border-white/25 active:bg-white/[0.08] transition"
+      }
+      style={
+        isDep
+          ? { background: "linear-gradient(135deg, #F2D77A 0%, #D4AF37 50%, #A8801F 100%)" }
+          : undefined
       }
     >
       <Icon className="size-4" />
