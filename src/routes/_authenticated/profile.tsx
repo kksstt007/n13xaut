@@ -160,8 +160,8 @@ function ProfilePage() {
         </div>
       </section>
 
-      {/* Premium Deposit & Withdrawal — clean card */}
-      <section className="rounded-2xl bg-surface border border-border">
+      {/* Premium Deposit & Withdrawal — rich card */}
+      <section>
         <DepositWithdraw />
       </section>
 
