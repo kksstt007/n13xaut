@@ -54,35 +54,35 @@
 :root {
   --radius: 1rem;
 
-  --background: oklch(0.115 0.005 260);
-  --foreground: oklch(0.97 0.004 250);
-  --surface: oklch(0.15 0.006 260);
-  --surface-elevated: oklch(0.185 0.008 260);
-  --card: oklch(0.15 0.006 260);
-  --card-foreground: oklch(0.97 0.004 250);
-  --popover: oklch(0.165 0.007 260);
-  --popover-foreground: oklch(0.97 0.004 250);
+  --background: oklch(0.10 0 0);            /* #0B0B0B */
+  --foreground: oklch(1 0 0);               /* #FFFFFF */
+  --surface: oklch(0.135 0 0);              /* #111111 */
+  --surface-elevated: oklch(0.16 0 0);
+  --card: oklch(0.135 0 0);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.135 0 0);
+  --popover-foreground: oklch(1 0 0);
 
-  --primary: oklch(0.80 0.115 86);
-  --primary-foreground: oklch(0.13 0.01 260);
-  --gold: oklch(0.80 0.115 86);
-  --gold-soft: oklch(0.88 0.085 90);
+  --primary: oklch(0.78 0.13 84);           /* #D4AF37 */
+  --primary-foreground: oklch(0.12 0 0);
+  --gold: oklch(0.78 0.13 84);
+  --gold-soft: oklch(0.85 0.10 86);
 
-  --secondary: oklch(0.22 0.008 260);
-  --secondary-foreground: oklch(0.97 0.004 250);
-  --muted: oklch(0.20 0.006 260);
-  --muted-foreground: oklch(0.62 0.012 260);
-  --accent: oklch(0.22 0.008 260);
-  --accent-foreground: oklch(0.97 0.004 250);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.62 0 0);      /* #888 */
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.64 0.20 22);
-  --destructive-foreground: oklch(0.98 0.004 250);
+  --destructive-foreground: oklch(0.98 0 0);
   --success: oklch(0.70 0.15 156);
-  --success-foreground: oklch(0.13 0.01 260);
+  --success-foreground: oklch(0.12 0 0);
 
-  --border: oklch(0.26 0.008 260 / 50%);
-  --input: oklch(0.20 0.008 260);
-  --ring: oklch(0.80 0.115 86 / 55%);
+  --border: oklch(1 0 0 / 6%);              /* rgba(255,255,255,0.06) */
+  --input: oklch(0.18 0 0);
+  --ring: oklch(0.78 0.13 84 / 50%);
 
   --sidebar: oklch(0.135 0.006 260);
   --sidebar-foreground: oklch(0.85 0.008 260);
@@ -108,9 +108,6 @@
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.80 0.115 86 / 0.05), transparent 70%);
-    background-attachment: fixed;
     overscroll-behavior-y: none;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
