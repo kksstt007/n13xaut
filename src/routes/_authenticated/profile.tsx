@@ -86,75 +86,46 @@ function ProfilePage() {
 
   return (
     <div className="space-y-4 pb-6">
-      {/* Identity header — premium with subtle layered depth */}
-      <section className="relative rounded-2xl border border-white/[0.06] overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(135deg, #131210 0%, #0E0D0C 55%, #100E0A 100%)",
-        }}
-      >
-        {/* warm gold tint overlay */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{
-            background:
-              "radial-gradient(120% 80% at 100% 0%, rgba(212,175,55,0.10) 0%, rgba(212,175,55,0) 55%)",
-          }}
-        />
-        {/* diagonal line pattern */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(135deg, #D4AF37 0 1px, transparent 1px 14px)",
-          }}
-        />
-        {/* subtle noise */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>\")",
-          }}
-        />
-        {/* hairline gold top */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
-
-        <div className="relative flex items-center gap-4 p-5">
-          <div className="relative">
-            <div className="size-14 rounded-full grid place-items-center text-base font-semibold bg-[#161412] text-foreground border border-[#D4AF37]/25">
+      {/* Profile identity — compact, premium fintech */}
+      <section className="rounded-xl border border-[#D4AF37]/15 bg-[#0F0F0F]">
+        <div className="flex items-center gap-3 p-4">
+          <div className="relative shrink-0">
+            <div className="size-11 rounded-full grid place-items-center text-sm font-semibold bg-[#141414] text-foreground border border-[#D4AF37]/20">
               {initials}
             </div>
             <button
               onClick={() => setEditOpen(true)}
               aria-label="Edit profile"
-              className="absolute -bottom-0.5 -right-0.5 size-5 rounded-full bg-[#1a1816] border border-white/10 grid place-items-center hover:bg-[#221f1b] transition"
+              className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-[#1a1a1a] border border-white/8 grid place-items-center hover:bg-[#222] transition"
             >
-              <Pencil className="size-2.5" />
+              <Pencil className="size-2" />
             </button>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-[15px] font-semibold truncate text-foreground">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-sm font-semibold truncate text-foreground">
                 {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
               </h1>
               {kycVerified && (
-                <ShieldCheck className="size-3.5 text-gold shrink-0" />
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#D4AF37] bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded px-1 py-0.5 tracking-wide">
+                  <ShieldCheck className="size-2.5" />
+                  Verified
+                </span>
               )}
             </div>
-            <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="font-mono tracking-wider">UID {uid}</span>
               <button
                 onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
                 className="hover:text-foreground transition"
                 aria-label="Copy UID"
               >
-                <Copy className="size-3" />
+                <Copy className="size-2.5" />
               </button>
             </div>
-            <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.12em] uppercase text-[#D4AF37] border border-[#D4AF37]/40 rounded px-1.5 py-0.5 bg-[#D4AF37]/[0.04]">
-              <Star className="size-2.5 fill-current" />
-              VIP 0
+            <div className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#C4A055] border border-[#D4AF37]/15 rounded-sm px-1.5 py-[2px] bg-[#D4AF37]/[0.03]">
+              <Star className="size-2 fill-current" />
+              Premium
             </div>
           </div>
         </div>
