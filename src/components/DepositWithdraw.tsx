@@ -50,69 +50,18 @@ export function DepositWithdraw() {
 
   return (
     <>
-      <div
-        className="relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 p-6 space-y-6"
-        style={{
-          background:
-            "linear-gradient(140deg, #1A1610 0%, #0F0E0C 45%, #14110B 100%)",
-          boxShadow:
-            "0 10px 40px -20px rgba(212,175,55,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
-        }}
-      >
-        {/* hairline gold top */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent" />
-        {/* flowing abstract waves */}
-        <svg
-          className="pointer-events-none absolute inset-0 w-full h-full opacity-[0.18]"
-          viewBox="0 0 400 200"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="waveGold" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,120 C80,70 160,180 240,110 C320,50 380,150 400,100 L400,200 L0,200 Z"
-            fill="url(#waveGold)"
-          />
-          <path
-            d="M0,150 C100,110 180,200 260,140 C340,90 380,170 400,140 L400,200 L0,200 Z"
-            fill="url(#waveGold)"
-            opacity="0.5"
-          />
-        </svg>
-        {/* warm gold glow corner */}
-        <div
-          className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full"
-          style={{
-            background:
-              "radial-gradient(closest-side, rgba(212,175,55,0.22), transparent)",
-          }}
-        />
-
-        <div className="relative">
-          <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#D4AF37]/80">
+      <div className="rounded-xl border border-[#D4AF37]/15 bg-[#0F0F0F] p-6 space-y-6">
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Available Balance
           </div>
-          <div
-            className="mt-2 text-[38px] leading-none font-bold tracking-tight tabular-nums"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #F5E6B8 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
+          <div className="mt-2.5 text-[36px] leading-none font-bold tracking-tight text-foreground tabular-nums">
             ${fmtUSD(available)}
           </div>
-          <div className="mt-1 text-[11px] text-white/40 tracking-wide">USDT · Tether Gold</div>
+          <div className="mt-1.5 text-[11px] text-muted-foreground">USDT · Tether Gold</div>
         </div>
 
-        <div className="relative grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
           <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
         </div>
