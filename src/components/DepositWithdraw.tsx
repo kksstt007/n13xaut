@@ -81,16 +81,16 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
       onClick={onClick}
       className={
         isDep
-          ? "h-12 rounded-full text-black text-sm font-semibold inline-flex items-center justify-center gap-2 hover:brightness-105 active:brightness-95 transition"
-          : "h-12 rounded-full border border-white/15 bg-white/[0.02] text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-white/[0.06] hover:border-white/25 active:bg-white/[0.08] transition"
+          ? "h-11 rounded-full text-black text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
+          : "h-11 rounded-full border border-white/10 bg-white/[0.02] text-foreground text-[13px] font-medium inline-flex items-center justify-center gap-1.5 hover:bg-white/[0.04] active:bg-white/[0.06] transition"
       }
       style={
         isDep
-          ? { background: "linear-gradient(135deg, #F2D77A 0%, #D4AF37 50%, #A8801F 100%)" }
+          ? { background: "#D4AF37" }
           : undefined
       }
     >
-      <Icon className="size-4" />
+      <Icon className="size-3.5" />
       {isDep ? "Deposit" : "Withdraw"}
     </button>
   );
