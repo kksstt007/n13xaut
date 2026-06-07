@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { ChevronDown, Mail, MessageCircle, BookOpen, ShieldCheck } from "lucide-react";
+import { ChevronDown, MessageCircle, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/support")({
   head: () => ({ meta: [{ title: "Support — XAUT.trade" }] }),
@@ -14,11 +14,6 @@ const faqs = [
   { q: "How do I complete KYC verification?", a: "Open the menu, choose Identity (KYC), and upload a valid government ID along with a clear selfie." },
 ];
 
-const channels = [
-  { icon: MessageCircle, label: "Live chat", hint: "Mon–Fri · 24h", action: "Start chat" },
-  { icon: Mail, label: "Email support", hint: "support@xaut.trade", action: "Compose" },
-  { icon: BookOpen, label: "Help center", hint: "Guides & tutorials", action: "Browse" },
-];
 
 function SupportPage() {
   const [open, setOpen] = React.useState<number | null>(0);
