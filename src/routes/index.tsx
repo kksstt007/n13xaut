@@ -105,9 +105,9 @@ function Hero({ data, price, changePct, up }: any) {
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link to="/signup" className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold hover:opacity-95 transition">
-              Start Trading <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" />
-            </Link>
+            <PrimaryCTA className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold hover:opacity-95 transition">
+              {(label) => (<>{label} <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" /></>)}
+            </PrimaryCTA>
             <a href="#market" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/60 px-6 py-3 text-sm font-medium hover:bg-surface-elevated transition">
               <LineChart className="size-4 text-gold" /> View Live Gold Price
             </a>
