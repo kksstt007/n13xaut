@@ -10,6 +10,7 @@ import { Logo } from "@/components/Logo";
 import { PriceChart } from "@/components/PriceChart";
 import { usePriceFeed } from "@/lib/price-feed";
 import { fmtUSD, fmtPct } from "@/lib/format";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
