@@ -10,6 +10,7 @@ import { Logo } from "@/components/Logo";
 import { PriceChart } from "@/components/PriceChart";
 import { usePriceFeed } from "@/lib/price-feed";
 import { fmtUSD, fmtPct } from "@/lib/format";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,6 +55,23 @@ function Landing() {
 
       <LandingContent />
     </div>
+  );
+}
+
+function PrimaryCTA({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: (label: string) => React.ReactNode;
+}) {
+  const { user, loading } = useAuth();
+  const to = user ? "/trade" : "/signup";
+  const label = user ? "Start Trading" : "Start Trading";
+  return (
+    <Link to={to} className={className} aria-disabled={loading}>
+      {children ? children(label) : label}
+    </Link>
   );
 }
 
@@ -104,9 +122,9 @@ function Hero({ data, price, changePct, up }: any) {
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link to="/signup" className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold hover:opacity-95 transition">
-              Start Trading <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" />
-            </Link>
+            <PrimaryCTA className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold hover:opacity-95 transition">
+              {(label) => (<>{label} <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" /></>)}
+            </PrimaryCTA>
             <a href="#market" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/60 px-6 py-3 text-sm font-medium hover:bg-surface-elevated transition">
               <LineChart className="size-4 text-gold" /> View Live Gold Price
             </a>
@@ -630,9 +648,9 @@ function CTA() {
             Open an account in minutes and start trading XAU₮ / USDT with a platform designed for serious investors.
           </p>
           <div className="relative mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold">
-              Create your account <ArrowRight className="size-4" />
-            </Link>
+            <PrimaryCTA className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold">
+              {(label) => (<>{label === "Start Trading" ? "Create your account" : label} <ArrowRight className="size-4" /></>)}
+            </PrimaryCTA>
             <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/60 px-6 py-3 text-sm font-medium hover:bg-surface-elevated transition">
               I already have one
             </Link>
