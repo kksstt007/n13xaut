@@ -58,6 +58,23 @@ function Landing() {
   );
 }
 
+function PrimaryCTA({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: (label: string) => React.ReactNode;
+}) {
+  const { user, loading } = useAuth();
+  const to = user ? "/trade" : "/signup";
+  const label = user ? "Start Trading" : "Start Trading";
+  return (
+    <Link to={to} className={className} aria-disabled={loading}>
+      {children ? children(label) : label}
+    </Link>
+  );
+}
+
 export function LandingContent() {
   const { data, price, changePct } = usePriceFeed(80);
   const up = changePct >= 0;
