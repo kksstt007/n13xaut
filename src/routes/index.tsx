@@ -35,9 +35,17 @@ function Landing() {
             <a href="#security" className="hover:text-foreground transition">Security</a>
             <a href="#faq" className="hover:text-foreground transition">FAQ</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden sm:inline-block text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
-            <Link to="/signup" className="rounded-full bg-gradient-gold px-4 py-2 text-sm font-semibold text-primary-foreground shadow-gold-soft hover:opacity-95 transition">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link
+              to="/login"
+              className="rounded-full border border-border/70 bg-surface/40 px-3.5 py-1.5 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium text-foreground/90 hover:text-foreground hover:border-gold/40 hover:bg-surface transition"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
+              className="rounded-full bg-gradient-gold px-3.5 py-1.5 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-semibold text-primary-foreground shadow-gold-soft hover:opacity-95 transition whitespace-nowrap"
+            >
               Open account
             </Link>
           </div>
