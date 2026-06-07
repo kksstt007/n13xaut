@@ -648,9 +648,9 @@ function CTA() {
             Open an account in minutes and start trading XAU₮ / USDT with a platform designed for serious investors.
           </p>
           <div className="relative mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold">
-              Create your account <ArrowRight className="size-4" />
-            </Link>
+            <PrimaryCTA className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold">
+              {(label) => (<>{label === "Start Trading" ? "Create your account" : label} <ArrowRight className="size-4" /></>)}
+            </PrimaryCTA>
             <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/60 px-6 py-3 text-sm font-medium hover:bg-surface-elevated transition">
               I already have one
             </Link>
