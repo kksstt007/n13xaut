@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { ChevronDown, Mail, MessageCircle, BookOpen, ShieldCheck } from "lucide-react";
+import { ChevronDown, MessageCircle, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/support")({
   head: () => ({ meta: [{ title: "Support — XAUT.trade" }] }),
@@ -14,11 +14,6 @@ const faqs = [
   { q: "How do I complete KYC verification?", a: "Open the menu, choose Identity (KYC), and upload a valid government ID along with a clear selfie." },
 ];
 
-const channels = [
-  { icon: MessageCircle, label: "Live chat", hint: "Mon–Fri · 24h", action: "Start chat" },
-  { icon: Mail, label: "Email support", hint: "support@xaut.trade", action: "Compose" },
-  { icon: BookOpen, label: "Help center", hint: "Guides & tutorials", action: "Browse" },
-];
 
 function SupportPage() {
   const [open, setOpen] = React.useState<number | null>(0);
@@ -31,25 +26,25 @@ function SupportPage() {
         <p className="text-sm text-muted-foreground mt-1">Real humans. Honest answers. Usually within minutes.</p>
       </div>
 
-      <section className="rounded-2xl bg-surface border border-border/60 divide-y divide-border/40">
-        {channels.map((c) => {
-          const Icon = c.icon;
-          return (
-            <button
-              key={c.label}
-              className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-surface-elevated transition"
-            >
-              <div className="size-10 rounded-xl bg-gold/10 grid place-items-center">
-                <Icon className="size-[18px] text-gold" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{c.label}</div>
-                <div className="text-xs text-muted-foreground truncate">{c.hint}</div>
-              </div>
-              <span className="text-xs text-gold font-medium">{c.action}</span>
-            </button>
-          );
-        })}
+      <section className="rounded-2xl bg-surface border border-border/60">
+        <button
+          onClick={() => {
+            const w = window as any;
+            if (w.SMLivechat?.open) w.SMLivechat.open();
+            else if (w.salesmartly?.open) w.salesmartly.open();
+            else document.querySelector<HTMLElement>("[class*='salesmartly'], [id*='salesmartly'], [class*='sm-live']")?.click();
+          }}
+          className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-surface-elevated transition"
+        >
+          <div className="size-10 rounded-xl bg-gold/10 grid place-items-center">
+            <MessageCircle className="size-[18px] text-gold" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium">Live chat</div>
+            <div className="text-xs text-muted-foreground truncate">Available 24/7 · Avg reply under 6 min</div>
+          </div>
+          <span className="text-xs text-gold font-medium">Start chat</span>
+        </button>
       </section>
 
       <section className="rounded-2xl bg-surface border border-border/60 overflow-hidden">

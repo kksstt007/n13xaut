@@ -136,6 +136,9 @@ function ProfilePage() {
         <DepositWithdraw />
       </section>
 
+      {/* Deposit & Withdrawal records */}
+      <RecordsSection userId={user?.id} />
+
       {/* Shortcut grid */}
       <section className="grid grid-cols-3 gap-2">
         <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
@@ -226,6 +229,73 @@ function ProfilePage() {
 }
 
 /* ------------------------------ Pieces ------------------------------ */
+
+function RecordsSection({ userId }: { userId?: string }) {
+  const [tab, setTab] = React.useState<"deposits" | "withdrawals">("deposits");
+  const { data: deposits } = useQuery({
+    queryKey: ["profile-deposits", userId],
+    queryFn: async () => (await supabase.from("deposits").select("*").eq("user_id", userId!).order("created_at", { ascending: false }).limit(10)).data ?? [],
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+  const { data: withdrawals } = useQuery({
+    queryKey: ["profile-withdrawals", userId],
+    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", userId!).order("created_at", { ascending: false }).limit(10)).data ?? [],
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+
+  const rows = tab === "deposits" ? deposits ?? [] : withdrawals ?? [];
+
+  const statusCls = (s?: string) => {
+    if (s === "approved" || s === "completed") return "text-success bg-success/10 border-success/20";
+    if (s === "pending" || s === "processing") return "text-gold bg-gold/10 border-gold/20";
+    if (s === "rejected" || s === "failed") return "text-destructive bg-destructive/10 border-destructive/20";
+    return "text-muted-foreground bg-background/60 border-border";
+  };
+
+  return (
+    <section>
+      <div className="px-1 mb-2 flex items-center justify-between">
+        <h2 className="text-[13px] font-semibold tracking-wide text-foreground">Records</h2>
+        <Link to="/wallet" className="text-[11px] font-medium text-gold hover:underline">View all</Link>
+      </div>
+      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+        <div className="flex border-b border-border/50">
+          {(["deposits", "withdrawals"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="divide-y divide-border/40">
+          {rows.length === 0 && (
+            <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">No {tab} yet</div>
+          )}
+          {rows.slice(0, 5).map((r: any) => (
+            <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-foreground tabular-nums">
+                  {tab === "deposits" ? "+" : "−"}${Number(r.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10.5px] text-muted-foreground mt-0.5">
+                  {new Date(r.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {r.network ? ` · ${r.network}` : ""}
+                </div>
+              </div>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border capitalize ${statusCls(r.status)}`}>{r.status ?? "pending"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 function UidRow({ uid }: { uid: string }) {
   const [copied, setCopied] = React.useState(false);
