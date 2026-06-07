@@ -136,6 +136,9 @@ function ProfilePage() {
         <DepositWithdraw />
       </section>
 
+      {/* Deposit & Withdrawal records */}
+      <RecordsSection userId={user?.id} />
+
       {/* Shortcut grid */}
       <section className="grid grid-cols-3 gap-2">
         <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
