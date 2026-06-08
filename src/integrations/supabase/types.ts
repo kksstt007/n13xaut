@@ -221,6 +221,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "deposits_user_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       kyc_submissions: {
@@ -275,6 +282,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kyc_submissions_user_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -624,11 +638,53 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "withdrawals_user_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_safe: {
+        Row: {
+          avatar_url: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          phone: string | null
+          referral_code: string | null
+          referred_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
