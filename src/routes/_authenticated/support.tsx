@@ -30,9 +30,29 @@ function SupportPage() {
         <button
           onClick={() => {
             const w = window as any;
-            if (w.SMLivechat?.open) w.SMLivechat.open();
-            else if (w.salesmartly?.open) w.salesmartly.open();
-            else document.querySelector<HTMLElement>("[class*='salesmartly'], [id*='salesmartly'], [class*='sm-live']")?.click();
+            const tryOpen = () => {
+              if (w.SMLivechat?.open) { w.SMLivechat.open(); return true; }
+              if (w.salesmartly?.open) { w.salesmartly.open(); return true; }
+              if (typeof w.openSalesmartly === "function") { w.openSalesmartly(); return true; }
+              const widget = document.querySelector<HTMLElement>(
+                "salesmartly-chat-widget, #salesmartly-container, [id^='salesmartly'], [class*='salesmartly'], [class*='sm-launcher'], [class*='sm-live']"
+              );
+              if (widget) {
+                const btn = widget.shadowRoot?.querySelector<HTMLElement>("button, [role='button'], .launcher, .sm-launcher")
+                  || widget.querySelector<HTMLElement>("button, [role='button']")
+                  || widget;
+                btn.click();
+                return true;
+              }
+              return false;
+            };
+            if (!tryOpen()) {
+              let tries = 0;
+              const id = setInterval(() => {
+                tries++;
+                if (tryOpen() || tries > 20) clearInterval(id);
+              }, 300);
+            }
           }}
           className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-surface-elevated transition"
         >
