@@ -15,7 +15,7 @@ function ReferralsPage() {
   const { user } = useAuth();
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
-    queryFn: async () => (await supabase.from("profiles").select("*").eq("id", user!.id).single()).data,
+    queryFn: async () => (await (supabase.from("profiles_safe" as any).select("*").eq("id", user!.id).single() as any)).data,
     enabled: !!user,
   });
   const { data: refs } = useQuery({
