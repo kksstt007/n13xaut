@@ -843,7 +843,4 @@ function Stat({
 }
 
 void TrendingUp;
-void Clock;
-void Activity;
-void ArrowUp;
-void ArrowDown;
+
