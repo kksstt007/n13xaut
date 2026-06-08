@@ -153,8 +153,15 @@ function TradePage() {
   const balance = Number(wallet?.usdt_balance ?? 0);
   const canTrade = balance >= amount && amount >= 1;
 
+  // Derived market stats (presentational only — derived from live feed)
+  const high24 = React.useMemo(() => Math.max(...chart.map((d) => d.p), price), [chart, price]);
+  const low24 = React.useMemo(() => Math.min(...chart.map((d) => d.p), price), [chart, price]);
+  const spread = Math.max(0.02, price * 0.00008);
+  const bid = price - spread / 2;
+  const ask = price + spread / 2;
+
   return (
-    <div className="flex flex-col gap-5 pb-6">
+    <div className="flex flex-col gap-4 pb-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
@@ -165,8 +172,14 @@ function TradePage() {
           <ChevronLeft className="size-5 text-muted-foreground" />
         </button>
         <div className="text-center">
-          <div className="text-sm font-semibold tracking-tight">Tether Gold</div>
-          <div className="text-[10px] text-muted-foreground tracking-wide">XAU₮ / USDT</div>
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="text-sm font-semibold tracking-tight">XAU₮ / USDT</span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-success/15 text-success text-[9px] font-bold tracking-wider">
+              <span className="size-1 rounded-full bg-success animate-pulse" />
+              LIVE
+            </span>
+          </div>
+          <div className="text-[10px] text-muted-foreground tracking-wide mt-0.5">Tether Gold · Spot</div>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-surface-elevated border border-border/50">
           <Wallet className="size-3.5 text-gold" />
@@ -174,59 +187,82 @@ function TradePage() {
         </div>
       </div>
 
-      {/* Price */}
+      {/* Price block */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="text-center"
+        className="flex items-end justify-between gap-3"
       >
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          <span className="text-sm text-muted-foreground font-medium">XAU₮ =</span>
-          <motion.span
-            key={Math.floor(price * 100)}
-            initial={{ opacity: 0.4, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="num text-[40px] sm:text-5xl font-bold tracking-tight"
-            style={{ fontFamily: "var(--font-display)" }}
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-2">
+            <motion.span
+              key={Math.floor(price * 100)}
+              initial={{ opacity: 0.5, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`num text-[38px] sm:text-5xl font-bold tracking-tight leading-none ${
+                up ? "text-success" : "text-destructive"
+              }`}
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {fmtUSD(price)}
+            </motion.span>
+            <span className="text-xs text-muted-foreground font-medium">USDT</span>
+          </div>
+          <div
+            className={`mt-2 inline-flex items-center gap-1 text-[12px] font-semibold num ${
+              up ? "text-success" : "text-destructive"
+            }`}
           >
-            ${fmtUSD(price)}
-          </motion.span>
+            {up ? <ArrowUp className="size-3" strokeWidth={3} /> : <ArrowDown className="size-3" strokeWidth={3} />}
+            <span>{up ? "+" : "−"}${fmtUSD(Math.abs(change))}</span>
+            <span className="opacity-70">({fmtPct(changePct)})</span>
+            <span className="text-muted-foreground font-medium ml-1">· 24h</span>
+          </div>
         </div>
-        <div
-          className={`mt-1 inline-flex items-center gap-1.5 text-sm font-medium ${
-            up ? "text-success" : "text-destructive"
-          }`}
-        >
-          {up ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
-          <span className="num">{up ? "+" : "-"}${fmtUSD(Math.abs(change))}</span>
-          <span className="num">({fmtPct(changePct)})</span>
+
+        {/* Bid / Ask */}
+        <div className="flex gap-1.5 shrink-0">
+          <div className="px-2.5 py-1.5 rounded-xl bg-success/10 border border-success/20 text-right">
+            <div className="text-[9px] uppercase tracking-wider text-success/80 font-semibold">Bid</div>
+            <div className="num text-[12px] font-bold text-success leading-tight">{fmtUSD(bid)}</div>
+          </div>
+          <div className="px-2.5 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-right">
+            <div className="text-[9px] uppercase tracking-wider text-destructive/80 font-semibold">Ask</div>
+            <div className="num text-[12px] font-bold text-destructive leading-tight">{fmtUSD(ask)}</div>
+          </div>
         </div>
       </motion.div>
 
       {/* Timeframe pills */}
-      <div className="flex items-center justify-center gap-1">
-        {TIMEFRAMES.map((t) => {
-          const active = tf === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTf(t.id)}
-              className={`relative px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {active && (
-                <motion.div
-                  layoutId="tf-pill"
-                  className="absolute inset-0 bg-gradient-gold rounded-full"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                />
-              )}
-              <span className="relative z-10">{t.label}</span>
-            </button>
-          );
-        })}
+      <div className="flex items-center justify-between gap-1 -mb-1">
+        <div className="flex items-center gap-0.5 p-0.5 rounded-full bg-surface/60 border border-border/40">
+          {TIMEFRAMES.map((t) => {
+            const isActive = tf === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTf(t.id)}
+                className={`relative px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide transition-colors ${
+                  isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="tf-pill"
+                    className="absolute inset-0 bg-gradient-gold rounded-full"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Activity className="size-3" />
+          <span className="num">Realtime</span>
+        </div>
       </div>
 
       {/* Chart */}
@@ -234,15 +270,39 @@ function TradePage() {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="rounded-3xl border border-border/40 bg-surface/60 p-3 sm:p-4 shadow-elevated"
+        className="relative rounded-3xl border border-border/40 bg-surface/60 p-3 sm:p-4 shadow-elevated overflow-hidden"
       >
-        <div className="h-[260px] sm:h-[320px]">
+        <div className="h-[240px] sm:h-[300px]">
           <PriceChart data={chart} up={up} />
+        </div>
+        {/* Floating price tag on chart */}
+        <div
+          className={`absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-bold num ${
+            up ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+          }`}
+        >
+          {fmtUSD(price)}
         </div>
       </motion.div>
 
-      {/* Buy / Sell only */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 24h stats strip */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl px-3 py-2 bg-surface/50 border border-border/40">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">24h High</div>
+          <div className="text-[12px] font-semibold num text-success mt-0.5">${fmtUSD(high24)}</div>
+        </div>
+        <div className="rounded-xl px-3 py-2 bg-surface/50 border border-border/40">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">24h Low</div>
+          <div className="text-[12px] font-semibold num text-destructive mt-0.5">${fmtUSD(low24)}</div>
+        </div>
+        <div className="rounded-xl px-3 py-2 bg-surface/50 border border-border/40">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Spread</div>
+          <div className="text-[12px] font-semibold num text-foreground mt-0.5">${spread.toFixed(2)}</div>
+        </div>
+      </div>
+
+      {/* Buy / Sell */}
+      <div className="grid grid-cols-2 gap-3 mt-1">
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={() => setSheet("buy")}
@@ -255,7 +315,10 @@ function TradePage() {
         >
           <div className="flex items-center justify-center gap-2">
             <ArrowUp className="size-5" strokeWidth={2.5} />
-            <span>BUY</span>
+            <div className="flex flex-col items-start leading-none">
+              <span>BUY</span>
+              <span className="text-[9px] opacity-70 font-semibold mt-0.5 num">{fmtUSD(ask)}</span>
+            </div>
           </div>
         </motion.button>
 
@@ -271,7 +334,10 @@ function TradePage() {
         >
           <div className="flex items-center justify-center gap-2">
             <ArrowDown className="size-5" strokeWidth={2.5} />
-            <span>SELL</span>
+            <div className="flex flex-col items-start leading-none">
+              <span>SELL</span>
+              <span className="text-[9px] opacity-80 font-semibold mt-0.5 num">{fmtUSD(bid)}</span>
+            </div>
           </div>
         </motion.button>
       </div>
@@ -289,7 +355,9 @@ function TradePage() {
               {positions.length} active position{positions.length > 1 ? "s" : ""}
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">Settling automatically</span>
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock className="size-3" /> Auto-settle
+          </span>
         </motion.div>
       )}
 
@@ -775,7 +843,4 @@ function Stat({
 }
 
 void TrendingUp;
-void Clock;
-void Activity;
-void ArrowUp;
-void ArrowDown;
+
