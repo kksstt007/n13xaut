@@ -365,6 +365,29 @@ function Reserves() {
   return (
     <section id="reserves" className="py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
+        {/* Swiss vault image strip */}
+        <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated mb-10 aspect-[21/9] sm:aspect-[21/7]">
+          <img
+            src={vaultGold}
+            alt="Allocated gold bars stored in a high-security Swiss vault"
+            width={1920}
+            height={1080}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+          <div className="relative z-10 h-full flex items-center px-6 sm:px-10">
+            <div className="max-w-md">
+              <div className="inline-flex items-center gap-2 rounded-full glass-gold px-3 py-1.5 text-[11px] font-medium tracking-wide text-gold uppercase">
+                <Lock className="size-3.5" /> Swiss vault custody
+              </div>
+              <p className="mt-3 text-[15px] sm:text-lg font-medium text-foreground/95">
+                Allocated bars · serial-tracked · professionally insured.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-start">
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">Reserve transparency</p>
