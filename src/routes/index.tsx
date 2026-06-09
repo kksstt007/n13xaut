@@ -11,6 +11,9 @@ import { PriceChart } from "@/components/PriceChart";
 import { usePriceFeed } from "@/lib/price-feed";
 import { fmtUSD, fmtPct } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import heroGoldBar from "@/assets/hero-goldbar.jpg";
+import vaultGold from "@/assets/vault-gold.jpg";
+import xautCoin from "@/assets/xaut-coin.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
