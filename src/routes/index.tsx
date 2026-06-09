@@ -11,6 +11,9 @@ import { PriceChart } from "@/components/PriceChart";
 import { usePriceFeed } from "@/lib/price-feed";
 import { fmtUSD, fmtPct } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import heroGoldBar from "@/assets/hero-goldbar.jpg";
+import vaultGold from "@/assets/vault-gold.jpg";
+import xautCoin from "@/assets/xaut-coin.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -139,35 +142,47 @@ function Hero({ data, price, changePct, up }: any) {
           </ul>
         </motion.div>
 
-        {/* Ticker card */}
+        {/* Hero visual: real gold bar + floating live ticker card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.15 }}
           className="relative"
         >
           <div className="absolute -inset-4 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
-          <div className="rounded-2xl border border-border/60 bg-surface/90 backdrop-blur-xl p-5 sm:p-6 shadow-elevated">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">XAU₮ / USDT · Live</div>
-                <div className="num text-3xl sm:text-4xl font-semibold mt-1.5">${fmtUSD(price)}</div>
-                <div className={`mt-1 num text-sm font-medium ${up ? "text-success" : "text-destructive"}`}>{fmtPct(changePct)} · last 80s</div>
-              </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 text-success text-[11px] font-medium px-2.5 py-1">
-                <span className="size-1.5 rounded-full bg-success animate-pulse-gold" /> Live
-              </span>
+
+          {/* Real gold bar photograph */}
+          <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-[4/5] sm:aspect-[5/6]">
+            <img
+              src={heroGoldBar}
+              alt="999.9 fine physical gold bar backing XAU₮"
+              width={1280}
+              height={1280}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+
+            {/* Top-right live badge */}
+            <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md border border-border/60 text-success text-[11px] font-medium px-2.5 py-1">
+              <span className="size-1.5 rounded-full bg-success animate-pulse-gold" /> Live
             </div>
-            <div className="h-56 sm:h-64 mt-4 -mx-2"><PriceChart data={data} up={up} /></div>
-            <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-              {[
-                ["Underlying", "Physical gold"],
-                ["Custody", "Swiss vault"],
-                ["Settlement", "On-chain"],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-xl bg-background/50 border border-border/40 px-3 py-2.5">
-                  <div className="text-muted-foreground">{k}</div>
-                  <div className="mt-0.5 font-medium text-foreground/90">{v}</div>
+
+            {/* Top-left issuer chip */}
+            <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md border border-border/60 text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-2.5 py-1">
+              <BadgeCheck className="size-3 text-gold" /> Swiss vault · allocated
+            </div>
+
+            {/* Bottom: floating live ticker card */}
+            <div className="absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4 rounded-2xl border border-border/60 bg-background/85 backdrop-blur-xl p-4 sm:p-5 shadow-elevated">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">XAU₮ / USDT</div>
+                  <div className="num text-2xl sm:text-3xl font-semibold mt-1">${fmtUSD(price)}</div>
+                  <div className={`mt-0.5 num text-xs font-medium ${up ? "text-success" : "text-destructive"}`}>{fmtPct(changePct)} · 24h</div>
                 </div>
-              ))}
+                <div className="size-9 rounded-xl bg-gold/15 grid place-items-center shrink-0">
+                  <Coins className="size-4 text-gold" />
+                </div>
+              </div>
+              <div className="h-20 sm:h-24 mt-3 -mx-1"><PriceChart data={data} up={up} /></div>
             </div>
           </div>
         </motion.div>
@@ -232,7 +247,7 @@ function MarketOverview({ price, changePct, up }: any) {
 function About() {
   return (
     <section id="about" className="py-16 md:py-24">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-start">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">About Tether Gold</p>
           <h2 className="mt-3 font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
@@ -248,24 +263,49 @@ function About() {
             transparency, and global accessibility of public blockchains — bringing the
             world's oldest reserve asset on-chain.
           </p>
+
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { i: Coins, t: "1 XAU₮ = 1 oz" },
+              { i: Lock, t: "Allocated" },
+              { i: Layers, t: "ETH · TRON" },
+              { i: ShieldCheck, t: "Inflation hedge" },
+            ].map((c) => (
+              <div key={c.t} className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center gap-1.5">
+                <c.i className="size-4 text-gold" />
+                <div className="text-[12px] font-medium">{c.t}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
-          {[
-            { i: Coins, t: "1 XAU₮ = 1 troy oz", d: "Each token represents a defined quantity of allocated physical gold." },
-            { i: Lock, t: "Allocated custody", d: "Bars are held in a high-security Swiss vault and individually identified." },
-            { i: Layers, t: "On-chain settlement", d: "Issued on Ethereum and TRON for transparent, near-instant transfers." },
-            { i: ShieldCheck, t: "Hedge against inflation", d: "Gain exposure to a historically stable asset used to preserve purchasing power." },
-          ].map((c) => (
-            <div key={c.t} className="rounded-2xl border border-border/60 bg-surface p-5 hover:border-gold/40 transition">
-              <div className="size-10 rounded-xl bg-gold/10 grid place-items-center mb-3">
-                <c.i className="size-[18px] text-gold" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6 }}
+          className="relative"
+        >
+          <div className="absolute -inset-6 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
+          <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-square">
+            <img
+              src={xautCoin}
+              alt="XAU₮ digital gold token on a blockchain network"
+              width={1280}
+              height={1280}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-background/60 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background/80 backdrop-blur-xl px-4 py-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">On-chain</div>
+                <div className="text-sm font-semibold mt-0.5">Ethereum · TRON</div>
               </div>
-              <div className="font-semibold text-sm">{c.t}</div>
-              <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">{c.d}</p>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-gold">
+                <Layers className="size-3.5" /> Multi-network
+              </span>
             </div>
-          ))}
-        </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -325,6 +365,29 @@ function Reserves() {
   return (
     <section id="reserves" className="py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
+        {/* Swiss vault image strip */}
+        <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated mb-10 aspect-[21/9] sm:aspect-[21/7]">
+          <img
+            src={vaultGold}
+            alt="Allocated gold bars stored in a high-security Swiss vault"
+            width={1920}
+            height={1080}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+          <div className="relative z-10 h-full flex items-center px-6 sm:px-10">
+            <div className="max-w-md">
+              <div className="inline-flex items-center gap-2 rounded-full glass-gold px-3 py-1.5 text-[11px] font-medium tracking-wide text-gold uppercase">
+                <Lock className="size-3.5" /> Swiss vault custody
+              </div>
+              <p className="mt-3 text-[15px] sm:text-lg font-medium text-foreground/95">
+                Allocated bars · serial-tracked · professionally insured.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-start">
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">Reserve transparency</p>
