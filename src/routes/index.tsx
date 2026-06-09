@@ -258,45 +258,72 @@ function About() {
             Each token represents ownership of one troy ounce of allocated physical gold,
             stored in a professional Swiss vault and uniquely identifiable by serial number.
           </p>
+function About() {
+  return (
+    <section id="about" className="py-16 md:py-24">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">About Tether Gold</p>
+          <h2 className="mt-3 font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
+            A digital token, backed one-to-one by physical gold.
+          </h2>
+          <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed">
+            Tether Gold (XAU₮) is a digital asset issued by TG Commodities Limited.
+            Each token represents ownership of one troy ounce of allocated physical gold,
+            stored in a professional Swiss vault and uniquely identifiable by serial number.
+          </p>
           <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
             XAU₮ combines the long-standing role of gold as a store of value with the speed,
             transparency, and global accessibility of public blockchains — bringing the
             world's oldest reserve asset on-chain.
           </p>
+
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { i: Coins, t: "1 XAU₮ = 1 oz" },
+              { i: Lock, t: "Allocated" },
+              { i: Layers, t: "ETH · TRON" },
+              { i: ShieldCheck, t: "Inflation hedge" },
+            ].map((c) => (
+              <div key={c.t} className="rounded-xl border border-border/60 bg-surface/60 p-3 flex flex-col items-center text-center gap-1.5">
+                <c.i className="size-4 text-gold" />
+                <div className="text-[12px] font-medium">{c.t}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
-          {[
-            { i: Coins, t: "1 XAU₮ = 1 troy oz", d: "Each token represents a defined quantity of allocated physical gold." },
-            { i: Lock, t: "Allocated custody", d: "Bars are held in a high-security Swiss vault and individually identified." },
-            { i: Layers, t: "On-chain settlement", d: "Issued on Ethereum and TRON for transparent, near-instant transfers." },
-            { i: ShieldCheck, t: "Hedge against inflation", d: "Gain exposure to a historically stable asset used to preserve purchasing power." },
-          ].map((c) => (
-            <div key={c.t} className="rounded-2xl border border-border/60 bg-surface p-5 hover:border-gold/40 transition">
-              <div className="size-10 rounded-xl bg-gold/10 grid place-items-center mb-3">
-                <c.i className="size-[18px] text-gold" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6 }}
+          className="relative"
+        >
+          <div className="absolute -inset-6 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
+          <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-square">
+            <img
+              src={xautCoin}
+              alt="XAU₮ digital gold token on a blockchain network"
+              width={1280}
+              height={1280}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-background/60 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background/80 backdrop-blur-xl px-4 py-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">On-chain</div>
+                <div className="text-sm font-semibold mt-0.5">Ethereum · TRON</div>
               </div>
-              <div className="font-semibold text-sm">{c.t}</div>
-              <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">{c.d}</p>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-gold">
+                <Layers className="size-3.5" /> Multi-network
+              </span>
             </div>
-          ))}
-        </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
 }
-
-/* ───────────────────────── BENEFITS ───────────────────────── */
-
-function Benefits() {
-  const items = [
-    { i: Coins, t: "Physical Gold Backing", d: "Every token is backed by allocated physical gold stored under professional custody." },
-    { i: ShieldCheck, t: "Blockchain Security", d: "Public blockchain settlement provides immutable transaction history and verifiable transfers." },
-    { i: Zap, t: "Fast Global Transfers", d: "Move value across borders in minutes — without the friction of traditional bullion markets." },
-    { i: TrendingUp, t: "Inflation Hedge", d: "Gain exposure to an asset historically used to preserve purchasing power across cycles." },
-    { i: KeyRound, t: "Secure Ownership", d: "Self-directed custody options — withdraw to your own wallet at any time." },
-    { i: Globe2, t: "High Liquidity", d: "Trade XAU₮ against USDT around the clock, with transparent pricing referenced to spot." },
-  ];
   return (
     <section className="py-16 md:py-24 border-t border-border/40 bg-surface/30">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
