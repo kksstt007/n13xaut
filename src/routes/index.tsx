@@ -247,20 +247,6 @@ function MarketOverview({ price, changePct, up }: any) {
 function About() {
   return (
     <section id="about" className="py-16 md:py-24">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-start">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">About Tether Gold</p>
-          <h2 className="mt-3 font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
-            A digital token, backed one-to-one by physical gold.
-          </h2>
-          <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed">
-            Tether Gold (XAU₮) is a digital asset issued by TG Commodities Limited.
-            Each token represents ownership of one troy ounce of allocated physical gold,
-            stored in a professional Swiss vault and uniquely identifiable by serial number.
-          </p>
-function About() {
-  return (
-    <section id="about" className="py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium">About Tether Gold</p>
