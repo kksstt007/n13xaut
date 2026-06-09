@@ -310,6 +310,18 @@ function About() {
     </section>
   );
 }
+
+/* ───────────────────────── BENEFITS ───────────────────────── */
+
+function Benefits() {
+  const items = [
+    { i: Coins, t: "Physical Gold Backing", d: "Every token is backed by allocated physical gold stored under professional custody." },
+    { i: ShieldCheck, t: "Blockchain Security", d: "Public blockchain settlement provides immutable transaction history and verifiable transfers." },
+    { i: Zap, t: "Fast Global Transfers", d: "Move value across borders in minutes — without the friction of traditional bullion markets." },
+    { i: TrendingUp, t: "Inflation Hedge", d: "Gain exposure to an asset historically used to preserve purchasing power across cycles." },
+    { i: KeyRound, t: "Secure Ownership", d: "Self-directed custody options — withdraw to your own wallet at any time." },
+    { i: Globe2, t: "High Liquidity", d: "Trade XAU₮ against USDT around the clock, with transparent pricing referenced to spot." },
+  ];
   return (
     <section className="py-16 md:py-24 border-t border-border/40 bg-surface/30">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
