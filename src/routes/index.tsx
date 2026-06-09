@@ -142,35 +142,47 @@ function Hero({ data, price, changePct, up }: any) {
           </ul>
         </motion.div>
 
-        {/* Ticker card */}
+        {/* Hero visual: real gold bar + floating live ticker card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.15 }}
           className="relative"
         >
           <div className="absolute -inset-4 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
-          <div className="rounded-2xl border border-border/60 bg-surface/90 backdrop-blur-xl p-5 sm:p-6 shadow-elevated">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">XAU₮ / USDT · Live</div>
-                <div className="num text-3xl sm:text-4xl font-semibold mt-1.5">${fmtUSD(price)}</div>
-                <div className={`mt-1 num text-sm font-medium ${up ? "text-success" : "text-destructive"}`}>{fmtPct(changePct)} · last 80s</div>
-              </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 text-success text-[11px] font-medium px-2.5 py-1">
-                <span className="size-1.5 rounded-full bg-success animate-pulse-gold" /> Live
-              </span>
+
+          {/* Real gold bar photograph */}
+          <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-[4/5] sm:aspect-[5/6]">
+            <img
+              src={heroGoldBar}
+              alt="999.9 fine physical gold bar backing XAU₮"
+              width={1280}
+              height={1280}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+
+            {/* Top-right live badge */}
+            <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md border border-border/60 text-success text-[11px] font-medium px-2.5 py-1">
+              <span className="size-1.5 rounded-full bg-success animate-pulse-gold" /> Live
             </div>
-            <div className="h-56 sm:h-64 mt-4 -mx-2"><PriceChart data={data} up={up} /></div>
-            <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-              {[
-                ["Underlying", "Physical gold"],
-                ["Custody", "Swiss vault"],
-                ["Settlement", "On-chain"],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-xl bg-background/50 border border-border/40 px-3 py-2.5">
-                  <div className="text-muted-foreground">{k}</div>
-                  <div className="mt-0.5 font-medium text-foreground/90">{v}</div>
+
+            {/* Top-left issuer chip */}
+            <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md border border-border/60 text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-2.5 py-1">
+              <BadgeCheck className="size-3 text-gold" /> Swiss vault · allocated
+            </div>
+
+            {/* Bottom: floating live ticker card */}
+            <div className="absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4 rounded-2xl border border-border/60 bg-background/85 backdrop-blur-xl p-4 sm:p-5 shadow-elevated">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">XAU₮ / USDT</div>
+                  <div className="num text-2xl sm:text-3xl font-semibold mt-1">${fmtUSD(price)}</div>
+                  <div className={`mt-0.5 num text-xs font-medium ${up ? "text-success" : "text-destructive"}`}>{fmtPct(changePct)} · 24h</div>
                 </div>
-              ))}
+                <div className="size-9 rounded-xl bg-gold/15 grid place-items-center shrink-0">
+                  <Coins className="size-4 text-gold" />
+                </div>
+              </div>
+              <div className="h-20 sm:h-24 mt-3 -mx-1"><PriceChart data={data} up={up} /></div>
             </div>
           </div>
         </motion.div>
