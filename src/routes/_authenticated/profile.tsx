@@ -85,58 +85,52 @@ function ProfilePage() {
   const memberSince = profile?.created_at ? new Date(profile.created_at) : null;
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* Profile identity — compact, premium fintech */}
-      <section className="rounded-xl border border-[#D4AF37]/15 bg-[#0F0F0F]">
-        <div className="flex items-center gap-3 p-4">
-          <div className="relative shrink-0">
-            <div className="size-11 rounded-full grid place-items-center text-sm font-semibold bg-[#141414] text-foreground border border-[#D4AF37]/20">
-              {initials}
-            </div>
-            <button
-              onClick={() => setEditOpen(true)}
-              aria-label="Edit profile"
-              className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-[#1a1a1a] border border-white/8 grid place-items-center hover:bg-[#222] transition"
-            >
-              <Pencil className="size-2" />
-            </button>
+    <div className="space-y-5 pb-6">
+      {/* Identity */}
+      <section className="flex items-center gap-3.5 px-1 pt-1">
+        <div className="relative shrink-0">
+          <div className="size-12 rounded-full grid place-items-center text-[13px] font-semibold bg-surface-elevated text-foreground border border-border/60">
+            {initials}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-semibold truncate text-foreground">
-                {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
-              </h1>
-              {kycVerified && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#D4AF37] bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded px-1 py-0.5 tracking-wide">
-                  <ShieldCheck className="size-2.5" />
-                  Verified
-                </span>
-              )}
-            </div>
-            <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className="font-mono tracking-wider">UID {uid}</span>
-              <button
-                onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
-                className="hover:text-foreground transition"
-                aria-label="Copy UID"
-              >
-                <Copy className="size-2.5" />
-              </button>
-            </div>
-            <div className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#C4A055] border border-[#D4AF37]/15 rounded-sm px-1.5 py-[2px] bg-[#D4AF37]/[0.03]">
-              <Star className="size-2 fill-current" />
-              Premium
-            </div>
+          <button
+            onClick={() => setEditOpen(true)}
+            aria-label="Edit profile"
+            className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-border grid place-items-center hover:bg-surface-elevated transition"
+          >
+            <Pencil className="size-2.5 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
+              {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
+            </h1>
+            {kycVerified && (
+              <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="font-mono">UID·{uid}</span>
+            <button
+              onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
+              className="hover:text-foreground transition"
+              aria-label="Copy UID"
+            >
+              <Copy className="size-3" />
+            </button>
+            {memberSince && (
+              <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Premium Deposit & Withdrawal — rich card */}
+      {/* Balance + actions */}
       <section>
         <DepositWithdraw />
       </section>
 
-      {/* Deposit & Withdrawal records */}
+      {/* Records */}
       <RecordsSection userId={user?.id} />
 
       {/* Shortcut grid */}
@@ -145,6 +139,7 @@ function ProfilePage() {
         <Shortcut to="/referrals" icon={Gift} label="Rewards" />
         <Shortcut to="/support" icon={LifeBuoy} label="Support" />
       </section>
+
 
 
       {/* Security center — collapsible */}
@@ -257,22 +252,22 @@ function RecordsSection({ userId }: { userId?: string }) {
 
   return (
     <section>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
-          <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-            <HistoryIcon className="size-[17px]" />
+          <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+            <HistoryIcon className="size-[15px]" />
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-semibold tracking-wide">Deposit & Withdrawal Records</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">Tap to view your recent transactions</div>
+            <div className="text-[13px] font-medium text-foreground">Transaction history</div>
           </div>
           <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
+
         <AnimatePresence initial={false}>
           {open && (
             <motion.div
@@ -289,7 +284,7 @@ function RecordsSection({ userId }: { userId?: string }) {
                     <button
                       key={t}
                       onClick={() => setTab(t)}
-                      className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-foreground border-b-2 border-foreground" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       {t}
                     </button>
@@ -354,24 +349,23 @@ function Shortcut({ to, icon: Icon, label }: { to: string; icon: any; label: str
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-1.5 rounded-2xl bg-surface border border-border/60 py-3 px-2 hover:bg-surface-elevated active:scale-95 transition"
+      className="flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 active:scale-[0.98] transition"
     >
-      <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-        <Icon className="size-[18px]" />
-      </div>
-      <span className="text-[11px] font-medium text-foreground/90">{label}</span>
+      <Icon className="size-[18px] text-foreground/80" />
+      <span className="text-[11px] font-medium text-foreground/80">{label}</span>
     </Link>
   );
 }
+
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <section>
       <div className="px-1 mb-2">
-        <h2 className="text-[13px] font-semibold tracking-wide text-foreground">{title}</h2>
-        {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{title}</h2>
+        {subtitle && <p className="text-[11px] text-muted-foreground/80 mt-0.5">{subtitle}</p>}
       </div>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         {children}
       </div>
     </section>
@@ -390,20 +384,20 @@ function CollapsibleSection({
   const [open, setOpen] = React.useState(defaultOpen);
   return (
     <section>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
           {Icon && (
-            <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-              <Icon className="size-[17px]" />
+            <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+              <Icon className="size-[15px]" />
             </div>
           )}
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-semibold tracking-wide">{title}</div>
+            <div className="text-[13px] font-medium text-foreground">{title}</div>
             {subtitle && <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</div>}
           </div>
           <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
@@ -427,6 +421,7 @@ function CollapsibleSection({
   );
 }
 
+
 type RowProps = {
   icon: any;
   label: string;
@@ -442,23 +437,24 @@ type RowProps = {
 
 function Row({ icon: Icon, label, value, hint, status, actionLabel, destructive, last, to, onClick }: RowProps) {
   const inner = (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${!last ? "border-b border-border/50" : ""} ${(to || onClick) ? "hover:bg-surface-elevated active:bg-surface-elevated/70 transition" : ""}`}>
-      <div className={`size-9 rounded-xl grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground"}`}>
-        <Icon className="size-[17px]" />
+    <div className={`flex items-center gap-3 px-4 py-3 ${!last ? "border-b border-border/40" : ""} ${(to || onClick) ? "hover:bg-surface-elevated/60 transition" : ""}`}>
+      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground border border-border/40"}`}>
+        <Icon className="size-[15px]" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium truncate ${destructive ? "text-destructive" : "text-foreground"}`}>{label}</div>
+        <div className={`text-[13px] font-medium truncate ${destructive ? "text-destructive" : "text-foreground"}`}>{label}</div>
         {(hint || value) && <div className="text-[11px] text-muted-foreground truncate mt-0.5">{value ?? hint}</div>}
       </div>
       {status && <StatusPill status={status} />}
-      {actionLabel && <span className="text-[11px] font-semibold text-gold">{actionLabel}</span>}
-      {(to || onClick) && !destructive && <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+      {actionLabel && <span className="text-[11px] font-medium text-foreground/70">{actionLabel}</span>}
+      {(to || onClick) && !destructive && <ChevronRight className="size-4 text-muted-foreground/60 shrink-0" />}
     </div>
   );
   if (to) return <Link to={to}>{inner}</Link>;
   if (onClick) return <button type="button" onClick={onClick} className="w-full text-left">{inner}</button>;
   return inner;
 }
+
 
 function StatusPill({ status }: { status: NonNullable<RowProps["status"]> }) {
   const map = {

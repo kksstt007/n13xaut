@@ -50,18 +50,18 @@ export function DepositWithdraw() {
 
   return (
     <>
-      <div className="rounded-xl border border-[#D4AF37]/15 bg-[#0F0F0F] p-6 space-y-6">
-        <div>
-          <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Available Balance
-          </div>
-          <div className="mt-2.5 text-[36px] leading-none font-bold tracking-tight text-foreground tabular-nums">
-            ${fmtUSD(available)}
-          </div>
-          <div className="mt-1.5 text-[11px] text-muted-foreground">USDT · Tether Gold</div>
+      <div className="rounded-2xl border border-border/50 bg-surface p-5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Available
+          </span>
+          <span className="text-[10.5px] font-medium text-muted-foreground tabular-nums">USDT</span>
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mt-3 text-[32px] leading-[1.05] font-semibold tracking-tight text-foreground tabular-nums">
+          ${fmtUSD(available)}
+        </div>
+        <div className="mt-4 h-px bg-border/50" />
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
           <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
           <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
         </div>
@@ -81,13 +81,8 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
       onClick={onClick}
       className={
         isDep
-          ? "h-11 rounded-full text-black text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
-          : "h-11 rounded-full border border-white/10 bg-white/[0.02] text-foreground text-[13px] font-medium inline-flex items-center justify-center gap-1.5 hover:bg-white/[0.04] active:bg-white/[0.06] transition"
-      }
-      style={
-        isDep
-          ? { background: "#D4AF37" }
-          : undefined
+          ? "h-10 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
+          : "h-10 rounded-lg border border-border bg-transparent text-foreground text-[13px] font-medium inline-flex items-center justify-center gap-1.5 hover:bg-surface-elevated transition"
       }
     >
       <Icon className="size-3.5" />
