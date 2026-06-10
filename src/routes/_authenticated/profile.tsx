@@ -284,7 +284,7 @@ function RecordsSection({ userId }: { userId?: string }) {
                     <button
                       key={t}
                       onClick={() => setTab(t)}
-                      className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-foreground border-b-2 border-foreground" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       {t}
                     </button>
