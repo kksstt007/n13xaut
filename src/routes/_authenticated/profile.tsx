@@ -85,58 +85,52 @@ function ProfilePage() {
   const memberSince = profile?.created_at ? new Date(profile.created_at) : null;
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* Profile identity — compact, premium fintech */}
-      <section className="rounded-xl border border-[#D4AF37]/15 bg-[#0F0F0F]">
-        <div className="flex items-center gap-3 p-4">
-          <div className="relative shrink-0">
-            <div className="size-11 rounded-full grid place-items-center text-sm font-semibold bg-[#141414] text-foreground border border-[#D4AF37]/20">
-              {initials}
-            </div>
-            <button
-              onClick={() => setEditOpen(true)}
-              aria-label="Edit profile"
-              className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-[#1a1a1a] border border-white/8 grid place-items-center hover:bg-[#222] transition"
-            >
-              <Pencil className="size-2" />
-            </button>
+    <div className="space-y-5 pb-6">
+      {/* Identity */}
+      <section className="flex items-center gap-3.5 px-1 pt-1">
+        <div className="relative shrink-0">
+          <div className="size-12 rounded-full grid place-items-center text-[13px] font-semibold bg-surface-elevated text-foreground border border-border/60">
+            {initials}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-semibold truncate text-foreground">
-                {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
-              </h1>
-              {kycVerified && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#D4AF37] bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded px-1 py-0.5 tracking-wide">
-                  <ShieldCheck className="size-2.5" />
-                  Verified
-                </span>
-              )}
-            </div>
-            <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className="font-mono tracking-wider">UID {uid}</span>
-              <button
-                onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
-                className="hover:text-foreground transition"
-                aria-label="Copy UID"
-              >
-                <Copy className="size-2.5" />
-              </button>
-            </div>
-            <div className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#C4A055] border border-[#D4AF37]/15 rounded-sm px-1.5 py-[2px] bg-[#D4AF37]/[0.03]">
-              <Star className="size-2 fill-current" />
-              Premium
-            </div>
+          <button
+            onClick={() => setEditOpen(true)}
+            aria-label="Edit profile"
+            className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-border grid place-items-center hover:bg-surface-elevated transition"
+          >
+            <Pencil className="size-2.5 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
+              {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
+            </h1>
+            {kycVerified && (
+              <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="font-mono">UID·{uid}</span>
+            <button
+              onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
+              className="hover:text-foreground transition"
+              aria-label="Copy UID"
+            >
+              <Copy className="size-3" />
+            </button>
+            {memberSince && (
+              <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Premium Deposit & Withdrawal — rich card */}
+      {/* Balance + actions */}
       <section>
         <DepositWithdraw />
       </section>
 
-      {/* Deposit & Withdrawal records */}
+      {/* Records */}
       <RecordsSection userId={user?.id} />
 
       {/* Shortcut grid */}
@@ -145,6 +139,7 @@ function ProfilePage() {
         <Shortcut to="/referrals" icon={Gift} label="Rewards" />
         <Shortcut to="/support" icon={LifeBuoy} label="Support" />
       </section>
+
 
 
       {/* Security center — collapsible */}
