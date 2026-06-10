@@ -19,6 +19,7 @@ import { usePriceFeed, getCurrentPrice } from "@/lib/price-feed";
 import { PriceChart } from "@/components/PriceChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 import { openTrade, settleTrade } from "@/lib/trade.functions";
+import tetherGoldLogo from "@/assets/tether-gold-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/trade")({
   head: () => ({ meta: [{ title: "Trade XAU/USDT — XAUT.trade" }] }),
