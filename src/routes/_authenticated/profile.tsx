@@ -362,10 +362,10 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
   return (
     <section>
       <div className="px-1 mb-2">
-        <h2 className="text-[13px] font-semibold tracking-wide text-foreground">{title}</h2>
-        {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{title}</h2>
+        {subtitle && <p className="text-[11px] text-muted-foreground/80 mt-0.5">{subtitle}</p>}
       </div>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         {children}
       </div>
     </section>
@@ -384,20 +384,20 @@ function CollapsibleSection({
   const [open, setOpen] = React.useState(defaultOpen);
   return (
     <section>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
           {Icon && (
-            <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-              <Icon className="size-[17px]" />
+            <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+              <Icon className="size-[15px]" />
             </div>
           )}
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-semibold tracking-wide">{title}</div>
+            <div className="text-[13px] font-medium text-foreground">{title}</div>
             {subtitle && <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</div>}
           </div>
           <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
@@ -420,6 +420,7 @@ function CollapsibleSection({
     </section>
   );
 }
+
 
 type RowProps = {
   icon: any;
