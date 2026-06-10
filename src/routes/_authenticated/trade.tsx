@@ -19,6 +19,7 @@ import { usePriceFeed, getCurrentPrice } from "@/lib/price-feed";
 import { PriceChart } from "@/components/PriceChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 import { openTrade, settleTrade } from "@/lib/trade.functions";
+import tetherGoldLogo from "@/assets/tether-gold-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/trade")({
   head: () => ({ meta: [{ title: "Trade XAU/USDT — XAUT.trade" }] }),
@@ -181,9 +182,9 @@ function TradePage() {
           </div>
           <div className="text-[10px] text-muted-foreground tracking-wide mt-0.5">Tether Gold · Spot</div>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-surface-elevated border border-border/50">
-          <Wallet className="size-3.5 text-gold" />
-          <span className="text-xs font-medium num">${fmtUSD(balance)}</span>
+        <div className="flex flex-col items-end px-3 py-1.5 rounded-xl bg-surface-elevated border border-border/50 min-w-[88px]">
+          <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground leading-none">Balance</span>
+          <span className="mt-1 text-[12.5px] font-semibold text-foreground tabular-nums leading-none">${fmtUSD(balance)}</span>
         </div>
       </div>
 
@@ -413,17 +414,12 @@ function TradePage() {
 
               {/* Asset Header */}
               <div className="flex items-center gap-3 mb-4">
-                <div
-                  className="size-12 rounded-xl grid place-items-center font-bold text-base shrink-0"
-                  style={{
-                    background: "linear-gradient(145deg, #E8C657, #B8862F)",
-                    color: "oklch(0.18 0.04 265)",
-                    clipPath:
-                      "polygon(50% 0%, 100% 30%, 100% 70%, 50% 100%, 0% 70%, 0% 30%)",
-                  }}
-                >
-                  ₮
-                </div>
+                <img
+                  src={tetherGoldLogo.url}
+                  alt="Tether Gold"
+                  className="size-11 shrink-0 object-contain"
+                  draggable={false}
+                />
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-semibold text-white leading-tight">
                     Tether Gold
