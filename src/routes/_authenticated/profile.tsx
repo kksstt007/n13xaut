@@ -349,15 +349,14 @@ function Shortcut({ to, icon: Icon, label }: { to: string; icon: any; label: str
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-1.5 rounded-2xl bg-surface border border-border/60 py-3 px-2 hover:bg-surface-elevated active:scale-95 transition"
+      className="flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 active:scale-[0.98] transition"
     >
-      <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-        <Icon className="size-[18px]" />
-      </div>
-      <span className="text-[11px] font-medium text-foreground/90">{label}</span>
+      <Icon className="size-[18px] text-foreground/80" />
+      <span className="text-[11px] font-medium text-foreground/80">{label}</span>
     </Link>
   );
 }
+
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
