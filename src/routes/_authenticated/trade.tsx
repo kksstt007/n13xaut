@@ -182,9 +182,9 @@ function TradePage() {
           </div>
           <div className="text-[10px] text-muted-foreground tracking-wide mt-0.5">Tether Gold · Spot</div>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-surface-elevated border border-border/50">
-          <Wallet className="size-3.5 text-gold" />
-          <span className="text-xs font-medium num">${fmtUSD(balance)}</span>
+        <div className="flex flex-col items-end px-3 py-1.5 rounded-xl bg-surface-elevated border border-border/50 min-w-[88px]">
+          <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground leading-none">Balance</span>
+          <span className="mt-1 text-[12.5px] font-semibold text-foreground tabular-nums leading-none">${fmtUSD(balance)}</span>
         </div>
       </div>
 
