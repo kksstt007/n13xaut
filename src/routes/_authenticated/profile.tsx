@@ -252,22 +252,22 @@ function RecordsSection({ userId }: { userId?: string }) {
 
   return (
     <section>
-      <div className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
+      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated active:bg-surface-elevated/70 transition"
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
-          <div className="size-9 rounded-xl grid place-items-center bg-gold/10 text-gold">
-            <HistoryIcon className="size-[17px]" />
+          <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+            <HistoryIcon className="size-[15px]" />
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-semibold tracking-wide">Deposit & Withdrawal Records</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">Tap to view your recent transactions</div>
+            <div className="text-[13px] font-medium text-foreground">Transaction history</div>
           </div>
           <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
+
         <AnimatePresence initial={false}>
           {open && (
             <motion.div
