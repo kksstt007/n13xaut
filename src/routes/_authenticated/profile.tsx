@@ -437,23 +437,24 @@ type RowProps = {
 
 function Row({ icon: Icon, label, value, hint, status, actionLabel, destructive, last, to, onClick }: RowProps) {
   const inner = (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${!last ? "border-b border-border/50" : ""} ${(to || onClick) ? "hover:bg-surface-elevated active:bg-surface-elevated/70 transition" : ""}`}>
-      <div className={`size-9 rounded-xl grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground"}`}>
-        <Icon className="size-[17px]" />
+    <div className={`flex items-center gap-3 px-4 py-3 ${!last ? "border-b border-border/40" : ""} ${(to || onClick) ? "hover:bg-surface-elevated/60 transition" : ""}`}>
+      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground border border-border/40"}`}>
+        <Icon className="size-[15px]" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium truncate ${destructive ? "text-destructive" : "text-foreground"}`}>{label}</div>
+        <div className={`text-[13px] font-medium truncate ${destructive ? "text-destructive" : "text-foreground"}`}>{label}</div>
         {(hint || value) && <div className="text-[11px] text-muted-foreground truncate mt-0.5">{value ?? hint}</div>}
       </div>
       {status && <StatusPill status={status} />}
-      {actionLabel && <span className="text-[11px] font-semibold text-gold">{actionLabel}</span>}
-      {(to || onClick) && !destructive && <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+      {actionLabel && <span className="text-[11px] font-medium text-foreground/70">{actionLabel}</span>}
+      {(to || onClick) && !destructive && <ChevronRight className="size-4 text-muted-foreground/60 shrink-0" />}
     </div>
   );
   if (to) return <Link to={to}>{inner}</Link>;
   if (onClick) return <button type="button" onClick={onClick} className="w-full text-left">{inner}</button>;
   return inner;
 }
+
 
 function StatusPill({ status }: { status: NonNullable<RowProps["status"]> }) {
   const map = {
