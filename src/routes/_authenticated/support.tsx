@@ -31,27 +31,26 @@ function SupportPage() {
           onClick={() => {
             const w = window as any;
             const tryOpen = () => {
-              if (w.SMLivechat?.open) { w.SMLivechat.open(); return true; }
-              if (w.salesmartly?.open) { w.salesmartly.open(); return true; }
-              if (typeof w.openSalesmartly === "function") { w.openSalesmartly(); return true; }
-              const widget = document.querySelector<HTMLElement>(
-                "salesmartly-chat-widget, #salesmartly-container, [id^='salesmartly'], [class*='salesmartly'], [class*='sm-launcher'], [class*='sm-live']"
+              try {
+                if (typeof w.ssq === "function") { w.ssq("chatOpen"); return true; }
+                if (w.ssmEvent?.track) { w.ssmEvent.track("chatOpen"); return true; }
+              } catch { /* noop */ }
+              const root: ParentNode = w.__SS_CHAT_SHADOWROOT__ ?? document;
+              const widget = root.querySelector<HTMLElement>(
+                "salesmartly-chat-widget, #s-chat-code, [class*='launcher'], [class*='entry'], [class*='chat-icon']"
               );
-              if (widget) {
-                const btn = widget.shadowRoot?.querySelector<HTMLElement>("button, [role='button'], .launcher, .sm-launcher")
-                  || widget.querySelector<HTMLElement>("button, [role='button']")
-                  || widget;
-                btn.click();
-                return true;
-              }
+              const btn = widget?.shadowRoot?.querySelector<HTMLElement>("button, [role='button'], [class*='launcher'], [class*='entry']")
+                ?? widget?.querySelector?.<HTMLElement>("button, [role='button']")
+                ?? widget;
+              if (btn) { btn.click(); return true; }
               return false;
             };
             if (!tryOpen()) {
               let tries = 0;
               const id = setInterval(() => {
                 tries++;
-                if (tryOpen() || tries > 20) clearInterval(id);
-              }, 300);
+                if (tryOpen() || tries > 30) clearInterval(id);
+              }, 250);
             }
           }}
           className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-surface-elevated transition"
