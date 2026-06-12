@@ -123,9 +123,10 @@ function TradePage() {
     if (!active || result || settlingRef.current) return;
     if (now < active.closesAt) return;
     settlingRef.current = true;
-    settleServer({ data: { tradeId: active.id, closePrice: getCurrentPrice() } })
+    settleServer({ data: { tradeId: active.id } })
       .then((r: any) => {
         setResult({ result: r.result, pnl: Number(r.pnl), closePrice: getCurrentPrice() });
+
         qc.invalidateQueries();
       })
       .catch((e: any) => {
