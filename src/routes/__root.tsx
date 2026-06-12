@@ -20,14 +20,49 @@ function NotFoundComponent() {
   );
 }
 
+function isChunkLoadError(error: unknown): boolean {
+  const msg = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
+  return (
+    msg.includes("importing a module script failed") ||
+    msg.includes("failed to fetch dynamically imported module") ||
+    msg.includes("error loading dynamically imported module") ||
+    msg.includes("dynamically imported module") ||
+    msg.includes("chunkloaderror") ||
+    msg.includes("unknown variable dynamic import")
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  const chunkErr = isChunkLoadError(error);
+
+  React.useEffect(() => {
+    if (!chunkErr || typeof window === "undefined") return;
+    const KEY = "__xaut_chunk_reload__";
+    const last = Number(sessionStorage.getItem(KEY) ?? "0");
+    if (Date.now() - last > 10_000) {
+      sessionStorage.setItem(KEY, String(Date.now()));
+      window.location.reload();
+    }
+  }, [chunkErr]);
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-gradient-gold px-4 py-2 text-sm text-primary-foreground">Try again</button>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {chunkErr ? "A new version is available. Reloading…" : error.message}
+        </p>
+        <button
+          onClick={() => {
+            if (chunkErr && typeof window !== "undefined") { window.location.reload(); return; }
+            router.invalidate();
+            reset();
+          }}
+          className="mt-6 rounded-md bg-gradient-gold px-4 py-2 text-sm text-primary-foreground"
+        >
+          Try again
+        </button>
       </div>
     </div>
   );
