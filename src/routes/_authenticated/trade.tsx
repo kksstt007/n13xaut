@@ -90,7 +90,8 @@ function TradePage() {
 
   const openMut = useMutation({
     mutationFn: (dir: "buy" | "sell") =>
-      openServer({ data: { direction: dir, amount, durationSec: duration, openPrice: price } }),
+      openServer({ data: { direction: dir, amount, durationSec: duration } }),
+
     onSuccess: ({ trade }: any) => {
       setSheet(null);
       setResult(null);
@@ -122,9 +123,10 @@ function TradePage() {
     if (!active || result || settlingRef.current) return;
     if (now < active.closesAt) return;
     settlingRef.current = true;
-    settleServer({ data: { tradeId: active.id, closePrice: getCurrentPrice() } })
+    settleServer({ data: { tradeId: active.id } })
       .then((r: any) => {
         setResult({ result: r.result, pnl: Number(r.pnl), closePrice: getCurrentPrice() });
+
         qc.invalidateQueries();
       })
       .catch((e: any) => {
@@ -141,7 +143,7 @@ function TradePage() {
       positions.forEach((p: any) => {
         if (active?.id === p.id) return;
         if (new Date(p.closes_at).getTime() <= ts) {
-          settleServer({ data: { tradeId: p.id, closePrice: getCurrentPrice() } })
+          settleServer({ data: { tradeId: p.id } })
             .then(() => qc.invalidateQueries())
             .catch(() => {});
         }
