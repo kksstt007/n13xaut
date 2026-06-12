@@ -143,7 +143,7 @@ function TradePage() {
       positions.forEach((p: any) => {
         if (active?.id === p.id) return;
         if (new Date(p.closes_at).getTime() <= ts) {
-          settleServer({ data: { tradeId: p.id, closePrice: getCurrentPrice() } })
+          settleServer({ data: { tradeId: p.id } })
             .then(() => qc.invalidateQueries())
             .catch(() => {});
         }
