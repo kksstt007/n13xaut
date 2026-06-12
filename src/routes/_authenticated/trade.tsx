@@ -90,7 +90,8 @@ function TradePage() {
 
   const openMut = useMutation({
     mutationFn: (dir: "buy" | "sell") =>
-      openServer({ data: { direction: dir, amount, durationSec: duration, openPrice: price } }),
+      openServer({ data: { direction: dir, amount, durationSec: duration } }),
+
     onSuccess: ({ trade }: any) => {
       setSheet(null);
       setResult(null);
