@@ -57,15 +57,15 @@ export function DepositWithdraw() {
           </span>
           <span className="text-[10.5px] font-medium text-muted-foreground tabular-nums">USDT</span>
         </div>
-        <div className="mt-3 text-[32px] leading-[1.05] font-semibold tracking-tight text-foreground tabular-nums">
+        <div className="mt-1 text-[30px] leading-[1.1] font-semibold tracking-tight text-foreground tabular-nums">
           ${fmtUSD(available)}
         </div>
-        <div className="mt-4 h-px bg-border/50" />
         <div className="mt-4 grid grid-cols-2 gap-2.5">
           <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
           <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
         </div>
       </div>
+
 
       <FundsSheet open={open === "deposit"} mode="deposit" onClose={() => setOpen(null)} available={available} />
       <FundsSheet open={open === "withdraw"} mode="withdraw" onClose={() => setOpen(null)} available={available} />
@@ -81,14 +81,15 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
       onClick={onClick}
       className={
         isDep
-          ? "h-10 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
-          : "h-10 rounded-lg border border-border bg-transparent text-foreground text-[13px] font-medium inline-flex items-center justify-center gap-1.5 hover:bg-surface-elevated transition"
+          ? "h-11 rounded-xl bg-foreground text-background text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
+          : "h-11 rounded-xl border border-border bg-surface-elevated text-foreground text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-surface-elevated/80 active:opacity-90 transition"
       }
     >
       <Icon className="size-3.5" />
       {isDep ? "Deposit" : "Withdraw"}
     </button>
   );
+
 }
 
 /* ----------------------------- Funds sheet ---------------------------- */

@@ -67,31 +67,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {bottomNav.map((n) => {
             const Icon = n.icon;
             const active = isActive(path, n.to);
-            if (n.primary) {
-              return (
-                <li key={n.to} className="relative flex items-center justify-center">
-                  <Link
-                    to={n.to}
-                    aria-label={n.label}
-                    className="absolute -top-5 size-14 rounded-full bg-gradient-gold grid place-items-center shadow-gold-soft active:scale-95 transition"
-                  >
-                    <Icon className="size-6 text-primary-foreground" strokeWidth={2.2} />
-                  </Link>
-                  <span className={`absolute bottom-2 text-[10px] font-medium tracking-wide ${active ? "text-gold" : "text-muted-foreground"}`}>{n.label}</span>
-                </li>
-              );
-            }
             return (
               <li key={n.to}>
                 <Link
                   to={n.to}
-                  className="h-full flex flex-col items-center justify-center gap-1 active:scale-95 transition"
+                  className="relative h-full flex flex-col items-center justify-center gap-1 active:scale-95 transition"
                 >
+                  {active && (
+                    <span className="absolute top-0 h-[2px] w-8 rounded-full bg-gold" aria-hidden />
+                  )}
                   <Icon
                     className={`size-[22px] ${active ? "text-gold" : "text-muted-foreground"}`}
                     strokeWidth={active ? 2.2 : 1.7}
                   />
-                  <span className={`text-[10px] font-medium tracking-wide ${active ? "text-foreground" : "text-muted-foreground"}`}>
+                  <span className={`text-[10px] font-medium tracking-wide ${active ? "text-gold" : "text-muted-foreground"}`}>
                     {n.label}
                   </span>
                 </Link>
@@ -99,6 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </ul>
+
       </nav>
 
       {/* Slide-in menu (preserves access to all routes) */}
