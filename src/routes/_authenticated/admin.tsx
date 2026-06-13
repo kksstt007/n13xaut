@@ -78,6 +78,10 @@ function useAdminQuery<T>(key: any[], q: () => Promise<T>) {
 function UsersAdmin() {
   const qc = useQueryClient();
   const [q, setQ] = React.useState("");
+  const [resetFor, setResetFor] = React.useState<any>(null);
+  const [newPw, setNewPw] = React.useState("");
+  const [showPw, setShowPw] = React.useState(false);
+  const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: wallets } = await supabase.from("wallets").select("*");
@@ -99,11 +103,24 @@ function UsersAdmin() {
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: any) => toast.error(e.message),
   });
+  const resetPw = useMutation({
+    mutationFn: async ({ uid, pw }: { uid: string; pw: string }) =>
+      resetPwFn({ data: { userId: uid, newPassword: pw } }),
+    onSuccess: () => { toast.success("Password reset successfully"); setResetFor(null); setNewPw(""); },
+    onError: (e: any) => toast.error(e.message ?? "Failed to reset password"),
+  });
+  const genStrong = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+    const buf = new Uint32Array(16);
+    crypto.getRandomValues(buf);
+    return Array.from(buf, (n) => chars[n % chars.length]).join("");
+  };
   const filtered = (data ?? []).filter((u: any) => {
     if (!q) return true;
     const s = q.toLowerCase();
     return (u.display_name ?? "").toLowerCase().includes(s) || (u.referral_code ?? "").toLowerCase().includes(s) || u.id.toLowerCase().includes(s);
   });
+
   return (
     <div className="space-y-3">
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, code, or user ID…"
