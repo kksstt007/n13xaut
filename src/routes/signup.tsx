@@ -14,16 +14,26 @@ function SignupPage() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast.error("You must accept the Terms and Conditions to continue");
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
-        data: { display_name: name },
+        data: {
+          display_name: name,
+          terms_accepted: true,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: "2026-06-01",
+        },
       },
     });
     if (error) {
@@ -49,6 +59,7 @@ function SignupPage() {
     nav({ to: "/login" });
   };
 
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="flex items-center justify-center p-6 md:p-12 order-2 lg:order-1">
@@ -66,9 +77,25 @@ function SignupPage() {
             <input required type="password" placeholder="Password (min 8 chars)" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg bg-input border border-border px-4 py-3 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-ring transition" />
           </div>
-          <button disabled={loading} className="w-full rounded-lg bg-gradient-gold py-3 text-sm font-semibold text-primary-foreground shadow-gold disabled:opacity-60">
+          <label className="flex items-start gap-2.5 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 size-4 rounded border-border bg-input accent-gold cursor-pointer flex-shrink-0"
+            />
+            <span>
+              I confirm that I am at least 18 years old and I have read and agree to the{" "}
+              <Link to="/terms" target="_blank" className="text-gold hover:underline font-medium">
+                Terms and Conditions
+              </Link>
+              , including the risk disclosure for trading Tether Gold (XAUT).
+            </span>
+          </label>
+          <button disabled={loading || !acceptedTerms} className="w-full rounded-lg bg-gradient-gold py-3 text-sm font-semibold text-primary-foreground shadow-gold disabled:opacity-60 disabled:cursor-not-allowed">
             {loading ? "Creating…" : "Create account"}
           </button>
+
           <p className="text-center text-sm text-muted-foreground">
             Already have one? <Link to="/login" className="text-gold hover:underline">Sign in</Link>
           </p>

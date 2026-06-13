@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import * as React from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
+import { adminResetUserPassword } from "@/lib/admin.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — XAUT.trade" }] }),
@@ -75,6 +78,10 @@ function useAdminQuery<T>(key: any[], q: () => Promise<T>) {
 function UsersAdmin() {
   const qc = useQueryClient();
   const [q, setQ] = React.useState("");
+  const [resetFor, setResetFor] = React.useState<any>(null);
+  const [newPw, setNewPw] = React.useState("");
+  const [showPw, setShowPw] = React.useState(false);
+  const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: wallets } = await supabase.from("wallets").select("*");
@@ -96,11 +103,24 @@ function UsersAdmin() {
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: any) => toast.error(e.message),
   });
+  const resetPw = useMutation({
+    mutationFn: async ({ uid, pw }: { uid: string; pw: string }) =>
+      resetPwFn({ data: { userId: uid, newPassword: pw } }),
+    onSuccess: () => { toast.success("Password reset successfully"); setResetFor(null); setNewPw(""); },
+    onError: (e: any) => toast.error(e.message ?? "Failed to reset password"),
+  });
+  const genStrong = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+    const buf = new Uint32Array(16);
+    crypto.getRandomValues(buf);
+    return Array.from(buf, (n) => chars[n % chars.length]).join("");
+  };
   const filtered = (data ?? []).filter((u: any) => {
     if (!q) return true;
     const s = q.toLowerCase();
     return (u.display_name ?? "").toLowerCase().includes(s) || (u.referral_code ?? "").toLowerCase().includes(s) || u.id.toLowerCase().includes(s);
   });
+
   return (
     <div className="space-y-3">
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, code, or user ID…"
@@ -144,6 +164,8 @@ function UsersAdmin() {
                       className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
                     <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
                       className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                    <button onClick={() => { setResetFor(u); setNewPw(genStrong()); setShowPw(true); }}
+                      className="text-[10px] px-2 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25">Reset password</button>
                   </div>
                 </td>
               </tr>
@@ -151,9 +173,55 @@ function UsersAdmin() {
           })}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No users</td></tr>}</tbody>
         </table>
       </div>
+
+      {resetFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !resetPw.isPending && setResetFor(null)}>
+          <div className="glass rounded-xl p-5 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold">Reset password</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {resetFor.display_name ?? "User"} · <span className="font-mono">{resetFor.id.slice(0, 8)}…</span>
+              </p>
+              <p className="text-xs text-gold mt-2">
+                ⚠ The user's existing sessions will keep working until token refresh. Share the new password securely.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">New password (min 8 characters)</label>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type={showPw ? "text" : "password"}
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="flex-1 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-gold/50"
+                />
+                <button type="button" onClick={() => setShowPw((v) => !v)} className="text-xs px-2 rounded border border-border text-muted-foreground hover:text-foreground">
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+              <div className="flex gap-2 text-xs">
+                <button type="button" onClick={() => setNewPw(genStrong())} className="px-2 py-1 rounded bg-muted/40 hover:bg-muted/60 text-muted-foreground">Generate</button>
+                <button type="button" onClick={() => { navigator.clipboard.writeText(newPw); toast.success("Copied"); }} className="px-2 py-1 rounded bg-muted/40 hover:bg-muted/60 text-muted-foreground">Copy</button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setResetFor(null)} disabled={resetPw.isPending} className="text-xs px-3 py-1.5 rounded text-muted-foreground hover:text-foreground">Cancel</button>
+              <button
+                disabled={resetPw.isPending || newPw.length < 8}
+                onClick={() => resetPw.mutate({ uid: resetFor.id, pw: newPw })}
+                className="text-xs px-3 py-1.5 rounded bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-50"
+              >
+                {resetPw.isPending ? "Resetting…" : "Confirm reset"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function useRealtimeInvalidate(table: string, queryKey: string, onNewPending?: (row: any) => void) {
   const qc = useQueryClient();
