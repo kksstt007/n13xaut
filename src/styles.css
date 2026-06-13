@@ -170,3 +170,22 @@
     font-size: 16px !important;
   }
 }
+
+/* Salesmartly chat widget — lift above bottom nav on mobile so it doesn't overlap Profile */
+#s-chat-code,
+#salesmartly-chat,
+[id^="salesmartly"],
+[class*="salesmartly"],
+salesmartly-chat-widget {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
+  z-index: 30 !important;
+}
+@media (min-width: 768px) {
+  #s-chat-code,
+  #salesmartly-chat,
+  [id^="salesmartly"],
+  [class*="salesmartly"],
+  salesmartly-chat-widget {
+    bottom: 24px !important;
+  }
+}
