@@ -164,6 +164,8 @@ function UsersAdmin() {
                       className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
                     <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
                       className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                    <button onClick={() => { setResetFor(u); setNewPw(genStrong()); setShowPw(true); }}
+                      className="text-[10px] px-2 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25">Reset password</button>
                   </div>
                 </td>
               </tr>
@@ -171,9 +173,55 @@ function UsersAdmin() {
           })}{!filtered.length && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No users</td></tr>}</tbody>
         </table>
       </div>
+
+      {resetFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !resetPw.isPending && setResetFor(null)}>
+          <div className="glass rounded-xl p-5 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold">Reset password</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {resetFor.display_name ?? "User"} · <span className="font-mono">{resetFor.id.slice(0, 8)}…</span>
+              </p>
+              <p className="text-xs text-gold mt-2">
+                ⚠ The user's existing sessions will keep working until token refresh. Share the new password securely.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">New password (min 8 characters)</label>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type={showPw ? "text" : "password"}
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="flex-1 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-gold/50"
+                />
+                <button type="button" onClick={() => setShowPw((v) => !v)} className="text-xs px-2 rounded border border-border text-muted-foreground hover:text-foreground">
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+              <div className="flex gap-2 text-xs">
+                <button type="button" onClick={() => setNewPw(genStrong())} className="px-2 py-1 rounded bg-muted/40 hover:bg-muted/60 text-muted-foreground">Generate</button>
+                <button type="button" onClick={() => { navigator.clipboard.writeText(newPw); toast.success("Copied"); }} className="px-2 py-1 rounded bg-muted/40 hover:bg-muted/60 text-muted-foreground">Copy</button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setResetFor(null)} disabled={resetPw.isPending} className="text-xs px-3 py-1.5 rounded text-muted-foreground hover:text-foreground">Cancel</button>
+              <button
+                disabled={resetPw.isPending || newPw.length < 8}
+                onClick={() => resetPw.mutate({ uid: resetFor.id, pw: newPw })}
+                className="text-xs px-3 py-1.5 rounded bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-50"
+              >
+                {resetPw.isPending ? "Resetting…" : "Confirm reset"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function useRealtimeInvalidate(table: string, queryKey: string, onNewPending?: (row: any) => void) {
   const qc = useQueryClient();
