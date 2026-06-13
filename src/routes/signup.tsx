@@ -14,16 +14,26 @@ function SignupPage() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast.error("You must accept the Terms and Conditions to continue");
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
-        data: { display_name: name },
+        data: {
+          display_name: name,
+          terms_accepted: true,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: "2026-06-01",
+        },
       },
     });
     if (error) {
@@ -48,6 +58,7 @@ function SignupPage() {
     toast.success("Account created. Check your email to verify.");
     nav({ to: "/login" });
   };
+
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
