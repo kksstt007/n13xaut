@@ -77,9 +77,25 @@ function SignupPage() {
             <input required type="password" placeholder="Password (min 8 chars)" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg bg-input border border-border px-4 py-3 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-ring transition" />
           </div>
-          <button disabled={loading} className="w-full rounded-lg bg-gradient-gold py-3 text-sm font-semibold text-primary-foreground shadow-gold disabled:opacity-60">
+          <label className="flex items-start gap-2.5 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 size-4 rounded border-border bg-input accent-gold cursor-pointer flex-shrink-0"
+            />
+            <span>
+              I confirm that I am at least 18 years old and I have read and agree to the{" "}
+              <Link to="/terms" target="_blank" className="text-gold hover:underline font-medium">
+                Terms and Conditions
+              </Link>
+              , including the risk disclosure for trading Tether Gold (XAUT).
+            </span>
+          </label>
+          <button disabled={loading || !acceptedTerms} className="w-full rounded-lg bg-gradient-gold py-3 text-sm font-semibold text-primary-foreground shadow-gold disabled:opacity-60 disabled:cursor-not-allowed">
             {loading ? "Creating…" : "Create account"}
           </button>
+
           <p className="text-center text-sm text-muted-foreground">
             Already have one? <Link to="/login" className="text-gold hover:underline">Sign in</Link>
           </p>
