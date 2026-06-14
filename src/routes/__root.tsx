@@ -123,12 +123,68 @@ function AuthSync() {
   return null;
 }
 
+function SalesmartlyPositionFix() {
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const fix = () => {
+      const selectors = [
+        "#s-chat-code",
+        "#salesmartly-chat",
+        '[id^="salesmartly"]',
+        '[class*="salesmartly"]',
+        "salesmartly-chat-widget",
+        ".ss-widget-container",
+        ".ss-chat-widget",
+        ".ss-launcher",
+        "#ss-widget",
+        "#ss-launcher",
+      ];
+      for (const sel of selectors) {
+        document.querySelectorAll(sel).forEach((el) => {
+          const elAny = el as any;
+          if (elAny.style) {
+            elAny.style.setProperty("bottom", "calc(env(safe-area-inset-bottom, 0px) + 120px)", "important");
+            elAny.style.setProperty("z-index", "30", "important");
+          }
+          // If it's an iframe or has shadow DOM, try to inject style there too
+          if (elAny.shadowRoot) {
+            const existing = elAny.shadowRoot.querySelector("#ss-position-fix");
+            if (!existing) {
+              const style = document.createElement("style");
+              style.id = "ss-position-fix";
+              style.textContent = `
+                :host, :host > * {
+                  bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
+                  z-index: 30 !important;
+                }
+              `;
+              elAny.shadowRoot.appendChild(style);
+            }
+          }
+        });
+      }
+    };
+    fix();
+    const id = setInterval(fix, 500);
+    // Also fix after the async script likely loads
+    const timeoutId = setTimeout(fix, 2000);
+    const timeoutId2 = setTimeout(fix, 5000);
+    return () => {
+      clearInterval(id);
+      clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
+    };
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthSync />
+        <SalesmartlyPositionFix />
         <Outlet />
         <Toaster richColors position="top-right" theme="dark" />
       </AuthProvider>
