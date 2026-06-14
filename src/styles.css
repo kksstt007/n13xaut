@@ -171,13 +171,20 @@
   }
 }
 
-/* Salesmartly chat widget — lift above bottom nav on mobile so it doesn't overlap Profile */
+/* Salesmartly chat widget — lift above bottom nav on mobile */
 #s-chat-code,
 #salesmartly-chat,
 [id^="salesmartly"],
 [class*="salesmartly"],
-salesmartly-chat-widget {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
+salesmartly-chat-widget,
+.ss-widget-container,
+.ss-chat-widget,
+.ss-launcher,
+#ss-widget,
+#ss-launcher,
+iframe[src*="salesmartly"],
+iframe[src*="ss-chat"] {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
   z-index: 30 !important;
 }
 @media (min-width: 768px) {
@@ -185,7 +192,14 @@ salesmartly-chat-widget {
   #salesmartly-chat,
   [id^="salesmartly"],
   [class*="salesmartly"],
-  salesmartly-chat-widget {
+  salesmartly-chat-widget,
+  .ss-widget-container,
+  .ss-chat-widget,
+  .ss-launcher,
+  #ss-widget,
+  #ss-launcher,
+  iframe[src*="salesmartly"],
+  iframe[src*="ss-chat"] {
     bottom: 24px !important;
   }
 }
