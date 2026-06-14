@@ -126,57 +126,46 @@ function AuthSync() {
 function SalesmartlyPositionFix() {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+    const SELECTORS = [
+      "#s-chat-code", "#salesmartly-chat", '[id^="salesmartly"]', '[class*="salesmartly"]',
+      "salesmartly-chat-widget", ".ss-widget-container", ".ss-chat-widget",
+      ".ss-launcher", "#ss-widget", "#ss-launcher",
+    ];
+    const apply = (el: HTMLElement) => {
+      el.style.setProperty("bottom", "calc(env(safe-area-inset-bottom, 0px) + 120px)", "important");
+      el.style.setProperty("z-index", "30", "important");
+    };
     const fix = () => {
-      const selectors = [
-        "#s-chat-code",
-        "#salesmartly-chat",
-        '[id^="salesmartly"]',
-        '[class*="salesmartly"]',
-        "salesmartly-chat-widget",
-        ".ss-widget-container",
-        ".ss-chat-widget",
-        ".ss-launcher",
-        "#ss-widget",
-        "#ss-launcher",
-      ];
-      for (const sel of selectors) {
-        document.querySelectorAll(sel).forEach((el) => {
-          const elAny = el as any;
-          if (elAny.style) {
-            elAny.style.setProperty("bottom", "calc(env(safe-area-inset-bottom, 0px) + 120px)", "important");
-            elAny.style.setProperty("z-index", "30", "important");
-          }
-          // If it's an iframe or has shadow DOM, try to inject style there too
-          if (elAny.shadowRoot) {
-            const existing = elAny.shadowRoot.querySelector("#ss-position-fix");
-            if (!existing) {
-              const style = document.createElement("style");
-              style.id = "ss-position-fix";
-              style.textContent = `
-                :host, :host > * {
-                  bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
-                  z-index: 30 !important;
-                }
-              `;
-              elAny.shadowRoot.appendChild(style);
-            }
-          }
-        });
+      for (const sel of SELECTORS) {
+        document.querySelectorAll<HTMLElement>(sel).forEach(apply);
       }
     };
     fix();
-    const id = setInterval(fix, 500);
-    // Also fix after the async script likely loads
-    const timeoutId = setTimeout(fix, 2000);
-    const timeoutId2 = setTimeout(fix, 5000);
+    // Observe DOM for the async widget instead of polling forever.
+    const mo = new MutationObserver(() => fix());
+    mo.observe(document.body, { childList: true, subtree: true });
+    // Stop observing after the widget settles (~10s) to avoid perf cost.
+    const stopId = window.setTimeout(() => mo.disconnect(), 10_000);
+
+    // Silence noisy 3rd-party widget rejections (network/timeout/dynamic import)
+    // so they don't surface in our runtime error UI.
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const msg = String((e.reason as any)?.message ?? e.reason ?? "");
+      if (/salesmartly|widget-v2|chunk-common|Network Error|timeout of \d+ms|Unknown variable dynamic import/i.test(msg)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("unhandledrejection", onRejection);
+
     return () => {
-      clearInterval(id);
-      clearTimeout(timeoutId);
-      clearTimeout(timeoutId2);
+      mo.disconnect();
+      window.clearTimeout(stopId);
+      window.removeEventListener("unhandledrejection", onRejection);
     };
   }, []);
   return null;
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

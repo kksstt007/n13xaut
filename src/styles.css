@@ -101,7 +101,7 @@
 }
 
 @layer base {
-  html { color-scheme: dark; }
+  html { color-scheme: dark; overflow-x: hidden; }
   * { border-color: var(--color-border); }
   body {
     background: var(--background);
@@ -109,11 +109,24 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
   ::selection { background: oklch(0.80 0.115 86 / 0.35); }
   button, a { -webkit-tap-highlight-color: transparent; }
+  /* Smoother, more human-feeling default transitions */
+  button, a, [role="button"] {
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+      transform .18s cubic-bezier(.22,1,.36,1), opacity .18s ease, box-shadow .25s ease;
+  }
+  :focus-visible {
+    outline: 2px solid oklch(0.78 0.13 84 / 0.55);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  img { max-width: 100%; height: auto; }
 }
+
 
 @layer utilities {
   .glass {
