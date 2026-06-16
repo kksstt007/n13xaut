@@ -152,3 +152,110 @@ export function usePriceFeed(historySize = 60) {
 export function getCurrentPrice() {
   return price;
 }
+
+// ── Candles ─────────────────────────────────────────────────────────────────
+export type Candle = { t: number; o: number; h: number; l: number; c: number };
+
+// Map app timeframe → CoinGecko `days` param (and Binance fallback interval).
+type Tf = "1D" | "1W" | "1M" | "6M" | "1Y" | "ALL";
+const TF_CG: Record<Tf, string> = {
+  "1D": "1",
+  "1W": "7",
+  "1M": "30",
+  "6M": "180",
+  "1Y": "365",
+  ALL: "max",
+};
+const TF_BINANCE: Record<Tf, { interval: string; limit: number }> = {
+  "1D": { interval: "30m", limit: 48 },
+  "1W": { interval: "4h", limit: 42 },
+  "1M": { interval: "12h", limit: 60 },
+  "6M": { interval: "1d", limit: 180 },
+  "1Y": { interval: "3d", limit: 122 },
+  ALL: { interval: "1w", limit: 200 },
+};
+
+async function fetchOhlcCoinGecko(tf: Tf): Promise<Candle[] | null> {
+  try {
+    const r = await fetch(
+      `https://api.coingecko.com/api/v3/coins/tether-gold/ohlc?vs_currency=usd&days=${TF_CG[tf]}`,
+      { cache: "no-store" },
+    );
+    if (!r.ok) return null;
+    const j: any = await r.json();
+    if (!Array.isArray(j) || !j.length) return null;
+    return j
+      .map((row: any[]) => ({
+        t: Number(row[0]),
+        o: Number(row[1]),
+        h: Number(row[2]),
+        l: Number(row[3]),
+        c: Number(row[4]),
+      }))
+      .filter((c) => [c.t, c.o, c.h, c.l, c.c].every(Number.isFinite));
+  } catch {
+    return null;
+  }
+}
+
+async function fetchOhlcBinance(tf: Tf): Promise<Candle[] | null> {
+  try {
+    const { interval, limit } = TF_BINANCE[tf];
+    const r = await fetch(
+      `https://api.binance.com/api/v3/klines?symbol=XAUTUSDT&interval=${interval}&limit=${limit}`,
+      { cache: "no-store" },
+    );
+    if (!r.ok) return null;
+    const j: any = await r.json();
+    if (!Array.isArray(j) || !j.length) return null;
+    return j
+      .map((row: any[]) => ({
+        t: Number(row[0]),
+        o: Number(row[1]),
+        h: Number(row[2]),
+        l: Number(row[3]),
+        c: Number(row[4]),
+      }))
+      .filter((c) => [c.t, c.o, c.h, c.l, c.c].every(Number.isFinite));
+  } catch {
+    return null;
+  }
+}
+
+export function useCandles(tf: Tf) {
+  const [data, setData] = React.useState<Candle[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    const load = async () => {
+      // Try CoinGecko first, then Binance.
+      let candles =
+        (await fetchOhlcCoinGecko(tf)) ??
+        (await fetchOhlcBinance(tf));
+
+      if (cancelled) return;
+      if (!candles || !candles.length) {
+        setData([]);
+        setLoading(false);
+        return;
+      }
+      setData(candles);
+      setLoading(false);
+    };
+
+    load();
+    // Refresh on a sensible cadence for the selected timeframe.
+    const refreshMs = tf === "1D" ? 30_000 : tf === "1W" ? 60_000 : 5 * 60_000;
+    const t = setInterval(load, refreshMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [tf]);
+
+  return { data, loading };
+}
