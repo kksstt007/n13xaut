@@ -489,7 +489,7 @@ function TradePage() {
                             active ? "text-[#1a1a2e]/70" : "text-white/40"
                           }`}
                         >
-                          Ror:{d.ror}%
+                          +{d.ror}% payout
                         </span>
                       </button>
                     );
