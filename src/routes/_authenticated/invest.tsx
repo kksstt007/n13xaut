@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Coins,
@@ -6,7 +6,6 @@ import {
   Calendar,
   ShieldCheck,
   ArrowRight,
-  Sparkles,
   Loader2,
   Wallet,
 } from "lucide-react";
@@ -149,7 +148,7 @@ function InvestPage() {
         className="space-y-3"
       >
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold/30 bg-gold/5 text-gold text-[11px] uppercase tracking-[0.18em]">
-          <Sparkles className="size-3.5" /> Gold Investment
+          <Coins className="size-3.5" /> Gold Investment
         </div>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
           Earn daily yield on XAUT-backed gold plans
@@ -306,12 +305,12 @@ function WalletStrip() {
           </div>
         </div>
       </div>
-      <a
-        href="/wallet"
+      <Link
+        to="/profile"
         className="text-xs text-gold hover:underline underline-offset-4"
       >
         Manage
-      </a>
+      </Link>
     </div>
   );
 }
@@ -335,7 +334,8 @@ function InvestDialog({ plan, onClose }: { plan: Plan | null; onClose: () => voi
   const endDate = useMemo(() => {
     if (!plan) return null;
     return new Date(Date.now() + plan.termDays * 86400_000);
-  }, [plan]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan?.level, plan?.termDays]);
 
   const m = useMutation({
     mutationFn: async () => fn({ data: { level: plan!.level, amount: value } }),

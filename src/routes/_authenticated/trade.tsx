@@ -8,9 +8,7 @@ import {
   ChevronLeft,
   ArrowUp,
   ArrowDown,
-  Wallet,
   Clock,
-  TrendingUp,
   Activity,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,7 +183,7 @@ function TradePage() {
               LIVE
             </span>
           </div>
-          <div className="text-[10px] text-muted-foreground tracking-wide mt-0.5">Tether Gold · Spot</div>
+          <div className="text-[10px] text-muted-foreground tracking-wide mt-0.5">Tether Gold · Short-term options</div>
         </div>
         <div className="flex flex-col items-end px-3 py-1.5 rounded-xl bg-surface-elevated border border-border/50 min-w-[88px]">
           <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground leading-none">Balance</span>
@@ -489,7 +487,7 @@ function TradePage() {
                             active ? "text-[#1a1a2e]/70" : "text-white/40"
                           }`}
                         >
-                          Ror:{d.ror}%
+                          +{d.ror}% payout
                         </span>
                       </button>
                     );
@@ -843,5 +841,4 @@ function Stat({
   );
 }
 
-void TrendingUp;
 

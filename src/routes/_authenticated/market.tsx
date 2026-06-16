@@ -6,11 +6,10 @@ import {
   ArrowUp,
   ArrowDown,
   Activity,
-  TrendingUp,
   BarChart3,
   Gauge,
 } from "lucide-react";
-import { usePriceFeed, useCandles, type Candle } from "@/lib/price-feed";
+import { usePriceFeed, useCandles } from "@/lib/price-feed";
 import { CandleChart } from "@/components/CandleChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 
@@ -112,12 +111,8 @@ function MarketPage() {
   const bid = price - spread / 2;
   const ask = price + spread / 2;
 
-  const watchlist = [
-    { sym: "XAU/USDT", name: "Tether Gold", price, pct: changePct },
-    { sym: "BTC/USDT", name: "Bitcoin", price: 68420.55, pct: 1.42 },
-    { sym: "ETH/USDT", name: "Ethereum", price: 3522.18, pct: -0.83 },
-    { sym: "SOL/USDT", name: "Solana", price: 162.31, pct: 2.16 },
-  ];
+  // Watchlist & synthetic order book removed: showed stale or fabricated data,
+  // which is a credibility / regulatory risk on a real trading platform.
 
   return (
     <div className="space-y-5 pb-6">
@@ -313,42 +308,8 @@ function MarketPage() {
         </div>
       </section>
 
-      {/* Order book preview */}
-      <OrderBookPreview price={price} />
+      {/* Watchlist & order book removed — only real, live XAU₮ data is shown. */}
 
-      {/* Watchlist */}
-      <section className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
-        <div className="px-5 py-3.5 flex items-center justify-between border-b border-border/60">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <TrendingUp className="size-4 text-gold" /> Watchlist
-          </h3>
-          <span className="text-[11px] text-muted-foreground">Indicative</span>
-        </div>
-        <ul>
-          {watchlist.map((w, i) => {
-            const wup = w.pct >= 0;
-            return (
-              <li
-                key={w.sym}
-                className={`flex items-center justify-between px-5 py-3.5 ${
-                  i > 0 ? "border-t border-border/40" : ""
-                }`}
-              >
-                <div>
-                  <div className="text-sm font-medium">{w.sym}</div>
-                  <div className="text-xs text-muted-foreground">{w.name}</div>
-                </div>
-                <div className="text-right">
-                  <div className="num text-sm font-medium">${fmtUSD(w.price)}</div>
-                  <div className={`num text-xs ${wup ? "text-success" : "text-destructive"}`}>
-                    {fmtPct(w.pct)}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
 
       <Link
         to="/trade"
@@ -431,64 +392,5 @@ function AnalysisRow({
         </div>
       )}
     </div>
-  );
-}
-
-function OrderBookPreview({ price }: { price: number }) {
-  const rows = React.useMemo(() => {
-    // Synthesised, deterministic-ish ladder around current price
-    const asks: { p: number; sz: number }[] = [];
-    const bids: { p: number; sz: number }[] = [];
-    for (let i = 1; i <= 5; i++) {
-      const step = price * 0.00012 * i;
-      asks.push({ p: price + step, sz: 12 + i * 8 + (i % 2) * 3 });
-      bids.push({ p: price - step, sz: 14 + i * 7 + (i % 3) * 4 });
-    }
-    return { asks: asks.reverse(), bids };
-  }, [price]);
-  const maxSz = Math.max(...rows.asks.map((r) => r.sz), ...rows.bids.map((r) => r.sz));
-
-  return (
-    <section className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Order book</h3>
-        <span className="text-[10px] text-muted-foreground">Indicative depth</span>
-      </div>
-      <div className="px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground grid grid-cols-2">
-        <span>Price (USDT)</span>
-        <span className="text-right">Size (XAU₮)</span>
-      </div>
-      <ul className="px-2 pb-1">
-        {rows.asks.map((r, i) => (
-          <li key={`a${i}`} className="relative">
-            <div
-              className="absolute inset-y-0 right-0 bg-destructive/10 rounded"
-              style={{ width: `${(r.sz / maxSz) * 100}%` }}
-            />
-            <div className="relative grid grid-cols-2 px-2 py-1 num text-[12px]">
-              <span className="text-destructive font-medium">{fmtUSD(r.p)}</span>
-              <span className="text-right text-muted-foreground">{r.sz.toFixed(2)}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <div className="mx-4 my-1 py-1.5 rounded-md bg-surface-elevated text-center num text-[12px] font-semibold">
-        ${fmtUSD(price)}
-      </div>
-      <ul className="px-2 pb-2">
-        {rows.bids.map((r, i) => (
-          <li key={`b${i}`} className="relative">
-            <div
-              className="absolute inset-y-0 right-0 bg-success/10 rounded"
-              style={{ width: `${(r.sz / maxSz) * 100}%` }}
-            />
-            <div className="relative grid grid-cols-2 px-2 py-1 num text-[12px]">
-              <span className="text-success font-medium">{fmtUSD(r.p)}</span>
-              <span className="text-right text-muted-foreground">{r.sz.toFixed(2)}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }
