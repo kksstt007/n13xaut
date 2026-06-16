@@ -230,6 +230,60 @@ export type Database = {
           },
         ]
       }
+      investments: {
+        Row: {
+          amount: number
+          created_at: string
+          daily_rate: number
+          end_at: string
+          id: string
+          last_payout_at: string
+          level: number
+          plan_name: string
+          principal_returned: boolean
+          start_at: string
+          status: string
+          term_days: number
+          total_paid: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          daily_rate: number
+          end_at: string
+          id?: string
+          last_payout_at?: string
+          level: number
+          plan_name: string
+          principal_returned?: boolean
+          start_at?: string
+          status?: string
+          term_days: number
+          total_paid?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          daily_rate?: number
+          end_at?: string
+          id?: string
+          last_payout_at?: string
+          level?: number
+          plan_name?: string
+          principal_returned?: boolean
+          start_at?: string
+          status?: string
+          term_days?: number
+          total_paid?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kyc_submissions: {
         Row: {
           created_at: string
