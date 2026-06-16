@@ -1,9 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as React from "react";
 import {
-  Home, LineChart, CandlestickChart, LifeBuoy,
+  Home, LineChart, CandlestickChart, LifeBuoy, Coins,
   Menu, LogOut, History, ShieldCheck, Users, Settings, User, X,
-
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
