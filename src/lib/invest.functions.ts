@@ -145,7 +145,12 @@ export const claimYield = createServerFn({ method: "POST" })
     const newBal = Number(wallet?.usdt_balance ?? 0) + credit;
     await supabaseAdmin.from("wallets").update({ usdt_balance: newBal }).eq("user_id", userId);
 
-    const patch: Record<string, unknown> = {
+    const patch: {
+      last_payout_at: string;
+      total_paid: number;
+      principal_returned?: boolean;
+      status?: string;
+    } = {
       last_payout_at: cap.toISOString(),
       total_paid: Number(inv.total_paid) + yieldAmt,
     };
@@ -154,6 +159,7 @@ export const claimYield = createServerFn({ method: "POST" })
       patch.status = "completed";
     }
     await supabaseAdmin.from("investments").update(patch).eq("id", inv.id);
+
 
     return { credited: credit, yield: yieldAmt, principal, balance: newBal, matured };
   });
