@@ -11,15 +11,15 @@ const bottomNav = [
   { to: "/dashboard", label: "Home", icon: Home },
   { to: "/market", label: "Market", icon: LineChart },
   { to: "/trade", label: "Trade", icon: CandlestickChart, primary: true },
-  { to: "/support", label: "Support", icon: LifeBuoy },
+  { to: "/invest", label: "Invest", icon: Coins },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
 const moreNav = [
   { to: "/history", label: "Trade history", icon: History },
-
   { to: "/kyc", label: "Identity (KYC)", icon: ShieldCheck },
   { to: "/referrals", label: "Referrals", icon: Users },
+  { to: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 function isActive(pathname: string, to: string) {
