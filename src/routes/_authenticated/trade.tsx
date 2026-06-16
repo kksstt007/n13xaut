@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { usePriceFeed, getCurrentPrice } from "@/lib/price-feed";
+import { usePriceFeed, useCandles, getCurrentPrice } from "@/lib/price-feed";
 import { PriceChart } from "@/components/PriceChart";
+import { CandleChart } from "@/components/CandleChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 import { openTrade, settleTrade } from "@/lib/trade.functions";
 import tetherGoldLogo from "@/assets/tether-gold-logo.png.asset.json";
@@ -61,7 +62,8 @@ function TradePage() {
   const up = changePct >= 0;
   const qc = useQueryClient();
 
-  const [tf, setTf] = React.useState("6M");
+  const [tf, setTf] = React.useState<"1D" | "1W" | "1M" | "6M" | "1Y" | "ALL">("1D");
+  const { data: candles } = useCandles(tf);
   const [amount, setAmount] = React.useState(50);
   const [duration, setDuration] = React.useState(60);
   const [sheet, setSheet] = React.useState<null | "buy" | "sell">(null);
@@ -275,8 +277,8 @@ function TradePage() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="relative rounded-3xl border border-border/40 bg-surface/60 p-3 sm:p-4 shadow-elevated overflow-hidden"
       >
-        <div className="h-[240px] sm:h-[300px]">
-          <PriceChart data={chart} up={up} />
+        <div className="h-[260px] sm:h-[320px]">
+          <CandleChart data={candles} tfLabel={tf} />
         </div>
         {/* Floating price tag on chart */}
         <div
