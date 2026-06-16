@@ -1,9 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as React from "react";
 import {
-  Home, LineChart, CandlestickChart, LifeBuoy,
+  Home, LineChart, CandlestickChart, LifeBuoy, Coins,
   Menu, LogOut, History, ShieldCheck, Users, Settings, User, X,
-
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,15 +11,15 @@ const bottomNav = [
   { to: "/dashboard", label: "Home", icon: Home },
   { to: "/market", label: "Market", icon: LineChart },
   { to: "/trade", label: "Trade", icon: CandlestickChart, primary: true },
-  { to: "/support", label: "Support", icon: LifeBuoy },
+  { to: "/invest", label: "Invest", icon: Coins },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
 const moreNav = [
   { to: "/history", label: "Trade history", icon: History },
-
   { to: "/kyc", label: "Identity (KYC)", icon: ShieldCheck },
   { to: "/referrals", label: "Referrals", icon: Users },
+  { to: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 function isActive(pathname: string, to: string) {
