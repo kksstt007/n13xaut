@@ -112,12 +112,8 @@ function MarketPage() {
   const bid = price - spread / 2;
   const ask = price + spread / 2;
 
-  const watchlist = [
-    { sym: "XAU/USDT", name: "Tether Gold", price, pct: changePct },
-    { sym: "BTC/USDT", name: "Bitcoin", price: 68420.55, pct: 1.42 },
-    { sym: "ETH/USDT", name: "Ethereum", price: 3522.18, pct: -0.83 },
-    { sym: "SOL/USDT", name: "Solana", price: 162.31, pct: 2.16 },
-  ];
+  // Watchlist & synthetic order book removed: showed stale or fabricated data,
+  // which is a credibility / regulatory risk on a real trading platform.
 
   return (
     <div className="space-y-5 pb-6">
