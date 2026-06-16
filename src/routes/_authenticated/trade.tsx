@@ -34,7 +34,8 @@ const TIMEFRAMES = [
   { id: "6M", label: "6M" },
   { id: "1Y", label: "1Y" },
   { id: "ALL", label: "All" },
-];
+] as const;
+type TF = (typeof TIMEFRAMES)[number]["id"];
 
 const DURATIONS = [
   { s: 60, label: "60 s", ror: 15 },
@@ -62,7 +63,7 @@ function TradePage() {
   const up = changePct >= 0;
   const qc = useQueryClient();
 
-  const [tf, setTf] = React.useState<"1D" | "1W" | "1M" | "6M" | "1Y" | "ALL">("1D");
+  const [tf, setTf] = React.useState<TF>("1D");
   const { data: candles } = useCandles(tf);
   const [amount, setAmount] = React.useState(50);
   const [duration, setDuration] = React.useState(60);
