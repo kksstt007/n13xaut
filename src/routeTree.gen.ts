@@ -21,6 +21,7 @@ import { Route as AuthenticatedReferralsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedMarketRouteImport } from './routes/_authenticated/market'
 import { Route as AuthenticatedKycRouteImport } from './routes/_authenticated/kyc'
+import { Route as AuthenticatedInvestRouteImport } from './routes/_authenticated/invest'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -84,6 +85,11 @@ const AuthenticatedKycRoute = AuthenticatedKycRouteImport.update({
   path: '/kyc',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedInvestRoute = AuthenticatedInvestRouteImport.update({
+  id: '/invest',
+  path: '/invest',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/invest': typeof AuthenticatedInvestRoute
   '/kyc': typeof AuthenticatedKycRoute
   '/market': typeof AuthenticatedMarketRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/invest': typeof AuthenticatedInvestRoute
   '/kyc': typeof AuthenticatedKycRoute
   '/market': typeof AuthenticatedMarketRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/invest': typeof AuthenticatedInvestRoute
   '/_authenticated/kyc': typeof AuthenticatedKycRoute
   '/_authenticated/market': typeof AuthenticatedMarketRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/history'
+    | '/invest'
     | '/kyc'
     | '/market'
     | '/profile'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/history'
+    | '/invest'
     | '/kyc'
     | '/market'
     | '/profile'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
+    | '/_authenticated/invest'
     | '/_authenticated/kyc'
     | '/_authenticated/market'
     | '/_authenticated/profile'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKycRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/invest': {
+      id: '/_authenticated/invest'
+      path: '/invest'
+      fullPath: '/invest'
+      preLoaderRoute: typeof AuthenticatedInvestRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/history': {
       id: '/_authenticated/history'
       path: '/history'
@@ -324,6 +343,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedInvestRoute: typeof AuthenticatedInvestRoute
   AuthenticatedKycRoute: typeof AuthenticatedKycRoute
   AuthenticatedMarketRoute: typeof AuthenticatedMarketRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -337,6 +357,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedInvestRoute: AuthenticatedInvestRoute,
   AuthenticatedKycRoute: AuthenticatedKycRoute,
   AuthenticatedMarketRoute: AuthenticatedMarketRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
