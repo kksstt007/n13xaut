@@ -6,11 +6,10 @@ import {
   ArrowUp,
   ArrowDown,
   Activity,
-  TrendingUp,
   BarChart3,
   Gauge,
 } from "lucide-react";
-import { usePriceFeed, useCandles, type Candle } from "@/lib/price-feed";
+import { usePriceFeed, useCandles } from "@/lib/price-feed";
 import { CandleChart } from "@/components/CandleChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 
@@ -309,42 +308,8 @@ function MarketPage() {
         </div>
       </section>
 
-      {/* Order book preview */}
-      <OrderBookPreview price={price} />
+      {/* Watchlist & order book removed — only real, live XAU₮ data is shown. */}
 
-      {/* Watchlist */}
-      <section className="rounded-2xl bg-surface border border-border/60 overflow-hidden">
-        <div className="px-5 py-3.5 flex items-center justify-between border-b border-border/60">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <TrendingUp className="size-4 text-gold" /> Watchlist
-          </h3>
-          <span className="text-[11px] text-muted-foreground">Indicative</span>
-        </div>
-        <ul>
-          {watchlist.map((w, i) => {
-            const wup = w.pct >= 0;
-            return (
-              <li
-                key={w.sym}
-                className={`flex items-center justify-between px-5 py-3.5 ${
-                  i > 0 ? "border-t border-border/40" : ""
-                }`}
-              >
-                <div>
-                  <div className="text-sm font-medium">{w.sym}</div>
-                  <div className="text-xs text-muted-foreground">{w.name}</div>
-                </div>
-                <div className="text-right">
-                  <div className="num text-sm font-medium">${fmtUSD(w.price)}</div>
-                  <div className={`num text-xs ${wup ? "text-success" : "text-destructive"}`}>
-                    {fmtPct(w.pct)}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
 
       <Link
         to="/trade"
