@@ -122,19 +122,38 @@ export const claimYield = createServerFn({ method: "POST" })
     if (error || !inv) throw new Error("Investment not found");
     if (inv.status !== "active") throw new Error("Investment is not active");
 
+    const DAY_MS = 86_400_000;
     const now = new Date();
     const end = new Date(inv.end_at);
     const last = new Date(inv.last_payout_at);
     const cap = now > end ? end : now;
-    const seconds = Math.max(0, (cap.getTime() - last.getTime()) / 1000);
-    const days = seconds / 86400;
-    const yieldAmt = Math.floor(Number(inv.amount) * Number(inv.daily_rate) * days * 100) / 100;
 
+    // Only whole days accrue. One claim = one (or more) full 24h cycles.
+    const elapsedMs = Math.max(0, cap.getTime() - last.getTime());
+    const fullDays = Math.floor(elapsedMs / DAY_MS);
     const matured = now >= end;
+
+    if (fullDays <= 0 && !matured) {
+      const nextAt = new Date(last.getTime() + DAY_MS);
+      const hoursLeft = Math.ceil((nextAt.getTime() - now.getTime()) / 3_600_000);
+      throw new Error(
+        `Next payout available in ~${hoursLeft}h (yields unlock once every 24h).`,
+      );
+    }
+
+    const dailyAmt =
+      Math.floor(Number(inv.amount) * Number(inv.daily_rate) * 100) / 100;
+    const yieldAmt = Math.floor(dailyAmt * fullDays * 100) / 100;
+
     const principal = matured && !inv.principal_returned ? Number(inv.amount) : 0;
     const credit = yieldAmt + principal;
 
-    if (credit <= 0 && !matured) throw new Error("Nothing to claim yet");
+    if (credit <= 0) throw new Error("Nothing to claim yet");
+
+    // Advance last_payout_at by exact whole-day increments so the next
+    // 24h window stays aligned to the original start time.
+    const newLast = new Date(last.getTime() + fullDays * DAY_MS);
+    const payoutMark = matured ? end : newLast;
 
     // Credit wallet
     const { data: wallet } = await supabaseAdmin
@@ -151,7 +170,7 @@ export const claimYield = createServerFn({ method: "POST" })
       principal_returned?: boolean;
       status?: string;
     } = {
-      last_payout_at: cap.toISOString(),
+      last_payout_at: payoutMark.toISOString(),
       total_paid: Number(inv.total_paid) + yieldAmt,
     };
     if (matured) {
