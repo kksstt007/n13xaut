@@ -165,13 +165,13 @@ function InvestPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="relative overflow-hidden rounded-2xl border border-border/60 bg-[radial-gradient(120%_140%_at_0%_0%,color-mix(in_oklab,var(--gold)_14%,transparent)_0%,transparent_55%),linear-gradient(180deg,var(--surface-elevated),var(--surface))] px-5 py-6 sm:px-7 sm:py-8"
+        className="relative overflow-hidden rounded-2xl border border-border/60 bg-surface-elevated px-5 py-6 sm:px-7 sm:py-8"
       >
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-gold/90">
           <Sparkles className="size-3.5" /> Gold Earn
         </div>
         <h1 className="mt-3 text-[26px] sm:text-[34px] leading-tight font-semibold tracking-tight">
-          Put your USDT to work in <span className="text-gradient-gold">XAUT-backed</span> gold plans
+          Put your USDT to work in <span className="text-gold">XAUT-backed</span> gold plans
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Pick a tier, lock for a fixed term, and earn transparent daily yield. Principal returns automatically at maturity.
@@ -281,8 +281,8 @@ function PlanCard({ p, i, onPick }: { p: Plan; i: number; onPick: () => void }) 
       )}
 
       <header className="flex items-start gap-3">
-        <div className="size-11 shrink-0 grid place-items-center rounded-xl bg-gradient-gold shadow-gold-soft">
-          <Coins className="size-5 text-background" />
+        <div className="size-11 shrink-0 grid place-items-center rounded-xl bg-gold/10 border border-gold/20">
+          <Coins className="size-5 text-gold" />
         </div>
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -725,8 +725,8 @@ function ActiveInvestments() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-10 grid place-items-center rounded-xl bg-gradient-gold shrink-0">
-                    <Coins className="size-4 text-background" />
+                  <div className="size-10 grid place-items-center rounded-xl bg-gold/10 border border-gold/20 shrink-0">
+                    <Coins className="size-4 text-gold" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
