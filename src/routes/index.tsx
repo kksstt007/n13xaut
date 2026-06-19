@@ -105,8 +105,7 @@ export function LandingContent() {
 function Hero({ data, price, changePct, up }: any) {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 grid-bg opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      <div className="absolute -top-32 right-1/2 translate-x-1/2 size-[520px] rounded-full bg-gradient-gold opacity-[0.12] blur-3xl -z-10" />
+      <div className="absolute inset-0 -z-10 grid-bg opacity-[0.12] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
 
       <div className="max-w-6xl mx-auto px-5 md:px-8 pt-10 md:pt-20 pb-12 md:pb-20 grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
@@ -125,7 +124,7 @@ function Hero({ data, price, changePct, up }: any) {
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <PrimaryCTA className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-primary-foreground shadow-gold hover:opacity-95 transition">
+            <PrimaryCTA className="group inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-background hover:brightness-105 transition">
               {(label) => (<>{label} <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" /></>)}
             </PrimaryCTA>
             <a href="#market" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/60 px-6 py-3 text-sm font-medium hover:bg-surface-elevated transition">
@@ -147,7 +146,6 @@ function Hero({ data, price, changePct, up }: any) {
           initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.15 }}
           className="relative"
         >
-          <div className="absolute -inset-4 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
 
           {/* Real gold bar photograph */}
           <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-[4/5] sm:aspect-[5/6]">
@@ -162,7 +160,7 @@ function Hero({ data, price, changePct, up }: any) {
 
             {/* Top-right live badge */}
             <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md border border-border/60 text-success text-[11px] font-medium px-2.5 py-1">
-              <span className="size-1.5 rounded-full bg-success animate-pulse-gold" /> Live
+              <span className="size-1.5 rounded-full bg-success animate-pulse" /> Live
             </div>
 
             {/* Top-left issuer chip */}
@@ -284,7 +282,6 @@ function About() {
           transition={{ duration: 0.6 }}
           className="relative"
         >
-          <div className="absolute -inset-6 bg-gradient-gold opacity-10 blur-3xl rounded-full -z-10" />
           <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-elevated aspect-square">
             <img
               src={xautCoin}
@@ -519,7 +516,6 @@ function PhoneMock() {
   const up = changePct >= 0;
   return (
     <div className="relative w-[260px] sm:w-[280px]">
-      <div className="absolute -inset-6 bg-gradient-gold opacity-[0.08] blur-3xl rounded-full -z-10" />
       <div className="rounded-[40px] border border-border/70 bg-background p-2 shadow-elevated">
         <div className="rounded-[34px] bg-surface overflow-hidden">
           <div className="h-6 flex items-center justify-center">
