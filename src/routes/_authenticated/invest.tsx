@@ -392,7 +392,7 @@ function PortfolioSummary() {
         label="Available"
         value={bLoading ? "—" : fmtUsd(balance ?? 0)}
         cta={
-          <Link to="/wallet" className="text-[11px] text-gold hover:underline underline-offset-4">
+          <Link to="/profile" className="text-[11px] text-gold hover:underline underline-offset-4">
             Deposit
           </Link>
         }
