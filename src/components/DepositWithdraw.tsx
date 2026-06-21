@@ -6,6 +6,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Buildi
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
+import { WithdrawWizard } from "@/components/WithdrawWizard";
 
 type Method = {
   id: string;
@@ -68,7 +69,7 @@ export function DepositWithdraw() {
 
 
       <FundsSheet open={open === "deposit"} mode="deposit" onClose={() => setOpen(null)} available={available} />
-      <FundsSheet open={open === "withdraw"} mode="withdraw" onClose={() => setOpen(null)} available={available} />
+      <WithdrawWizard open={open === "withdraw"} onClose={() => setOpen(null)} available={available} />
     </>
   );
 }
