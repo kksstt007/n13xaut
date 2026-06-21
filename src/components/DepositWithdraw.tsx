@@ -6,6 +6,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Buildi
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
+import { WithdrawWizard } from "@/components/WithdrawWizard";
 
 type Method = {
   id: string;
