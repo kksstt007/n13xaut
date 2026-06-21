@@ -647,6 +647,7 @@ export type Database = {
           risk_flags: Json
           status: string
           user_id: string
+          user_note: string | null
         }
         Insert: {
           account_name?: string | null
@@ -665,6 +666,7 @@ export type Database = {
           risk_flags?: Json
           status?: string
           user_id: string
+          user_note?: string | null
         }
         Update: {
           account_name?: string | null
@@ -683,6 +685,7 @@ export type Database = {
           risk_flags?: Json
           status?: string
           user_id?: string
+          user_note?: string | null
         }
         Relationships: [
           {
