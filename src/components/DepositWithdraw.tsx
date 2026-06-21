@@ -69,7 +69,7 @@ export function DepositWithdraw() {
 
 
       <FundsSheet open={open === "deposit"} mode="deposit" onClose={() => setOpen(null)} available={available} />
-      <FundsSheet open={open === "withdraw"} mode="withdraw" onClose={() => setOpen(null)} available={available} />
+      <WithdrawWizard open={open === "withdraw"} onClose={() => setOpen(null)} available={available} />
     </>
   );
 }
