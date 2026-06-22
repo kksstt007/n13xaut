@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { writeAuditLog, writeLoginHistory } from "./audit.functions";
 
 function deviceInfo() {
   if (typeof navigator === "undefined") return {};
@@ -19,17 +19,16 @@ export async function logAudit(opts: {
   new_value?: unknown;
 }) {
   try {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) return;
-    await supabase.from("audit_log").insert({
-      actor_id: data.user.id,
-      action: opts.action,
-      target: opts.target ?? null,
-      target_type: opts.target_type ?? null,
-      target_id: opts.target_id ?? null,
-      prev_value: (opts.prev_value ?? null) as any,
-      new_value: (opts.new_value ?? null) as any,
-      device_info: deviceInfo() as any,
+    await writeAuditLog({
+      data: {
+        action: opts.action,
+        target: opts.target ?? null,
+        target_type: opts.target_type ?? null,
+        target_id: opts.target_id ?? null,
+        prev_value: opts.prev_value ?? null,
+        new_value: opts.new_value ?? null,
+        device_info: deviceInfo(),
+      },
     });
   } catch (e) {
     console.warn("audit log failed", e);
@@ -38,14 +37,13 @@ export async function logAudit(opts: {
 
 export async function logLogin(success: boolean, failure_reason?: string) {
   try {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) return;
-    await supabase.from("login_history").insert({
-      user_id: data.user.id,
-      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-      device_info: deviceInfo() as any,
-      success,
-      failure_reason: failure_reason ?? null,
+    await writeLoginHistory({
+      data: {
+        success,
+        failure_reason: failure_reason ?? null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        device_info: deviceInfo(),
+      },
     });
   } catch (e) {
     console.warn("login history failed", e);
