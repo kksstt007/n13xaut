@@ -130,7 +130,7 @@ export function WithdrawWizard({
                       <Field
                         label="Country name" autoFocus
                         value={country} onChange={setCountry}
-                        placeholder="e.g. Myanmar, Thailand, Singapore"
+                        placeholder="e.g. United States, United Kingdom, Germany, Japan"
                       />
                     </Section>
                   )}
@@ -140,7 +140,7 @@ export function WithdrawWizard({
                       <Field
                         label="Bank name" autoFocus
                         value={bankName} onChange={setBankName}
-                        placeholder="e.g. KBZ Bank, AYA Bank, Bangkok Bank"
+                        placeholder="e.g. JPMorgan Chase, HSBC, Deutsche Bank, MUFG"
                       />
                     </Section>
                   )}
