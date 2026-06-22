@@ -270,7 +270,7 @@ function RecordsSection({ userId }: { userId?: string }) {
           className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
-          <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+          <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
             <HistoryIcon className="size-[15px]" />
           </div>
           <div className="flex-1 min-w-0 text-left">
@@ -403,7 +403,7 @@ function CollapsibleSection({
           aria-expanded={open}
         >
           {Icon && (
-            <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+            <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
               <Icon className="size-[15px]" />
             </div>
           )}
