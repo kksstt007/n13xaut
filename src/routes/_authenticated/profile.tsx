@@ -12,6 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { DepositWithdraw } from "@/components/DepositWithdraw";
+import { NotificationBell } from "@/components/NotificationBell";
 
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -87,41 +88,51 @@ function ProfilePage() {
   return (
     <div className="space-y-5 pb-6">
       {/* Identity */}
-      <section className="flex items-center gap-3.5 px-1 pt-1">
-        <div className="relative shrink-0">
-          <div className="size-12 rounded-full grid place-items-center text-[13px] font-semibold bg-surface-elevated text-foreground border border-border/60">
-            {initials}
-          </div>
-          <button
-            onClick={() => setEditOpen(true)}
-            aria-label="Edit profile"
-            className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-border grid place-items-center hover:bg-surface-elevated transition"
-          >
-            <Pencil className="size-2.5 text-muted-foreground" />
-          </button>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
-              {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
-            </h1>
-            {kycVerified && (
-              <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
-            )}
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="font-mono">UID·{uid}</span>
-            <button
-              onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
-              className="hover:text-foreground transition"
-              aria-label="Copy UID"
+      <section className="relative overflow-hidden rounded-2xl border border-gold/15 px-4 py-4 mt-1"
+        style={{ background: "linear-gradient(135deg, oklch(0.78 0.13 84 / 0.06) 0%, oklch(0.135 0 0) 55%)" }}
+      >
+        <div className="absolute -top-12 -right-10 size-40 rounded-full opacity-40 pointer-events-none"
+          style={{ background: "radial-gradient(circle, oklch(0.78 0.13 84 / 0.20), transparent 70%)" }}
+        />
+        <div className="relative flex items-center gap-3.5">
+          <div className="relative shrink-0">
+            <div className="size-12 rounded-full grid place-items-center text-[13px] font-bold text-primary-foreground border border-gold/40 shadow-gold-soft"
+              style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}
             >
-              <Copy className="size-3" />
+              {initials}
+            </div>
+            <button
+              onClick={() => setEditOpen(true)}
+              aria-label="Edit profile"
+              className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-gold/40 grid place-items-center hover:bg-surface-elevated transition"
+            >
+              <Pencil className="size-2.5 text-gold" />
             </button>
-            {memberSince && (
-              <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
-            )}
           </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
+                {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
+              </h1>
+              {kycVerified && (
+                <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
+              )}
+            </div>
+            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="font-mono text-gold/80">UID·{uid}</span>
+              <button
+                onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
+                className="hover:text-gold transition"
+                aria-label="Copy UID"
+              >
+                <Copy className="size-3" />
+              </button>
+              {memberSince && (
+                <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
+              )}
+            </div>
+          </div>
+          <NotificationBell />
         </div>
       </section>
 
@@ -259,7 +270,7 @@ function RecordsSection({ userId }: { userId?: string }) {
           className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
           aria-expanded={open}
         >
-          <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+          <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
             <HistoryIcon className="size-[15px]" />
           </div>
           <div className="flex-1 min-w-0 text-left">
@@ -349,9 +360,9 @@ function Shortcut({ to, icon: Icon, label }: { to: string; icon: any; label: str
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 active:scale-[0.98] transition"
+      className="group flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 hover:border-gold/30 active:scale-[0.98] transition"
     >
-      <Icon className="size-[18px] text-foreground/80" />
+      <Icon className="size-[18px] text-gold group-hover:scale-110 transition-transform" />
       <span className="text-[11px] font-medium text-foreground/80">{label}</span>
     </Link>
   );
@@ -392,7 +403,7 @@ function CollapsibleSection({
           aria-expanded={open}
         >
           {Icon && (
-            <div className="size-8 rounded-lg grid place-items-center bg-background/60 text-muted-foreground border border-border/40">
+            <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
               <Icon className="size-[15px]" />
             </div>
           )}
@@ -438,7 +449,7 @@ type RowProps = {
 function Row({ icon: Icon, label, value, hint, status, actionLabel, destructive, last, to, onClick }: RowProps) {
   const inner = (
     <div className={`flex items-center gap-3 px-4 py-3 ${!last ? "border-b border-border/40" : ""} ${(to || onClick) ? "hover:bg-surface-elevated/60 transition" : ""}`}>
-      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground border border-border/40"}`}>
+      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-gold/8 text-gold border border-gold/20"}`}>
         <Icon className="size-[15px]" />
       </div>
       <div className="flex-1 min-w-0">

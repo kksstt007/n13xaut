@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { adminResetUserPassword } from "@/lib/admin.functions";
+import { sendNotification } from "@/lib/notifications.functions";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins";
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins" | "notify";
 
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
@@ -36,6 +37,7 @@ function AdminPage() {
     { k: "control", l: "Trade Control" },
     { k: "logins", l: "Login History" },
     { k: "audit", l: "Audit Log" },
+    { k: "notify", l: "Notifications" },
   ];
 
   return (
@@ -67,6 +69,7 @@ function AdminPage() {
       {tab === "control" && <TradeControlAdmin />}
       {tab === "logins" && <LoginHistoryAdmin />}
       {tab === "audit" && <AuditLogAdmin />}
+      {tab === "notify" && <NotificationsAdmin />}
     </div>
   );
 }
@@ -1080,3 +1083,179 @@ function Fld({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 
+
+function NotificationsAdmin() {
+  const sendFn = useServerFn(sendNotification);
+  const [title, setTitle] = React.useState("");
+  const [body, setBody] = React.useState("");
+  const [type, setType] = React.useState<"info" | "success" | "warning" | "alert" | "promo">("info");
+  const [link, setLink] = React.useState("");
+  const [mode, setMode] = React.useState<"all" | "users">("all");
+  const [userQuery, setUserQuery] = React.useState("");
+  const [selected, setSelected] = React.useState<Record<string, { email?: string; display_name?: string }>>({});
+  const [sending, setSending] = React.useState(false);
+
+  const { data: users } = useQuery({
+    queryKey: ["admin-users-min"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      return data ?? [];
+    },
+  });
+
+  const filtered = React.useMemo(() => {
+    const q = userQuery.trim().toLowerCase();
+    if (!q) return (users ?? []).slice(0, 20);
+    return (users ?? [])
+      .filter((u: any) =>
+        (u.email ?? "").toLowerCase().includes(q) ||
+        (u.display_name ?? "").toLowerCase().includes(q) ||
+        (u.id ?? "").toLowerCase().includes(q)
+      )
+      .slice(0, 30);
+  }, [users, userQuery]);
+
+  const selectedIds = Object.keys(selected);
+
+  async function handleSend() {
+    if (!title.trim()) { toast.error("Title is required"); return; }
+    if (mode === "users" && selectedIds.length === 0) { toast.error("Select at least one user"); return; }
+    setSending(true);
+    try {
+      const res = await sendFn({
+        data: {
+          title: title.trim(),
+          body: body.trim() || null,
+          type,
+          link: link.trim() || null,
+          target: mode === "all" ? { kind: "all" } : { kind: "users", userIds: selectedIds },
+        },
+      });
+      toast.success(`Sent to ${res.count} user${res.count === 1 ? "" : "s"}`);
+      setTitle(""); setBody(""); setLink(""); setSelected({});
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to send");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      {/* Composer */}
+      <div className="rounded-2xl bg-surface border border-border/60 p-5 space-y-4">
+        <div>
+          <h3 className="font-display text-base font-semibold">Send notification</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Push an in-app message to users in realtime.</p>
+        </div>
+
+        <Fld label="Title">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="adm-input" placeholder="e.g. New trading pair listed" />
+        </Fld>
+
+        <Fld label="Message (optional)">
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={2000} rows={4} className="adm-input resize-none" placeholder="Details for your users…" />
+        </Fld>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Fld label="Type">
+            <select value={type} onChange={(e) => setType(e.target.value as any)} className="adm-input">
+              <option value="info">Info</option>
+              <option value="success">Success</option>
+              <option value="warning">Warning</option>
+              <option value="alert">Alert</option>
+              <option value="promo">Promo</option>
+            </select>
+          </Fld>
+          <Fld label="Link (optional)">
+            <input value={link} onChange={(e) => setLink(e.target.value)} className="adm-input" placeholder="/trade" />
+          </Fld>
+        </div>
+
+        <div>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Recipients</span>
+          <div className="mt-1.5 inline-flex rounded-lg border border-border bg-background p-0.5">
+            <button onClick={() => setMode("all")} className={`px-3 py-1.5 text-xs rounded-md transition ${mode === "all" ? "bg-gold/15 text-gold" : "text-muted-foreground"}`}>All users</button>
+            <button onClick={() => setMode("users")} className={`px-3 py-1.5 text-xs rounded-md transition ${mode === "users" ? "bg-gold/15 text-gold" : "text-muted-foreground"}`}>Selected ({selectedIds.length})</button>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSend}
+          disabled={sending}
+          className="w-full rounded-xl py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 active:scale-[0.99] transition"
+          style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}
+        >
+          {sending ? "Sending…" : mode === "all" ? "Broadcast to all users" : `Send to ${selectedIds.length} user${selectedIds.length === 1 ? "" : "s"}`}
+        </button>
+
+        <style>{`.adm-input{width:100%;border-radius:.5rem;background:var(--color-input);border:1px solid var(--color-border);padding:.5rem .75rem;font-size:.875rem;outline:none;color:var(--color-foreground)}.adm-input:focus{border-color:var(--gold)}`}</style>
+      </div>
+
+      {/* User picker */}
+      <div className="rounded-2xl bg-surface border border-border/60 p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-base font-semibold">Pick users</h3>
+          {selectedIds.length > 0 && (
+            <button onClick={() => setSelected({})} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
+          )}
+        </div>
+        <input
+          value={userQuery}
+          onChange={(e) => setUserQuery(e.target.value)}
+          placeholder="Search by name, email or UID"
+          className="w-full rounded-lg bg-background border border-border px-3 py-2 text-sm outline-none focus:border-gold/50"
+        />
+
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedIds.map((id) => {
+              const u = selected[id];
+              return (
+                <span key={id} className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md bg-gold/10 text-gold border border-gold/20">
+                  {u.display_name || u.email || id.slice(0, 8)}
+                  <button onClick={() => setSelected((s) => { const c = { ...s }; delete c[id]; return c; })} className="hover:opacity-70">×</button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="max-h-[420px] overflow-y-auto scrollbar-thin divide-y divide-border/40 rounded-lg border border-border/40">
+          {filtered.length === 0 && (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">No matches</div>
+          )}
+          {filtered.map((u: any) => {
+            const checked = !!selected[u.id];
+            return (
+              <label key={u.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-elevated/60 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => {
+                    setSelected((s) => {
+                      const c = { ...s };
+                      if (e.target.checked) c[u.id] = { email: u.email, display_name: u.display_name };
+                      else delete c[u.id];
+                      return c;
+                    });
+                    if (e.target.checked) setMode("users");
+                  }}
+                  className="accent-gold"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium truncate">{u.display_name || "—"}</div>
+                  <div className="text-[10.5px] text-muted-foreground truncate">{u.email ?? u.id}</div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
