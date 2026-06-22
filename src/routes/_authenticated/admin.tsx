@@ -1100,7 +1100,7 @@ function NotificationsAdmin() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, display_name, email")
+        .select("id, display_name")
         .order("created_at", { ascending: false })
         .limit(500);
       return data ?? [];
