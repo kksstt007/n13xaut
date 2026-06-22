@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { adminResetUserPassword } from "@/lib/admin.functions";
+import { sendNotification } from "@/lib/notifications.functions";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins";
+type TabKey = "overview" | "users" | "deposits" | "withdrawals" | "methods" | "kyc" | "trades" | "control" | "audit" | "logins" | "notify";
 
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
@@ -36,6 +37,7 @@ function AdminPage() {
     { k: "control", l: "Trade Control" },
     { k: "logins", l: "Login History" },
     { k: "audit", l: "Audit Log" },
+    { k: "notify", l: "Notifications" },
   ];
 
   return (
@@ -67,6 +69,7 @@ function AdminPage() {
       {tab === "control" && <TradeControlAdmin />}
       {tab === "logins" && <LoginHistoryAdmin />}
       {tab === "audit" && <AuditLogAdmin />}
+      {tab === "notify" && <NotificationsAdmin />}
     </div>
   );
 }
