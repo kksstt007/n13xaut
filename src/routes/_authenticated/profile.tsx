@@ -12,6 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { DepositWithdraw } from "@/components/DepositWithdraw";
+import { NotificationBell } from "@/components/NotificationBell";
 
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -87,41 +88,51 @@ function ProfilePage() {
   return (
     <div className="space-y-5 pb-6">
       {/* Identity */}
-      <section className="flex items-center gap-3.5 px-1 pt-1">
-        <div className="relative shrink-0">
-          <div className="size-12 rounded-full grid place-items-center text-[13px] font-semibold bg-surface-elevated text-foreground border border-border/60">
-            {initials}
-          </div>
-          <button
-            onClick={() => setEditOpen(true)}
-            aria-label="Edit profile"
-            className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-border grid place-items-center hover:bg-surface-elevated transition"
-          >
-            <Pencil className="size-2.5 text-muted-foreground" />
-          </button>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
-              {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
-            </h1>
-            {kycVerified && (
-              <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
-            )}
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="font-mono">UID·{uid}</span>
-            <button
-              onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
-              className="hover:text-foreground transition"
-              aria-label="Copy UID"
+      <section className="relative overflow-hidden rounded-2xl border border-gold/15 px-4 py-4 mt-1"
+        style={{ background: "linear-gradient(135deg, oklch(0.78 0.13 84 / 0.06) 0%, oklch(0.135 0 0) 55%)" }}
+      >
+        <div className="absolute -top-12 -right-10 size-40 rounded-full opacity-40 pointer-events-none"
+          style={{ background: "radial-gradient(circle, oklch(0.78 0.13 84 / 0.20), transparent 70%)" }}
+        />
+        <div className="relative flex items-center gap-3.5">
+          <div className="relative shrink-0">
+            <div className="size-12 rounded-full grid place-items-center text-[13px] font-bold text-primary-foreground border border-gold/40 shadow-gold-soft"
+              style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}
             >
-              <Copy className="size-3" />
+              {initials}
+            </div>
+            <button
+              onClick={() => setEditOpen(true)}
+              aria-label="Edit profile"
+              className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-gold/40 grid place-items-center hover:bg-surface-elevated transition"
+            >
+              <Pencil className="size-2.5 text-gold" />
             </button>
-            {memberSince && (
-              <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
-            )}
           </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
+                {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
+              </h1>
+              {kycVerified && (
+                <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
+              )}
+            </div>
+            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="font-mono text-gold/80">UID·{uid}</span>
+              <button
+                onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
+                className="hover:text-gold transition"
+                aria-label="Copy UID"
+              >
+                <Copy className="size-3" />
+              </button>
+              {memberSince && (
+                <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
+              )}
+            </div>
+          </div>
+          <NotificationBell />
         </div>
       </section>
 
