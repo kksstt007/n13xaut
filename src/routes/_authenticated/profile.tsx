@@ -360,9 +360,9 @@ function Shortcut({ to, icon: Icon, label }: { to: string; icon: any; label: str
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 active:scale-[0.98] transition"
+      className="group flex flex-col items-center gap-2 rounded-xl bg-surface border border-border/50 py-3.5 px-2 hover:bg-surface-elevated/60 hover:border-gold/30 active:scale-[0.98] transition"
     >
-      <Icon className="size-[18px] text-foreground/80" />
+      <Icon className="size-[18px] text-gold group-hover:scale-110 transition-transform" />
       <span className="text-[11px] font-medium text-foreground/80">{label}</span>
     </Link>
   );
@@ -449,7 +449,7 @@ type RowProps = {
 function Row({ icon: Icon, label, value, hint, status, actionLabel, destructive, last, to, onClick }: RowProps) {
   const inner = (
     <div className={`flex items-center gap-3 px-4 py-3 ${!last ? "border-b border-border/40" : ""} ${(to || onClick) ? "hover:bg-surface-elevated/60 transition" : ""}`}>
-      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-background/60 text-muted-foreground border border-border/40"}`}>
+      <div className={`size-8 rounded-lg grid place-items-center ${destructive ? "bg-destructive/10 text-destructive" : "bg-gold/8 text-gold border border-gold/20"}`}>
         <Icon className="size-[15px]" />
       </div>
       <div className="flex-1 min-w-0">
