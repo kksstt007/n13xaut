@@ -64,6 +64,7 @@ function TradePage() {
   const [tf, setTf] = React.useState<TF>("1D");
   const { data: candles } = useCandles(tf);
   const [amount, setAmount] = React.useState(50);
+  const [amountRaw, setAmountRaw] = React.useState<string | null>(null);
   const [duration, setDuration] = React.useState(60);
   const [sheet, setSheet] = React.useState<null | "buy" | "sell">(null);
   const [active, setActive] = React.useState<ActiveTrade | null>(null);
