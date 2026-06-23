@@ -64,6 +64,7 @@ function TradePage() {
   const [tf, setTf] = React.useState<TF>("1D");
   const { data: candles } = useCandles(tf);
   const [amount, setAmount] = React.useState(50);
+  const [amountRaw, setAmountRaw] = React.useState<string | null>(null);
   const [duration, setDuration] = React.useState(60);
   const [sheet, setSheet] = React.useState<null | "buy" | "sell">(null);
   const [active, setActive] = React.useState<ActiveTrade | null>(null);
@@ -507,7 +508,10 @@ function TradePage() {
                 style={{ background: "oklch(0.22 0.03 265)" }}
               >
                 <button
-                  onClick={() => setAmount(Math.max(1, amount - 1))}
+                  onClick={() => {
+                    setAmount(Math.max(1, amount - 1));
+                    setAmountRaw(null);
+                  }}
                   disabled={openMut.isPending}
                   className="size-9 rounded-lg grid place-items-center text-white transition active:scale-90 disabled:opacity-50"
                   style={{ background: "oklch(0.28 0.03 265)" }}
@@ -519,17 +523,29 @@ function TradePage() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  value={amount}
+                  value={amountRaw !== null ? amountRaw : String(amount)}
+                  onFocus={() => setAmountRaw(String(amount))}
+                  onBlur={() => {
+                    const raw = (amountRaw || "").replace(/\D/g, "");
+                    const val = Math.min(100000, Math.max(1, parseInt(raw || "1", 10)));
+                    setAmount(val);
+                    setAmountRaw(null);
+                  }}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
-                    if (raw === "") setAmount(1);
-                    else setAmount(Math.min(100000, Math.max(1, parseInt(raw, 10))));
+                    setAmountRaw(raw);
+                    if (raw !== "") {
+                      setAmount(Math.min(100000, Math.max(1, parseInt(raw, 10))));
+                    }
                   }}
                   disabled={openMut.isPending}
                   className="w-32 text-center bg-transparent text-xl font-semibold text-white num tabular-nums outline-none border-none focus:ring-0 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
-                  onClick={() => setAmount(Math.min(100000, amount + 1))}
+                  onClick={() => {
+                    setAmount(Math.min(100000, amount + 1));
+                    setAmountRaw(null);
+                  }}
                   disabled={openMut.isPending}
                   className="size-9 rounded-lg grid place-items-center text-white transition active:scale-90 disabled:opacity-50"
                   style={{ background: "oklch(0.28 0.03 265)" }}
