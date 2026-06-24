@@ -25,7 +25,7 @@ function WalletPage() {
   });
   const { data: methods } = useQuery({
     queryKey: ["methods"],
-    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true)).data ?? [],
+    queryFn: async () => (await supabase.rpc("list_enabled_deposit_methods")).data ?? [],
   });
   const { data: deposits } = useQuery({
     queryKey: ["deposits", user?.id],
@@ -40,6 +40,15 @@ function WalletPage() {
 
   const [selectedMethod, setSelectedMethod] = React.useState<any>(null);
   React.useEffect(() => { if (methods?.length && !selectedMethod) setSelectedMethod(methods[0]); }, [methods, selectedMethod]);
+
+  const { data: selectedMethodDetails } = useQuery({
+    queryKey: ["method-details", selectedMethod?.id],
+    enabled: !!selectedMethod?.id,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_deposit_method_details", { _id: selectedMethod.id });
+      return Array.isArray(data) ? data[0] : data;
+    },
+  });
   const [depAmount, setDepAmount] = React.useState(100);
   const [txHash, setTxHash] = React.useState("");
 
