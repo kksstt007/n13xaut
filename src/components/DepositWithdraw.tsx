@@ -104,7 +104,7 @@ function FundsSheet({
   const { data: methods = [] } = useQuery<Method[]>({
     queryKey: ["deposit-methods"],
     queryFn: async () =>
-      ((await supabase.from("deposit_methods").select("*").eq("enabled", true).order("sort_order").order("network")).data as Method[]) ?? [],
+      (((await supabase.rpc("list_enabled_deposit_methods")).data as Method[]) ?? []),
   });
 
   const { data: countries = [] } = useQuery<CountryRow[]>({
