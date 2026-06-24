@@ -86,27 +86,34 @@ function ProfilePage() {
   const memberSince = profile?.created_at ? new Date(profile.created_at) : null;
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* Identity */}
-      <section className="relative overflow-hidden rounded-2xl border border-gold/15 px-4 py-4 mt-1"
-        style={{ background: "linear-gradient(135deg, oklch(0.78 0.13 84 / 0.06) 0%, oklch(0.135 0 0) 55%)" }}
+    <div className="space-y-4 pb-6">
+      {/* Identity — Binance-style clean dark card */}
+      <section
+        className="relative overflow-hidden rounded-2xl px-4 py-4 mt-1"
+        style={{
+          background: "linear-gradient(180deg, #1E2026 0%, #181A1F 100%)",
+          border: "1px solid rgba(240,185,11,0.10)",
+        }}
       >
-        <div className="absolute -top-12 -right-10 size-40 rounded-full opacity-40 pointer-events-none"
-          style={{ background: "radial-gradient(circle, oklch(0.78 0.13 84 / 0.20), transparent 70%)" }}
+        {/* subtle corner glow */}
+        <div
+          className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full opacity-60"
+          style={{ background: "radial-gradient(circle, rgba(240,185,11,0.10), transparent 70%)" }}
         />
         <div className="relative flex items-center gap-3.5">
           <div className="relative shrink-0">
-            <div className="size-12 rounded-full grid place-items-center text-[13px] font-bold text-primary-foreground border border-gold/40 shadow-gold-soft"
-              style={{ background: "linear-gradient(135deg, #E8C657 0%, #B8862F 100%)" }}
+            <div
+              className="size-12 rounded-full grid place-items-center text-[13px] font-bold text-[#181A1F] ring-2 ring-[#F0B90B]/30"
+              style={{ background: "linear-gradient(135deg, #FCD535 0%, #F0B90B 100%)" }}
             >
               {initials}
             </div>
             <button
               onClick={() => setEditOpen(true)}
               aria-label="Edit profile"
-              className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-surface border border-gold/40 grid place-items-center hover:bg-surface-elevated transition"
+              className="absolute -bottom-0.5 -right-0.5 size-[18px] rounded-full bg-[#0B0E11] border border-[#F0B90B]/50 grid place-items-center hover:bg-[#181A1F] transition"
             >
-              <Pencil className="size-2.5 text-gold" />
+              <Pencil className="size-2.5 text-[#F0B90B]" />
             </button>
           </div>
           <div className="flex-1 min-w-0">
@@ -114,21 +121,27 @@ function ProfilePage() {
               <h1 className="text-[15px] font-semibold truncate text-foreground leading-tight">
                 {profile?.display_name || user?.email?.split("@")[0] || "Trader"}
               </h1>
-              {kycVerified && (
-                <ShieldCheck className="size-3.5 text-success shrink-0" aria-label="Verified" />
+              {kycVerified ? (
+                <span className="inline-flex items-center gap-1 px-1.5 py-[1px] rounded text-[9.5px] font-semibold bg-success/15 text-success border border-success/25">
+                  <ShieldCheck className="size-2.5" /> Verified
+                </span>
+              ) : (
+                <span className="px-1.5 py-[1px] rounded text-[9.5px] font-semibold bg-[#F0B90B]/12 text-[#F0B90B] border border-[#F0B90B]/25">
+                  Regular
+                </span>
               )}
             </div>
-            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span className="font-mono text-gold/80">UID·{uid}</span>
+            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+              <span className="font-mono text-muted-foreground">UID: {uid}</span>
               <button
                 onClick={async () => { await navigator.clipboard.writeText(uid); toast.success("UID copied"); }}
-                className="hover:text-gold transition"
+                className="text-muted-foreground hover:text-[#F0B90B] transition"
                 aria-label="Copy UID"
               >
                 <Copy className="size-3" />
               </button>
               {memberSince && (
-                <span className="text-muted-foreground/60">·  Since {memberSince.getFullYear()}</span>
+                <span className="text-muted-foreground/60 hidden xs:inline">· Joined {memberSince.getFullYear()}</span>
               )}
             </div>
           </div>
