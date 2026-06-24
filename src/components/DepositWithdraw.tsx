@@ -52,21 +52,52 @@ export function DepositWithdraw() {
   });
   const available = Number(wallet?.usdt_balance ?? 0);
 
+  const [hidden, setHidden] = React.useState(false);
+  const masked = (s: string) => (hidden ? "••••••" : s);
+
   return (
     <>
-      <div className="rounded-2xl border border-border/50 bg-surface p-5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Available
-          </span>
-          <span className="text-[10.5px] font-medium text-muted-foreground tabular-nums">USDT</span>
-        </div>
-        <div className="mt-1 text-[30px] leading-[1.1] font-semibold tracking-tight text-foreground tabular-nums">
-          ${fmtUSD(available)}
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
-          <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
+      <div
+        className="relative overflow-hidden rounded-2xl p-5"
+        style={{
+          background: "linear-gradient(180deg, #1E2026 0%, #181A1F 100%)",
+          border: "1px solid rgba(240,185,11,0.10)",
+        }}
+      >
+        {/* faint corner glow */}
+        <div
+          className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full opacity-50"
+          style={{ background: "radial-gradient(circle, rgba(240,185,11,0.10), transparent 70%)" }}
+        />
+
+        <div className="relative">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-muted-foreground tracking-wide">
+              Estimated Balance
+            </span>
+            <button
+              onClick={() => setHidden((h) => !h)}
+              aria-label={hidden ? "Show balance" : "Hide balance"}
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              {hidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </button>
+          </div>
+
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-[32px] leading-none font-semibold tracking-tight text-foreground tabular-nums">
+              {masked(fmtUSD(available))}
+            </span>
+            <span className="text-[13px] font-medium text-muted-foreground">USDT</span>
+          </div>
+          <div className="mt-1 text-[11.5px] text-muted-foreground tabular-nums">
+            ≈ ${masked(fmtUSD(available))} USD
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <ActionButton kind="deposit" onClick={() => setOpen("deposit")} />
+            <ActionButton kind="withdraw" onClick={() => setOpen("withdraw")} />
+          </div>
         </div>
       </div>
 
@@ -85,9 +116,10 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
       onClick={onClick}
       className={
         isDep
-          ? "h-11 rounded-xl bg-foreground text-background text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition"
-          : "h-11 rounded-xl border border-border bg-surface-elevated text-foreground text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-surface-elevated/80 active:opacity-90 transition"
+          ? "h-11 rounded-xl text-[#181A1F] text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-90 transition shadow-[0_4px_14px_-4px_rgba(240,185,11,0.45)]"
+          : "h-11 rounded-xl border border-[#2B3139] bg-[#2B3139]/40 text-foreground text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-[#2B3139]/70 active:opacity-90 transition"
       }
+      style={isDep ? { background: "linear-gradient(135deg, #FCD535 0%, #F0B90B 100%)" } : undefined}
     >
       <Icon className="size-3.5" />
       {isDep ? "Deposit" : "Withdraw"}
