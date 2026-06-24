@@ -79,5 +79,16 @@ export function useNotifications() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications", user?.id] }),
   });
 
-  return { items, unreadCount, isLoading: query.isLoading, markAllRead, markRead };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("notifications" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications", user?.id] }),
+  });
+
+  return { items, unreadCount, isLoading: query.isLoading, markAllRead, markRead, remove };
 }
