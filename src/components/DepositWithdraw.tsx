@@ -107,7 +107,13 @@ function FundsSheet({
   const { data: methods = [] } = useQuery<Method[]>({
     queryKey: ["deposit-methods"],
     queryFn: async () =>
-      (((await supabase.rpc("list_enabled_deposit_methods")).data as Method[]) ?? []),
+      (((await supabase.rpc("list_enabled_deposit_methods")).data as unknown as Method[]) ?? []),
+  });
+
+  const { data: selectedDetails = null } = useQuery<MethodDetails | null>({
+    queryKey: ["deposit-method-details", selectedSafeId()],
+    enabled: false, // overridden below
+    queryFn: async () => null,
   });
 
   const { data: countries = [] } = useQuery<CountryRow[]>({
