@@ -332,20 +332,23 @@ function FundsSheet({
 
 /* --------------------------- Mode bodies --------------------------- */
 
-function DepositBody({ method, amount, setAmount, txHash, setTxHash }: any) {
+function DepositBody({ method, details, amount, setAmount, txHash, setTxHash }: any) {
   const isBank = method.method_type === "bank";
+  const loading = !details;
   return (
     <div className="space-y-3">
       <Label>{isBank ? "Bank details" : "Deposit address"}</Label>
       <div className="rounded-xl bg-background/40 border border-border/60 p-4 space-y-2.5">
-        {isBank ? (
+        {loading ? (
+          <p className="text-[11px] text-muted-foreground">Loading details…</p>
+        ) : isBank ? (
           <>
-            <DetailRow label="Bank" value={method.bank_name ?? "—"} />
-            <DetailRow label="Account name" value={method.account_name ?? "—"} copy />
-            <DetailRow label="Account number" value={method.account_number ?? "—"} copy mono />
+            <DetailRow label="Bank" value={details.bank_name ?? "—"} />
+            <DetailRow label="Account name" value={details.account_name ?? "—"} copy />
+            <DetailRow label="Account number" value={details.account_number ?? "—"} copy mono />
           </>
         ) : (
-          <DetailRow label={method.network} value={method.deposit_address ?? "—"} copy mono break />
+          <DetailRow label={method.network} value={details.deposit_address ?? "—"} copy mono break />
         )}
         {method.instructions && (
           <p className="text-[11px] text-muted-foreground pt-2 border-t border-border/50">{method.instructions}</p>
