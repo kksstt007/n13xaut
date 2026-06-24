@@ -22,11 +22,14 @@ type Method = {
   flow: "deposit" | "withdraw" | "both";
   display_name: string | null;
   method_type: string;
+  instructions: string | null;
+};
+
+type MethodDetails = Method & {
   deposit_address: string | null;
   bank_name: string | null;
   account_name: string | null;
   account_number: string | null;
-  instructions: string | null;
 };
 
 type CountryRow = {
@@ -104,7 +107,7 @@ function FundsSheet({
   const { data: methods = [] } = useQuery<Method[]>({
     queryKey: ["deposit-methods"],
     queryFn: async () =>
-      ((await supabase.from("deposit_methods").select("*").eq("enabled", true).order("sort_order").order("network")).data as Method[]) ?? [],
+      (((await supabase.rpc("list_enabled_deposit_methods")).data as unknown as Method[]) ?? []),
   });
 
   const { data: countries = [] } = useQuery<CountryRow[]>({
@@ -147,6 +150,18 @@ function FundsSheet({
   const [selected, setSelected] = React.useState<Method | null>(null);
   React.useEffect(() => { setSelected(filtered[0] ?? null); /* eslint-disable-next-line */ }, [countryCode, methods.length, mode]);
 
+  // Fetch sensitive details (account number / deposit address) only for the
+  // method the user actually selected — not for the entire list.
+  const { data: selectedDetails = null } = useQuery<MethodDetails | null>({
+    queryKey: ["deposit-method-details", selected?.id],
+    enabled: !!selected?.id,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_deposit_method_details", { _id: selected!.id });
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row as unknown as MethodDetails) ?? null;
+    },
+  });
+
   // Forms
   const [depAmount, setDepAmount] = React.useState<number>(100);
   const [txHash, setTxHash] = React.useState("");
@@ -183,7 +198,7 @@ function FundsSheet({
         method_id: selected.id,
       };
       if (selected.method_type === "bank") {
-        payload.bank_name = selected.bank_name;
+        payload.bank_name = selectedDetails?.bank_name ?? null;
       }
       const { error } = await supabase.from("withdrawals").insert(payload);
       if (error) throw error;
@@ -257,7 +272,7 @@ function FundsSheet({
                   <div className="mt-2 space-y-2">
                     {filtered.map((m) => {
                       const isSel = selected?.id === m.id;
-                      const title = m.display_name || (m.method_type === "bank" ? (m.bank_name || m.network) : m.network);
+                      const title = m.display_name || m.network;
                       const subtitle = m.method_type === "bank"
                         ? `${m.asset} · min $${m.min_deposit}`
                         : `${m.asset} · ${m.network} · min $${m.min_deposit}`;
@@ -291,8 +306,8 @@ function FundsSheet({
               )}
 
               {/* Mode-specific body */}
-              {selected && mode === "deposit" && <DepositBody method={selected} amount={depAmount} setAmount={setDepAmount} txHash={txHash} setTxHash={setTxHash} />}
-              {selected && mode === "withdraw" && <WithdrawBody method={selected} amount={wdAmount} setAmount={setWdAmount} address={wdAddress} setAddress={setWdAddress} available={available} />}
+              {selected && mode === "deposit" && <DepositBody method={selected} details={selectedDetails} amount={depAmount} setAmount={setDepAmount} txHash={txHash} setTxHash={setTxHash} />}
+              {selected && mode === "withdraw" && <WithdrawBody method={selected} details={selectedDetails} amount={wdAmount} setAmount={setWdAmount} address={wdAddress} setAddress={setWdAddress} available={available} />}
 
               {/* Submit */}
               {selected && (
@@ -317,20 +332,23 @@ function FundsSheet({
 
 /* --------------------------- Mode bodies --------------------------- */
 
-function DepositBody({ method, amount, setAmount, txHash, setTxHash }: any) {
+function DepositBody({ method, details, amount, setAmount, txHash, setTxHash }: any) {
   const isBank = method.method_type === "bank";
+  const loading = !details;
   return (
     <div className="space-y-3">
       <Label>{isBank ? "Bank details" : "Deposit address"}</Label>
       <div className="rounded-xl bg-background/40 border border-border/60 p-4 space-y-2.5">
-        {isBank ? (
+        {loading ? (
+          <p className="text-[11px] text-muted-foreground">Loading details…</p>
+        ) : isBank ? (
           <>
-            <DetailRow label="Bank" value={method.bank_name ?? "—"} />
-            <DetailRow label="Account name" value={method.account_name ?? "—"} copy />
-            <DetailRow label="Account number" value={method.account_number ?? "—"} copy mono />
+            <DetailRow label="Bank" value={details.bank_name ?? "—"} />
+            <DetailRow label="Account name" value={details.account_name ?? "—"} copy />
+            <DetailRow label="Account number" value={details.account_number ?? "—"} copy mono />
           </>
         ) : (
-          <DetailRow label={method.network} value={method.deposit_address ?? "—"} copy mono break />
+          <DetailRow label={method.network} value={details.deposit_address ?? "—"} copy mono break />
         )}
         {method.instructions && (
           <p className="text-[11px] text-muted-foreground pt-2 border-t border-border/50">{method.instructions}</p>

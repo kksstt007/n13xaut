@@ -780,12 +780,58 @@ export type Database = {
       }
     }
     Functions: {
+      get_deposit_method_details: {
+        Args: { _id: string }
+        Returns: {
+          account_name: string
+          account_number: string
+          asset: string
+          bank_name: string
+          country: string
+          country_code: string
+          created_at: string
+          deposit_address: string
+          display_name: string
+          enabled: boolean
+          fee: number
+          flow: string
+          id: string
+          instructions: string
+          method_type: string
+          min_deposit: number
+          network: string
+          notes: string
+          sort_order: number
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      list_enabled_deposit_methods: {
+        Args: never
+        Returns: {
+          asset: string
+          country: string
+          country_code: string
+          created_at: string
+          display_name: string
+          enabled: boolean
+          fee: number
+          flow: string
+          id: string
+          instructions: string
+          method_type: string
+          min_deposit: number
+          network: string
+          notes: string
+          sort_order: number
+          updated_at: string
+        }[]
       }
     }
     Enums: {

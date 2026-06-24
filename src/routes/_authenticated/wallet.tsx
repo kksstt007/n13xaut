@@ -25,7 +25,7 @@ function WalletPage() {
   });
   const { data: methods } = useQuery({
     queryKey: ["methods"],
-    queryFn: async () => (await supabase.from("deposit_methods").select("*").eq("enabled", true)).data ?? [],
+    queryFn: async () => (await supabase.rpc("list_enabled_deposit_methods")).data ?? [],
   });
   const { data: deposits } = useQuery({
     queryKey: ["deposits", user?.id],
@@ -40,6 +40,15 @@ function WalletPage() {
 
   const [selectedMethod, setSelectedMethod] = React.useState<any>(null);
   React.useEffect(() => { if (methods?.length && !selectedMethod) setSelectedMethod(methods[0]); }, [methods, selectedMethod]);
+
+  const { data: selectedMethodDetails } = useQuery({
+    queryKey: ["method-details", selectedMethod?.id],
+    enabled: !!selectedMethod?.id,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_deposit_method_details", { _id: selectedMethod.id });
+      return Array.isArray(data) ? data[0] : data;
+    },
+  });
   const [depAmount, setDepAmount] = React.useState(100);
   const [txHash, setTxHash] = React.useState("");
 
@@ -193,10 +202,12 @@ function WalletPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">Deposit address</label>
                   <div className="mt-1 flex items-center gap-2 p-3 rounded-lg bg-surface-elevated font-mono text-xs break-all">
-                    {selectedMethod.deposit_address}
-                    <button onClick={() => { navigator.clipboard.writeText(selectedMethod.deposit_address); toast.success("Copied"); }}>
-                      <Copy className="size-4 text-gold flex-shrink-0" />
-                    </button>
+                    {selectedMethodDetails?.deposit_address ?? "Loading…"}
+                    {selectedMethodDetails?.deposit_address && (
+                      <button onClick={() => { navigator.clipboard.writeText(selectedMethodDetails.deposit_address!); toast.success("Copied"); }}>
+                        <Copy className="size-4 text-gold flex-shrink-0" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Send only USDT on {selectedMethod.network}. Other assets may be lost.</p>
