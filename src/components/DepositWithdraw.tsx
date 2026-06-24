@@ -272,7 +272,7 @@ function FundsSheet({
                   <div className="mt-2 space-y-2">
                     {filtered.map((m) => {
                       const isSel = selected?.id === m.id;
-                      const title = m.display_name || (m.method_type === "bank" ? (m.bank_name || m.network) : m.network);
+                      const title = m.display_name || m.network;
                       const subtitle = m.method_type === "bank"
                         ? `${m.asset} · min $${m.min_deposit}`
                         : `${m.asset} · ${m.network} · min $${m.min_deposit}`;
