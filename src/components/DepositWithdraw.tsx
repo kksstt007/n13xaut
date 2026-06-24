@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Building2, Wallet as WalletIcon, CheckCircle2, Inbox } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Copy, X, Globe2, ChevronRight, Building2, Wallet as WalletIcon, CheckCircle2, Inbox, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
