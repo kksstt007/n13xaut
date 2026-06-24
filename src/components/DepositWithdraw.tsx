@@ -150,6 +150,18 @@ function FundsSheet({
   const [selected, setSelected] = React.useState<Method | null>(null);
   React.useEffect(() => { setSelected(filtered[0] ?? null); /* eslint-disable-next-line */ }, [countryCode, methods.length, mode]);
 
+  // Fetch sensitive details (account number / deposit address) only for the
+  // method the user actually selected — not for the entire list.
+  const { data: selectedDetails = null } = useQuery<MethodDetails | null>({
+    queryKey: ["deposit-method-details", selected?.id],
+    enabled: !!selected?.id,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_deposit_method_details", { _id: selected!.id });
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row as unknown as MethodDetails) ?? null;
+    },
+  });
+
   // Forms
   const [depAmount, setDepAmount] = React.useState<number>(100);
   const [txHash, setTxHash] = React.useState("");
@@ -186,7 +198,7 @@ function FundsSheet({
         method_id: selected.id,
       };
       if (selected.method_type === "bank") {
-        payload.bank_name = selected.bank_name;
+        payload.bank_name = selectedDetails?.bank_name ?? null;
       }
       const { error } = await supabase.from("withdrawals").insert(payload);
       if (error) throw error;
