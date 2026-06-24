@@ -306,8 +306,8 @@ function FundsSheet({
               )}
 
               {/* Mode-specific body */}
-              {selected && mode === "deposit" && <DepositBody method={selected} amount={depAmount} setAmount={setDepAmount} txHash={txHash} setTxHash={setTxHash} />}
-              {selected && mode === "withdraw" && <WithdrawBody method={selected} amount={wdAmount} setAmount={setWdAmount} address={wdAddress} setAddress={setWdAddress} available={available} />}
+              {selected && mode === "deposit" && <DepositBody method={selected} details={selectedDetails} amount={depAmount} setAmount={setDepAmount} txHash={txHash} setTxHash={setTxHash} />}
+              {selected && mode === "withdraw" && <WithdrawBody method={selected} details={selectedDetails} amount={wdAmount} setAmount={setWdAmount} address={wdAddress} setAddress={setWdAddress} available={available} />}
 
               {/* Submit */}
               {selected && (
