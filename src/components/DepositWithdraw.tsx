@@ -22,11 +22,14 @@ type Method = {
   flow: "deposit" | "withdraw" | "both";
   display_name: string | null;
   method_type: string;
+  instructions: string | null;
+};
+
+type MethodDetails = Method & {
   deposit_address: string | null;
   bank_name: string | null;
   account_name: string | null;
   account_number: string | null;
-  instructions: string | null;
 };
 
 type CountryRow = {
