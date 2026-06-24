@@ -202,10 +202,12 @@ function WalletPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">Deposit address</label>
                   <div className="mt-1 flex items-center gap-2 p-3 rounded-lg bg-surface-elevated font-mono text-xs break-all">
-                    {selectedMethod.deposit_address}
-                    <button onClick={() => { navigator.clipboard.writeText(selectedMethod.deposit_address); toast.success("Copied"); }}>
-                      <Copy className="size-4 text-gold flex-shrink-0" />
-                    </button>
+                    {selectedMethodDetails?.deposit_address ?? "Loading…"}
+                    {selectedMethodDetails?.deposit_address && (
+                      <button onClick={() => { navigator.clipboard.writeText(selectedMethodDetails.deposit_address!); toast.success("Copied"); }}>
+                        <Copy className="size-4 text-gold flex-shrink-0" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Send only USDT on {selectedMethod.network}. Other assets may be lost.</p>
