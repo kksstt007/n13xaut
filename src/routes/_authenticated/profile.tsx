@@ -506,9 +506,20 @@ function EditProfileSheet({
     });
   }, [profile, open]);
 
+  const phoneLocked = !!(profile?.phone && String(profile.phone).trim().length > 0);
+
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update(form).eq("id", userId!);
+      const username = form.display_name.trim();
+      if (!username) throw new Error("Username is required");
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username))
+        throw new Error("Username must be 3–20 characters: letters, numbers, or _ (no spaces)");
+
+      const patch: any = { display_name: username, country: form.country };
+      // Only allow setting phone if it has not been set yet.
+      if (!phoneLocked) patch.phone = form.phone.trim() || null;
+
+      const { error } = await supabase.from("profiles").update(patch).eq("id", userId!);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Profile updated"); onSaved(); onClose(); },
@@ -537,11 +548,33 @@ function EditProfileSheet({
               </button>
             </div>
             <div className="space-y-3">
-              <Field label="Display name">
-                <input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} className="input" placeholder="Your name" />
+              <Field label="Username">
+                <input
+                  value={form.display_name}
+                  onChange={(e) => setForm({ ...form, display_name: e.target.value.replace(/\s+/g, "") })}
+                  className="input"
+                  placeholder="e.g. trader_01"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  maxLength={20}
+                />
+                <p className="mt-1 text-[10.5px] text-muted-foreground">3–20 characters · letters, numbers, _ · no spaces</p>
               </Field>
-              <Field label="Phone">
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" placeholder="+1 555 000 0000" />
+              <Field label={phoneLocked ? "Phone (locked)" : "Phone"}>
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="input"
+                  placeholder="+1 555 000 0000"
+                  disabled={phoneLocked}
+                  readOnly={phoneLocked}
+                />
+                <p className="mt-1 text-[10.5px] text-muted-foreground">
+                  {phoneLocked
+                    ? "Phone number is permanent once set. Contact support to change it."
+                    : "Once saved, your phone number cannot be changed."}
+                </p>
               </Field>
               <Field label="Country">
                 <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="input" placeholder="Country" />
