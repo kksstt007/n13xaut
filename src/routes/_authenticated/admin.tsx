@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
-import { adminResetUserPassword } from "@/lib/admin.functions";
+import { adminResetUserPassword, adminGetUserDetail, adminUpdateUserContact } from "@/lib/admin.functions";
 import { sendNotification } from "@/lib/notifications.functions";
 
 
@@ -84,6 +84,7 @@ function UsersAdmin() {
   const [resetFor, setResetFor] = React.useState<any>(null);
   const [newPw, setNewPw] = React.useState("");
   const [showPw, setShowPw] = React.useState(false);
+  const [detailFor, setDetailFor] = React.useState<any>(null);
   const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
@@ -167,6 +168,8 @@ function UsersAdmin() {
                       className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
                     <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
                       className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                    <button onClick={() => setDetailFor(u)}
+                      className="text-[10px] px-2 py-1 rounded bg-muted/40 text-foreground hover:bg-muted/60">Details</button>
                     <button onClick={() => { setResetFor(u); setNewPw(genStrong()); setShowPw(true); }}
                       className="text-[10px] px-2 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25">Reset password</button>
                   </div>
@@ -221,9 +224,192 @@ function UsersAdmin() {
           </div>
         </div>
       )}
+
+      {detailFor && (
+        <UserDetailModal user={detailFor} onClose={() => setDetailFor(null)} onChanged={() => qc.invalidateQueries({ queryKey: ["admin-users"] })} />
+      )}
     </div>
   );
 }
+
+function UserDetailModal({ user, onClose, onChanged }: { user: any; onClose: () => void; onChanged: () => void }) {
+  const getDetail = useServerFn(adminGetUserDetail);
+  const updateContact = useServerFn(adminUpdateUserContact);
+  const qc = useQueryClient();
+  const [tab, setTab] = React.useState<"info" | "deposits" | "withdrawals" | "trades" | "investments" | "logins" | "notifications" | "audit">("info");
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-user-detail", user.id],
+    queryFn: () => getDetail({ data: { userId: user.id } }),
+  });
+
+  const [email, setEmail] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  React.useEffect(() => {
+    if (data) {
+      setEmail(data.auth.email ?? "");
+      setPhone(data.auth.phone ?? data.profile?.phone ?? "");
+    }
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => updateContact({
+      data: {
+        userId: user.id,
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+      },
+    }),
+    onSuccess: () => {
+      toast.success("Contact updated");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Update failed"),
+  });
+
+  const tabs: { k: typeof tab; l: string; n?: number }[] = [
+    { k: "info", l: "Info" },
+    { k: "deposits", l: "Deposits", n: data?.deposits.length },
+    { k: "withdrawals", l: "Withdrawals", n: data?.withdrawals.length },
+    { k: "trades", l: "Trades", n: data?.trades.length },
+    { k: "investments", l: "Invest", n: data?.investments.length },
+    { k: "logins", l: "Logins", n: data?.logins.length },
+    { k: "notifications", l: "Notifs", n: data?.notifications.length },
+    { k: "audit", l: "Audit", n: data?.audit.length },
+  ];
+
+  const fmtDt = (s?: string | null) => s ? new Date(s).toLocaleString() : "—";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="glass rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-5 border-b border-border/50 flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold">{user.display_name ?? "User"}</h3>
+            <p className="text-[11px] text-muted-foreground font-mono">{user.id}</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
+        </div>
+
+        <div className="px-5 pt-3 flex gap-1 border-b border-border/30 overflow-x-auto scrollbar-thin">
+          {tabs.map((t) => (
+            <button key={t.k} onClick={() => setTab(t.k)}
+              className={`px-3 py-2 text-xs whitespace-nowrap border-b-2 transition flex items-center gap-1.5 ${tab === t.k ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              {t.l}
+              {typeof t.n === "number" && t.n > 0 && <span className="text-[9px] px-1 rounded bg-muted/40">{t.n}</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-5 overflow-y-auto flex-1 scrollbar-thin">
+          {isLoading && <div className="text-center text-sm text-muted-foreground py-8">Loading…</div>}
+          {data && tab === "info" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <Stat label="Balance (USDT)" value={fmtUSD(Number(data.wallet?.usdt_balance ?? 0))} />
+                <Stat label="Status" value={data.profile?.banned ? "Banned" : data.profile?.frozen ? "Frozen" : "Active"} />
+                <Stat label="Risk score" value={String(data.profile?.risk_score ?? 0)} />
+                <Stat label="WD limit" value={data.profile?.withdrawal_limit != null ? String(data.profile.withdrawal_limit) : "∞"} />
+                <Stat label="Country" value={data.profile?.country ?? "—"} />
+                <Stat label="Referral code" value={data.profile?.referral_code ?? "—"} />
+                <Stat label="Joined" value={fmtDt(data.auth.created_at)} />
+                <Stat label="Last sign-in" value={fmtDt(data.auth.last_sign_in_at)} />
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] text-muted-foreground flex items-center gap-2">
+                      Email
+                      {data.auth.email_confirmed_at && <span className="text-[9px] px-1 rounded bg-success/15 text-success">verified</span>}
+                    </label>
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email"
+                      className="w-full mt-1 rounded bg-input border border-border px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground flex items-center gap-2">
+                      Phone
+                      {data.auth.phone_confirmed_at && <span className="text-[9px] px-1 rounded bg-success/15 text-success">verified</span>}
+                    </label>
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. 959xxxxxxxx"
+                      className="w-full mt-1 rounded bg-input border border-border px-2 py-1.5 text-sm" />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button disabled={save.isPending} onClick={() => save.mutate()}
+                    className="text-xs px-3 py-1.5 rounded bg-gold/20 text-gold hover:bg-gold/30 disabled:opacity-50">
+                    {save.isPending ? "Saving…" : "Save contact"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {data && tab === "deposits" && (
+            <LogTable cols={["Time","Network","Asset","Amount","Status","Note"]} rows={data.deposits.map((d: any) => [fmtDt(d.created_at), d.network, d.asset, fmtUSD(Number(d.amount)), d.status, d.admin_note ?? "—"])} />
+          )}
+          {data && tab === "withdrawals" && (
+            <LogTable cols={["Time","Network","Amount","Address","Status","Risk","Note"]} rows={data.withdrawals.map((d: any) => [fmtDt(d.created_at), d.network, fmtUSD(Number(d.amount)), shorten(d.address), d.status, (d.risk_flags ?? []).join(",") || "—", d.admin_note ?? "—"])} />
+          )}
+          {data && tab === "trades" && (
+            <LogTable cols={["Time","Side","Symbol","Amount","Open","Close","PnL","Status"]} rows={data.trades.map((t: any) => [fmtDt(t.opened_at), t.direction, t.symbol, fmtUSD(Number(t.amount)), t.open_price ?? "—", t.close_price ?? "—", t.pnl != null ? fmtUSD(Number(t.pnl)) : "—", t.status])} />
+          )}
+          {data && tab === "investments" && (
+            <LogTable cols={["Time","Plan","Amount","Daily %","Status"]} rows={data.investments.map((t: any) => [fmtDt(t.created_at), t.plan_name ?? "—", fmtUSD(Number(t.amount ?? 0)), t.daily_rate != null ? `${(Number(t.daily_rate) * 100).toFixed(2)}%` : "—", t.status ?? "—"])} />
+          )}
+          {data && tab === "logins" && (
+            <LogTable cols={["Time","Success","IP","User agent"]} rows={data.logins.map((l: any) => [fmtDt(l.created_at), l.success ? "yes" : "no", l.ip ?? "—", shorten(l.user_agent ?? "—", 40)])} />
+          )}
+          {data && tab === "notifications" && (
+            <LogTable cols={["Time","Type","Title","Read"]} rows={data.notifications.map((n: any) => [fmtDt(n.created_at), n.type, n.title, n.read_at ? "yes" : "no"])} />
+          )}
+          {data && tab === "audit" && (
+            <LogTable cols={["Time","Action","Target","Value"]} rows={data.audit.map((a: any) => [fmtDt(a.created_at), a.action, a.target_type ?? "—", JSON.stringify(a.new_value ?? a.prev_value ?? {}).slice(0, 80)])} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-lg bg-muted/20 border border-border/30 px-3 py-2">
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
+      <div className="text-sm font-medium mt-0.5 truncate">{value}</div>
+    </div>
+  );
+}
+
+function LogTable({ cols, rows }: { cols: string[]; rows: React.ReactNode[][] }) {
+  if (!rows.length) return <div className="text-center text-sm text-muted-foreground py-6">No records</div>;
+  return (
+    <div className="overflow-x-auto scrollbar-thin">
+      <table className="w-full text-xs">
+        <thead className="text-[10px] text-muted-foreground border-b border-border/40">
+          <tr>{cols.map((c) => <th key={c} className="text-left py-1.5 pr-3 font-medium uppercase tracking-wider">{c}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b border-border/20">
+              {r.map((c, j) => <td key={j} className="py-1.5 pr-3 align-top">{c}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function shorten(s: string, n = 12) {
+  if (!s) return "—";
+  return s.length > n ? `${s.slice(0, n)}…` : s;
+}
+
 
 
 function useRealtimeInvalidate(table: string, queryKey: string, onNewPending?: (row: any) => void) {
