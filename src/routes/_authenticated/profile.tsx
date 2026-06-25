@@ -183,8 +183,9 @@ function ProfilePage() {
           icon={Smartphone}
           label="Phone number"
           value={profile?.phone || "Not set"}
+          hint={profile?.phone ? "Locked — contact support to change" : undefined}
           status={profile?.phone ? "verified" : "off"}
-          onClick={() => setEditOpen(true)}
+          onClick={profile?.phone ? undefined : () => setEditOpen(true)}
         />
         <Row icon={Lock} label="Login password" hint="Last changed —" actionLabel="Change" onClick={() => toast.info("Password reset link will be sent to your email")} />
         <Row icon={Fingerprint} label="Two-factor (2FA)" hint="Authenticator app" status="off" actionLabel="Enable" onClick={() => toast.info("2FA setup coming soon")} />
