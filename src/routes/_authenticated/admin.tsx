@@ -168,6 +168,8 @@ function UsersAdmin() {
                       className="text-[10px] px-2 py-1 rounded bg-gold/15 text-gold hover:bg-gold/25">{u.frozen ? "Unfreeze" : "Freeze"}</button>
                     <button onClick={() => update.mutate({ uid: u.id, patch: { banned: !u.banned }, prev: { banned: u.banned }, action: u.banned ? "profile.unban" : "profile.ban" })}
                       className="text-[10px] px-2 py-1 rounded bg-destructive/15 text-destructive hover:bg-destructive/25">{u.banned ? "Unban" : "Ban"}</button>
+                    <button onClick={() => setDetailFor(u)}
+                      className="text-[10px] px-2 py-1 rounded bg-muted/40 text-foreground hover:bg-muted/60">Details</button>
                     <button onClick={() => { setResetFor(u); setNewPw(genStrong()); setShowPw(true); }}
                       className="text-[10px] px-2 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25">Reset password</button>
                   </div>
