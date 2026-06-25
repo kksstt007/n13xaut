@@ -84,6 +84,7 @@ function UsersAdmin() {
   const [resetFor, setResetFor] = React.useState<any>(null);
   const [newPw, setNewPw] = React.useState("");
   const [showPw, setShowPw] = React.useState(false);
+  const [detailFor, setDetailFor] = React.useState<any>(null);
   const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
