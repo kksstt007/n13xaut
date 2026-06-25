@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
-import { adminResetUserPassword } from "@/lib/admin.functions";
+import { adminResetUserPassword, adminGetUserDetail, adminUpdateUserContact } from "@/lib/admin.functions";
 import { sendNotification } from "@/lib/notifications.functions";
 
 
