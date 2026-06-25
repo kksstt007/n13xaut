@@ -64,7 +64,7 @@ export const adminGetUserDetail = createServerFn({ method: "POST" })
         supabaseAdmin.from("wallets").select("*").eq("user_id", uid).maybeSingle(),
         supabaseAdmin.from("deposits").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
         supabaseAdmin.from("withdrawals").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
-        supabaseAdmin.from("trades").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
+        supabaseAdmin.from("trades").select("*").eq("user_id", uid).order("opened_at", { ascending: false }).limit(100),
         supabaseAdmin.from("login_history").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
         supabaseAdmin.from("audit_log").select("*").or(`target_id.eq.${uid},actor_id.eq.${uid}`).order("created_at", { ascending: false }).limit(100),
         supabaseAdmin.from("notifications").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
