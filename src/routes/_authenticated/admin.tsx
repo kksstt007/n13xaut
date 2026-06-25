@@ -356,13 +356,13 @@ function UserDetailModal({ user, onClose, onChanged }: { user: any; onClose: () 
             <LogTable cols={["Time","Network","Amount","Address","Status","Risk","Note"]} rows={data.withdrawals.map((d: any) => [fmtDt(d.created_at), d.network, fmtUSD(Number(d.amount)), shorten(d.address), d.status, (d.risk_flags ?? []).join(",") || "—", d.admin_note ?? "—"])} />
           )}
           {data && tab === "trades" && (
-            <LogTable cols={["Time","Side","Symbol","Amount","Entry","Exit","PnL","Status"]} rows={data.trades.map((t: any) => [fmtDt(t.created_at), t.side, t.symbol, fmtUSD(Number(t.amount)), t.entry_price ?? "—", t.exit_price ?? "—", t.pnl != null ? fmtUSD(Number(t.pnl)) : "—", t.status])} />
+            <LogTable cols={["Time","Side","Symbol","Amount","Open","Close","PnL","Status"]} rows={data.trades.map((t: any) => [fmtDt(t.opened_at), t.direction, t.symbol, fmtUSD(Number(t.amount)), t.open_price ?? "—", t.close_price ?? "—", t.pnl != null ? fmtUSD(Number(t.pnl)) : "—", t.status])} />
           )}
           {data && tab === "investments" && (
-            <LogTable cols={["Time","Plan","Amount","APR","Status"]} rows={data.investments.map((t: any) => [fmtDt(t.created_at), t.plan ?? t.type ?? "—", fmtUSD(Number(t.amount ?? 0)), t.apr ?? t.rate ?? "—", t.status ?? "—"])} />
+            <LogTable cols={["Time","Plan","Amount","Daily %","Status"]} rows={data.investments.map((t: any) => [fmtDt(t.created_at), t.plan_name ?? "—", fmtUSD(Number(t.amount ?? 0)), t.daily_rate != null ? `${(Number(t.daily_rate) * 100).toFixed(2)}%` : "—", t.status ?? "—"])} />
           )}
           {data && tab === "logins" && (
-            <LogTable cols={["Time","Success","IP","User agent"]} rows={data.logins.map((l: any) => [fmtDt(l.created_at), l.success ? "yes" : "no", l.ip_address ?? "—", shorten(l.user_agent ?? "—", 40)])} />
+            <LogTable cols={["Time","Success","IP","User agent"]} rows={data.logins.map((l: any) => [fmtDt(l.created_at), l.success ? "yes" : "no", l.ip ?? "—", shorten(l.user_agent ?? "—", 40)])} />
           )}
           {data && tab === "notifications" && (
             <LogTable cols={["Time","Type","Title","Read"]} rows={data.notifications.map((n: any) => [fmtDt(n.created_at), n.type, n.title, n.read_at ? "yes" : "no"])} />
