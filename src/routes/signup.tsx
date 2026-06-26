@@ -146,12 +146,23 @@ function SignupPage() {
               </div>
             )}
 
-            <input
-              placeholder="Display name (optional)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg bg-input border border-border px-4 py-3 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-ring transition"
-            />
+            <div>
+              <input
+                required
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ""))}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={20}
+                pattern="[a-zA-Z0-9_]{3,20}"
+                className="w-full rounded-lg bg-input border border-border px-4 py-3 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-ring transition"
+              />
+              <p className="mt-1 text-[10.5px] text-muted-foreground">
+                3–20 chars · letters, numbers, _ · cannot be changed later
+              </p>
+            </div>
 
             <input
               required
