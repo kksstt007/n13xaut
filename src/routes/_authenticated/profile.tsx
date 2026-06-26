@@ -236,7 +236,7 @@ function ProfilePage() {
 
 /* ------------------------------ Pieces ------------------------------ */
 
-function RecordsSection({ userId }: { userId?: string }) {
+function RecordsRow({ userId }: { userId?: string }) {
   const [open, setOpen] = React.useState(false);
   const [tab, setTab] = React.useState<"deposits" | "withdrawals">("deposits");
   const { data: deposits } = useQuery({
@@ -253,6 +253,7 @@ function RecordsSection({ userId }: { userId?: string }) {
   });
 
   const rows = tab === "deposits" ? deposits ?? [] : withdrawals ?? [];
+  const count = (deposits?.length ?? 0) + (withdrawals?.length ?? 0);
 
   const statusCls = (s?: string) => {
     if (s === "approved" || s === "completed") return "text-success bg-success/10 border-success/20";
@@ -262,72 +263,75 @@ function RecordsSection({ userId }: { userId?: string }) {
   };
 
   return (
-    <section>
-      <div className="rounded-2xl bg-surface border border-border/50 overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-elevated/60 transition"
-          aria-expanded={open}
-        >
-          <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
-            <HistoryIcon className="size-[15px]" />
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <div className="text-[13px] font-medium text-foreground">Transaction history</div>
-          </div>
-          <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
-        </button>
+    <div className="border-b border-border/40">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-elevated/60 transition"
+        aria-expanded={open}
+      >
+        <div className="size-8 rounded-lg grid place-items-center bg-gold/8 text-gold border border-gold/20">
+          <HistoryIcon className="size-[15px]" />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <div className="text-[13px] font-medium text-foreground">Transaction history</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">Deposits & withdrawals</div>
+        </div>
+        {count > 0 && (
+          <span className="text-[10px] font-medium text-muted-foreground tabular-nums">{count}</span>
+        )}
+        <ChevronDown className={`size-4 text-muted-foreground/60 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+      </button>
 
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              key="records-content"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="border-t border-border/50">
-                <div className="flex border-b border-border/50">
-                  {(["deposits", "withdrawals"] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTab(t)}
-                      className={`flex-1 py-2.5 text-[12px] font-medium capitalize transition ${tab === t ? "text-foreground border-b-2 border-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <div className="divide-y divide-border/40">
-                  {rows.length === 0 && (
-                    <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">No {tab} yet</div>
-                  )}
-                  {rows.slice(0, 5).map((r: any) => (
-                    <div key={r.id} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-foreground tabular-nums">
-                          {tab === "deposits" ? "+" : "−"}${Number(r.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                        <div className="text-[10.5px] text-muted-foreground mt-0.5">
-                          {new Date(r.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                          {r.network ? ` · ${r.network}` : ""}
-                        </div>
-                      </div>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border capitalize ${statusCls(r.status)}`}>{r.status ?? "pending"}</span>
-                    </div>
-                  ))}
-                </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="records-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border/40 bg-background/40">
+              <div className="flex border-b border-border/40">
+                {(["deposits", "withdrawals"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`flex-1 py-2 text-[12px] font-medium capitalize transition ${tab === t ? "text-foreground border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </section>
+              <div className="divide-y divide-border/30">
+                {rows.length === 0 && (
+                  <div className="px-4 py-6 text-center text-[12px] text-muted-foreground">No {tab} yet</div>
+                )}
+                {rows.slice(0, 5).map((r: any) => (
+                  <div key={r.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-semibold text-foreground tabular-nums">
+                        {tab === "deposits" ? "+" : "−"}${Number(r.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-[10.5px] text-muted-foreground mt-0.5">
+                        {new Date(r.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {r.network ? ` · ${r.network}` : ""}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border capitalize ${statusCls(r.status)}`}>{r.status ?? "pending"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
+
 
 
 function UidRow({ uid }: { uid: string }) {
