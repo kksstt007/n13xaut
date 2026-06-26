@@ -154,31 +154,16 @@ function ProfilePage() {
         <DepositWithdraw />
       </section>
 
-      {/* Records */}
-      <RecordsSection userId={user?.id} />
+      {/* Funds & activity */}
+      <SectionCard title="Funds & activity">
+        <RecordsRow userId={user?.id} />
+        <Row icon={HistoryIcon} label="Orders" hint="Spot & options trade history" to="/history" />
+        <Row icon={Gift} label="Rewards" hint={`${refCount ?? 0} referrals · invite & earn`} to="/referrals" last />
+      </SectionCard>
 
-      {/* Shortcut grid */}
-      <section className="grid grid-cols-3 gap-2">
-        <Shortcut to="/history" icon={HistoryIcon} label="Orders" />
-        <Shortcut to="/referrals" icon={Gift} label="Rewards" />
-        <Shortcut to="/support" icon={LifeBuoy} label="Support" />
-      </section>
-
-
-
-      {/* Security center — collapsible */}
-      <CollapsibleSection
-        title="Security"
-        subtitle="Protect your account"
-        icon={Shield}
-        defaultOpen={false}
-      >
-        <Row
-          icon={Mail}
-          label="Email"
-          value={user?.email}
-          status={user?.email_confirmed_at ? "verified" : "unverified"}
-        />
+      {/* Security */}
+      <SectionCard title="Security" subtitle="Protect your account">
+        <Row icon={Mail} label="Email" value={user?.email} status={user?.email_confirmed_at ? "verified" : "unverified"} />
         <Row
           icon={Smartphone}
           label="Phone number"
@@ -187,21 +172,21 @@ function ProfilePage() {
           status={profile?.phone ? "verified" : "off"}
           onClick={profile?.phone ? undefined : () => setEditOpen(true)}
         />
-        <Row icon={Lock} label="Login password" hint="Last changed —" actionLabel="Change" onClick={() => toast.info("Password reset link will be sent to your email")} />
+        <Row icon={Lock} label="Login password" hint="Change at any time" actionLabel="Change" onClick={() => toast.info("Password reset link will be sent to your email")} />
         <Row icon={Fingerprint} label="Two-factor (2FA)" hint="Authenticator app" status="off" actionLabel="Enable" onClick={() => toast.info("2FA setup coming soon")} />
         <Row icon={KeyRound} label="Anti-phishing code" hint="Recognize official emails" actionLabel="Set" onClick={() => toast.info("Anti-phishing setup coming soon")} />
         <Row icon={Monitor} label="Devices & sessions" hint="Manage signed-in devices" onClick={() => toast.info("Session manager coming soon")} last />
-      </CollapsibleSection>
+      </SectionCard>
 
       {/* Verification */}
-      <SectionCard title="Identity verification" subtitle="Increase limits and unlock features">
+      <SectionCard title="Verification">
         <Row
           icon={ScanFace}
           label="Identity (KYC)"
           hint={
-            kycVerified ? "Approved — full trading access"
+            kycVerified ? "Approved — full access"
             : kyc?.status === "pending" ? "Under review"
-            : kyc?.status === "rejected" ? "Rejected — please resubmit"
+            : kyc?.status === "rejected" ? "Rejected — resubmit"
             : "Not started"
           }
           status={kycVerified ? "verified" : kyc?.status === "pending" ? "pending" : "off"}
@@ -210,13 +195,11 @@ function ProfilePage() {
         />
       </SectionCard>
 
-
       {/* Account */}
-      <SectionCard title="Account" subtitle="API & invites">
+      <SectionCard title="Account">
         <Row icon={Users} label="Referral program" hint={`${refCount ?? 0} invited`} to="/referrals" />
         <Row icon={KeyRound} label="API management" hint="Create API keys" onClick={() => toast.info("API management coming soon")} last />
       </SectionCard>
-
 
       {/* Preferences */}
       <SectionCard title="Preferences">
@@ -225,10 +208,13 @@ function ProfilePage() {
         <Row icon={Bell} label="Notifications" hint="Push, email & in-app" onClick={() => toast.info("Notification settings coming soon")} last />
       </SectionCard>
 
-      {/* Help & legal */}
+      {/* Support & more */}
+      <SectionCard title="Support">
+        <Row icon={LifeBuoy} label="Help center" hint="24/7 live chat & FAQs" to="/support" />
+        <Row icon={FileText} label="Terms & privacy" hint="Legal documents" to="/terms" last />
+      </SectionCard>
+
       <SectionCard title="More">
-        <Row icon={LifeBuoy} label="Help center" to="/support" />
-        <Row icon={FileText} label="Terms & privacy" onClick={() => toast.info("Legal documents")} />
         {isAdmin && <Row icon={SettingsIcon} label="Admin panel" to="/admin" />}
         <Row icon={LogOut} label="Sign out" destructive onClick={signOut} last />
       </SectionCard>
