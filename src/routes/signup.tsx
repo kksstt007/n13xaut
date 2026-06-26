@@ -14,11 +14,13 @@ export const Route = createFileRoute("/signup")({
 
 type Mode = "email" | "phone";
 
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+
 function SignupPage() {
   const nav = useNavigate();
   const [country, setCountry] = React.useState<Country>(DEFAULT_COUNTRY);
   const [mode, setMode] = React.useState<Mode>("email");
-  const [name, setName] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -30,19 +32,20 @@ function SignupPage() {
     if (!acceptedTerms) return toast.error("You must accept the Terms and Conditions to continue");
     if (password.length < 8) return toast.error("Password must be at least 8 characters");
 
+    const displayName = username.trim();
+    if (!USERNAME_RE.test(displayName))
+      return toast.error("Username must be 3–20 characters: letters, numbers, or _ (no spaces)");
+
     let signupEmail = "";
-    let displayName = name.trim();
     let phoneDigits: string | null = null;
 
     if (mode === "email") {
       signupEmail = email.trim();
       if (!signupEmail) return toast.error("Enter your email");
-      if (!displayName) displayName = signupEmail.split("@")[0];
     } else {
       phoneDigits = normalizePhone(phone);
       if (phoneDigits.length < 6) return toast.error("Enter a valid phone number");
       signupEmail = phoneToSyntheticEmail(country.dial, phoneDigits);
-      if (!displayName) displayName = `+${country.dial} ${phoneDigits.slice(-4).padStart(phoneDigits.length, "•")}`;
     }
 
     setLoading(true);
