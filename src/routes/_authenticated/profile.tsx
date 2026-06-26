@@ -508,16 +508,20 @@ function EditProfileSheet({
   }, [profile, open]);
 
   const phoneLocked = !!(profile?.phone && String(profile.phone).trim().length > 0);
+  const usernameLocked = !!(profile?.display_name && String(profile.display_name).trim().length > 0);
 
   const save = useMutation({
     mutationFn: async () => {
-      const username = form.display_name.trim();
-      if (!username) throw new Error("Username is required");
-      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username))
-        throw new Error("Username must be 3–20 characters: letters, numbers, or _ (no spaces)");
-
-      const patch: any = { display_name: username, country: form.country };
-      // Only allow setting phone if it has not been set yet.
+      const patch: any = { country: form.country };
+      // Username can only be set once.
+      if (!usernameLocked) {
+        const username = form.display_name.trim();
+        if (!username) throw new Error("Username is required");
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username))
+          throw new Error("Username must be 3–20 characters: letters, numbers, or _ (no spaces)");
+        patch.display_name = username;
+      }
+      // Phone can only be set once.
       if (!phoneLocked) patch.phone = form.phone.trim() || null;
 
       const { error } = await supabase.from("profiles").update(patch).eq("id", userId!);
@@ -549,7 +553,7 @@ function EditProfileSheet({
               </button>
             </div>
             <div className="space-y-3">
-              <Field label="Username">
+              <Field label={usernameLocked ? "Username (locked)" : "Username"}>
                 <input
                   value={form.display_name}
                   onChange={(e) => setForm({ ...form, display_name: e.target.value.replace(/\s+/g, "") })}
@@ -559,8 +563,14 @@ function EditProfileSheet({
                   autoCorrect="off"
                   spellCheck={false}
                   maxLength={20}
+                  disabled={usernameLocked}
+                  readOnly={usernameLocked}
                 />
-                <p className="mt-1 text-[10.5px] text-muted-foreground">3–20 characters · letters, numbers, _ · no spaces</p>
+                <p className="mt-1 text-[10.5px] text-muted-foreground">
+                  {usernameLocked
+                    ? "Username is permanent once set. Contact support to change it."
+                    : "3–20 characters · letters, numbers, _ · cannot be changed later"}
+                </p>
               </Field>
               <Field label={phoneLocked ? "Phone (locked)" : "Phone"}>
                 <input
