@@ -553,7 +553,7 @@ function EditProfileSheet({
               </button>
             </div>
             <div className="space-y-3">
-              <Field label="Username">
+              <Field label={usernameLocked ? "Username (locked)" : "Username"}>
                 <input
                   value={form.display_name}
                   onChange={(e) => setForm({ ...form, display_name: e.target.value.replace(/\s+/g, "") })}
@@ -563,8 +563,14 @@ function EditProfileSheet({
                   autoCorrect="off"
                   spellCheck={false}
                   maxLength={20}
+                  disabled={usernameLocked}
+                  readOnly={usernameLocked}
                 />
-                <p className="mt-1 text-[10.5px] text-muted-foreground">3–20 characters · letters, numbers, _ · no spaces</p>
+                <p className="mt-1 text-[10.5px] text-muted-foreground">
+                  {usernameLocked
+                    ? "Username is permanent once set. Contact support to change it."
+                    : "3–20 characters · letters, numbers, _ · cannot be changed later"}
+                </p>
               </Field>
               <Field label={phoneLocked ? "Phone (locked)" : "Phone"}>
                 <input
