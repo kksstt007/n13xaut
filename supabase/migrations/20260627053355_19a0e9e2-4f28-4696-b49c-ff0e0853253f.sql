@@ -1,0 +1,1 @@
+REVOKE SELECT (internal_note) ON public.profiles FROM authenticated, anon;
