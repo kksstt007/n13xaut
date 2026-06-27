@@ -11,7 +11,7 @@ import {
   Clock,
   Info,
   CheckCircle2,
-  Sparkles,
+  Layers,
   Flame,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
