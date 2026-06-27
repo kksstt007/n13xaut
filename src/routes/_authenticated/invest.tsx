@@ -168,7 +168,7 @@ function InvestPage() {
         className="relative overflow-hidden rounded-2xl border border-border/60 bg-surface-elevated px-5 py-6 sm:px-7 sm:py-8"
       >
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-gold/90">
-          <Sparkles className="size-3.5" /> Gold Earn
+          <span className="inline-block size-1.5 rounded-full bg-gold" /> Gold Earn
         </div>
         <h1 className="mt-3 text-[26px] sm:text-[34px] leading-tight font-semibold tracking-tight">
           Put your USDT to work in <span className="text-gold">XAUT-backed</span> gold plans
