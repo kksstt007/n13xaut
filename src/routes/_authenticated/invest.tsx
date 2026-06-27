@@ -412,7 +412,7 @@ function PortfolioSummary() {
       <SummaryCell
         label="Active plans"
         value={totals.active.toString()}
-        icon={<Sparkles className="size-3.5 text-gold" />}
+        icon={<Layers className="size-3.5 text-gold" />}
       />
     </div>
   );
