@@ -109,11 +109,21 @@ export const settleTrade = createServerFn({ method: "POST" })
       status: "settled", result, pnl, payout_pct: effectivePayout, close_price: closePrice, settled_at: new Date().toISOString(),
     }).eq("id", trade.id);
 
-    const { data: w } = await supabaseAdmin.from("wallets").select("usdt_balance, locked").eq("user_id", context.userId).single();
-    await supabaseAdmin.from("wallets").update({
-      usdt_balance: Number(w!.usdt_balance) + credit,
-      locked: Math.max(0, Number(w!.locked) - Number(trade.amount)),
-    }).eq("user_id", context.userId);
+    // Atomic credit + release the locked amount.
+    if (credit > 0) {
+      await supabaseAdmin.rpc("credit_wallet", {
+        _user_id: context.userId,
+        _amount: credit,
+        _lock_delta: -Number(trade.amount),
+      });
+    } else {
+      await supabaseAdmin.rpc("credit_wallet", {
+        _user_id: context.userId,
+        _amount: 0,
+        _lock_delta: -Number(trade.amount),
+      });
+    }
 
     return { result, pnl };
   });
+
