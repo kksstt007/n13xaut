@@ -48,27 +48,20 @@ export const createInvestment = createServerFn({ method: "POST" })
     if (plan.max != null && amount > plan.max)
       throw new Error(`Maximum for ${plan.name} is $${plan.max}`);
 
-    // Check wallet
-    const { data: wallet, error: wErr } = await supabase
-      .from("wallets")
-      .select("usdt_balance, locked")
-      .eq("user_id", userId)
-      .single();
-    if (wErr || !wallet) throw new Error("Wallet not found");
-    if (Number(wallet.usdt_balance) < amount) throw new Error("Insufficient balance");
+    // Atomic debit — prevents concurrent overspend and enforces balance server-side.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: newBalRow, error: debitErr } = await supabaseAdmin.rpc("debit_wallet", {
+      _user_id: userId,
+      _amount: amount,
+      _lock_delta: 0,
+    });
+    if (debitErr) throw new Error(debitErr.message || "Insufficient balance");
+    const newBal = Number(newBalRow ?? 0);
 
     const dailyRate = computeDailyRate(plan, amount);
     const startAt = new Date();
     const endAt = new Date(startAt.getTime() + plan.termDays * 86400_000);
 
-    // Deduct first (RLS allows admin; use service role)
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const newBal = Number(wallet.usdt_balance) - amount;
-    const { error: uErr } = await supabaseAdmin
-      .from("wallets")
-      .update({ usdt_balance: newBal })
-      .eq("user_id", userId);
-    if (uErr) throw new Error("Failed to debit wallet");
 
     const { data: inv, error: iErr } = await supabaseAdmin
       .from("investments")
@@ -86,10 +79,11 @@ export const createInvestment = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (iErr) {
-      // rollback debit
-      await supabaseAdmin.from("wallets").update({ usdt_balance: wallet.usdt_balance }).eq("user_id", userId);
+      // rollback debit atomically
+      await supabaseAdmin.rpc("credit_wallet", { _user_id: userId, _amount: amount, _lock_delta: 0 });
       throw new Error("Failed to create investment");
     }
+
     return { investment: inv, balance: newBal };
   });
 
@@ -155,14 +149,14 @@ export const claimYield = createServerFn({ method: "POST" })
     const newLast = new Date(last.getTime() + fullDays * DAY_MS);
     const payoutMark = matured ? end : newLast;
 
-    // Credit wallet
-    const { data: wallet } = await supabaseAdmin
-      .from("wallets")
-      .select("usdt_balance")
-      .eq("user_id", userId)
-      .single();
-    const newBal = Number(wallet?.usdt_balance ?? 0) + credit;
-    await supabaseAdmin.from("wallets").update({ usdt_balance: newBal }).eq("user_id", userId);
+    // Atomic credit
+    const { data: newBalRow } = await supabaseAdmin.rpc("credit_wallet", {
+      _user_id: userId,
+      _amount: credit,
+      _lock_delta: 0,
+    });
+    const newBal = Number(newBalRow ?? 0);
+
 
     const patch: {
       last_payout_at: string;

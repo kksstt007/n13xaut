@@ -780,6 +780,14 @@ export type Database = {
       }
     }
     Functions: {
+      credit_wallet: {
+        Args: { _amount: number; _lock_delta?: number; _user_id: string }
+        Returns: number
+      }
+      debit_wallet: {
+        Args: { _amount: number; _lock_delta?: number; _user_id: string }
+        Returns: number
+      }
       get_deposit_method_details: {
         Args: { _id: string }
         Returns: {
