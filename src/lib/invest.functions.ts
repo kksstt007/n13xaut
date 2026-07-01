@@ -149,14 +149,14 @@ export const claimYield = createServerFn({ method: "POST" })
     const newLast = new Date(last.getTime() + fullDays * DAY_MS);
     const payoutMark = matured ? end : newLast;
 
-    // Credit wallet
-    const { data: wallet } = await supabaseAdmin
-      .from("wallets")
-      .select("usdt_balance")
-      .eq("user_id", userId)
-      .single();
-    const newBal = Number(wallet?.usdt_balance ?? 0) + credit;
-    await supabaseAdmin.from("wallets").update({ usdt_balance: newBal }).eq("user_id", userId);
+    // Atomic credit
+    const { data: newBalRow } = await supabaseAdmin.rpc("credit_wallet", {
+      _user_id: userId,
+      _amount: credit,
+      _lock_delta: 0,
+    });
+    const newBal = Number(newBalRow ?? 0);
+
 
     const patch: {
       last_payout_at: string;
