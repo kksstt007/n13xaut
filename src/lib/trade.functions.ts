@@ -40,8 +40,6 @@ export const openTrade = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
-    const { data: wallet } = await supabaseAdmin.from("wallets").select("usdt_balance").eq("user_id", userId).single();
-    if (!wallet || Number(wallet.usdt_balance) < data.amount) throw new Error("Insufficient balance");
 
     // Payout is derived from the chosen duration so the UI's "Ror" matches settlement exactly.
     const DURATION_PAYOUT: Record<number, number> = { 60: 15, 120: 20, 180: 25, 300: 30 };
@@ -53,10 +51,13 @@ export const openTrade = createServerFn({ method: "POST" })
     // Server-side price — never trust the client.
     const openPrice = await fetchServerPrice();
 
-    await supabaseAdmin.from("wallets").update({
-      usdt_balance: Number(wallet.usdt_balance) - data.amount,
-      locked: data.amount,
-    }).eq("user_id", userId);
+    // Atomic debit — rejects if balance insufficient; prevents concurrent overspend.
+    const { error: debitErr } = await supabaseAdmin.rpc("debit_wallet", {
+      _user_id: userId,
+      _amount: data.amount,
+      _lock_delta: data.amount,
+    });
+    if (debitErr) throw new Error(debitErr.message || "Insufficient balance");
 
     const closesAt = new Date(Date.now() + data.durationSec * 1000).toISOString();
     const { data: trade, error } = await supabaseAdmin.from("trades").insert({
@@ -64,9 +65,14 @@ export const openTrade = createServerFn({ method: "POST" })
       duration_sec: data.durationSec, open_price: openPrice, payout_pct: payout,
       closes_at: closesAt,
     }).select().single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Rollback debit on insert failure
+      await supabaseAdmin.rpc("credit_wallet", { _user_id: userId, _amount: data.amount, _lock_delta: -data.amount });
+      throw new Error(error.message);
+    }
     return { trade };
   });
+
 
 export const settleTrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
