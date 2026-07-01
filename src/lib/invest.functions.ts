@@ -79,10 +79,11 @@ export const createInvestment = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (iErr) {
-      // rollback debit
-      await supabaseAdmin.from("wallets").update({ usdt_balance: wallet.usdt_balance }).eq("user_id", userId);
+      // rollback debit atomically
+      await supabaseAdmin.rpc("credit_wallet", { _user_id: userId, _amount: amount, _lock_delta: 0 });
       throw new Error("Failed to create investment");
     }
+
     return { investment: inv, balance: newBal };
   });
 
