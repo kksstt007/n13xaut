@@ -247,7 +247,7 @@ function RecordsRow({ userId }: { userId?: string }) {
   });
   const { data: withdrawals } = useQuery({
     queryKey: ["profile-withdrawals", userId],
-    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", userId!).order("created_at", { ascending: false }).limit(10)).data ?? [],
+    queryFn: async () => (await supabase.from("withdrawals").select("id,user_id,network,address,amount,fee,status,created_at,reviewed_at,country,method_id,bank_name,account_name,user_note").eq("user_id", userId!).order("created_at", { ascending: false }).limit(10)).data ?? [],
     enabled: !!userId,
     staleTime: 30_000,
   });
