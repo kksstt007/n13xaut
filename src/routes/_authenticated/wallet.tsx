@@ -34,7 +34,7 @@ function WalletPage() {
   });
   const { data: withdrawals } = useQuery({
     queryKey: ["withdrawals", user?.id],
-    queryFn: async () => (await supabase.from("withdrawals").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("withdrawals").select("id,user_id,network,address,amount,fee,status,created_at,reviewed_at,country,method_id,bank_name,account_name,user_note").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
     enabled: !!user,
   });
 

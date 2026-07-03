@@ -87,7 +87,7 @@ function UsersAdmin() {
   const [detailFor, setDetailFor] = React.useState<any>(null);
   const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
-    const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    const { data: profiles } = await supabase.rpc("admin_list_profiles");
     const { data: wallets } = await supabase.from("wallets").select("*");
     return profiles?.map((p: any) => ({ ...p, wallet: wallets?.find((w: any) => w.user_id === p.id) })) ?? [];
   });
@@ -450,7 +450,13 @@ function DepositsAdmin() {
 
 function WithdrawalsAdmin() {
   const qc = useQueryClient();
-  const { data } = useAdminQuery(["admin-withdrawals"], async () => (await supabase.from("withdrawals").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  const { data } = useAdminQuery(["admin-withdrawals"], async () => {
+    const { data: rows } = await supabase.rpc("admin_list_withdrawals");
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+    const { data: profs } = ids.length ? await supabase.rpc("admin_list_profiles") : { data: [] as any[] };
+    const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return (rows ?? []).map((r: any) => ({ ...r, profiles: byId.get(r.user_id) ? { display_name: byId.get(r.user_id).display_name } : null }));
+  });
   useRealtimeInvalidate("withdrawals", "admin-withdrawals", (row) => toast.info(`New withdrawal · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, w, note }: any) => {
@@ -723,9 +729,9 @@ function LiveTradesAdmin() {
 function OverviewAdmin() {
   const { data } = useAdminQuery(["admin-overview"], async () => {
     const [users, deposits, withdrawals, kyc, trades, wallets] = await Promise.all([
-      supabase.from("profiles").select("id, frozen, banned, risk_score"),
+      supabase.rpc("admin_list_profiles"),
       supabase.from("deposits").select("amount, status, created_at"),
-      supabase.from("withdrawals").select("amount, status, risk_flags, created_at"),
+      supabase.rpc("admin_list_withdrawals"),
       supabase.from("kyc_submissions").select("status"),
       supabase.from("trades").select("amount, status, pnl, opened_at"),
       supabase.from("wallets").select("usdt_balance, locked"),
