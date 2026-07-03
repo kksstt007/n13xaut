@@ -450,7 +450,13 @@ function DepositsAdmin() {
 
 function WithdrawalsAdmin() {
   const qc = useQueryClient();
-  const { data } = useAdminQuery(["admin-withdrawals"], async () => (await supabase.from("withdrawals").select("*, profiles(display_name)").order("created_at", { ascending: false })).data ?? []);
+  const { data } = useAdminQuery(["admin-withdrawals"], async () => {
+    const { data: rows } = await supabase.rpc("admin_list_withdrawals");
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+    const { data: profs } = ids.length ? await supabase.rpc("admin_list_profiles") : { data: [] as any[] };
+    const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return (rows ?? []).map((r: any) => ({ ...r, profiles: byId.get(r.user_id) ? { display_name: byId.get(r.user_id).display_name } : null }));
+  });
   useRealtimeInvalidate("withdrawals", "admin-withdrawals", (row) => toast.info(`New withdrawal · $${fmtUSD(Number(row.amount))} on ${row.network}`));
   const review = useMutation({
     mutationFn: async ({ id, status, w, note }: any) => {
