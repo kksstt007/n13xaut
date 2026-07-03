@@ -780,6 +780,59 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_profiles: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          banned: boolean
+          country: string | null
+          created_at: string
+          display_name: string | null
+          frozen: boolean
+          id: string
+          internal_note: string | null
+          phone: string | null
+          referral_code: string | null
+          referred_by: string | null
+          risk_score: number
+          updated_at: string
+          withdrawal_limit: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      admin_list_withdrawals: {
+        Args: never
+        Returns: {
+          account_name: string | null
+          address: string
+          admin_note: string | null
+          amount: number
+          bank_name: string | null
+          country: string | null
+          created_at: string
+          fee: number
+          id: string
+          method_id: string | null
+          network: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_flags: Json
+          status: string
+          user_id: string
+          user_note: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "withdrawals"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       credit_wallet: {
         Args: { _amount: number; _lock_delta?: number; _user_id: string }
         Returns: number
