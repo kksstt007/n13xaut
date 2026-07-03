@@ -729,9 +729,9 @@ function LiveTradesAdmin() {
 function OverviewAdmin() {
   const { data } = useAdminQuery(["admin-overview"], async () => {
     const [users, deposits, withdrawals, kyc, trades, wallets] = await Promise.all([
-      supabase.from("profiles").select("id, frozen, banned, risk_score"),
+      supabase.rpc("admin_list_profiles"),
       supabase.from("deposits").select("amount, status, created_at"),
-      supabase.from("withdrawals").select("amount, status, risk_flags, created_at"),
+      supabase.rpc("admin_list_withdrawals"),
       supabase.from("kyc_submissions").select("status"),
       supabase.from("trades").select("amount, status, pnl, opened_at"),
       supabase.from("wallets").select("usdt_balance, locked"),
