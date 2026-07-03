@@ -87,7 +87,7 @@ function UsersAdmin() {
   const [detailFor, setDetailFor] = React.useState<any>(null);
   const resetPwFn = useServerFn(adminResetUserPassword);
   const { data } = useAdminQuery(["admin-users"], async () => {
-    const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    const { data: profiles } = await supabase.rpc("admin_list_profiles");
     const { data: wallets } = await supabase.from("wallets").select("*");
     return profiles?.map((p: any) => ({ ...p, wallet: wallets?.find((w: any) => w.user_id === p.id) })) ?? [];
   });
