@@ -3,7 +3,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { CountryPicker } from "@/components/CountryPicker";
+import { CountryStep, CountryChip } from "@/components/CountryStep";
 import { DEFAULT_COUNTRY, phoneToSyntheticEmail, normalizePhone, type Country } from "@/lib/countries-list";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ type Mode = "email" | "phone";
 function LoginPage() {
   const nav = useNavigate();
   const [country, setCountry] = React.useState<Country>(DEFAULT_COUNTRY);
+  const [step, setStep] = React.useState<"country" | "form">("country");
   const [mode, setMode] = React.useState<Mode>("email");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
@@ -49,6 +50,10 @@ function LoginPage() {
     nav({ to: "/dashboard" });
   };
 
+  if (step === "country") {
+    return <CountryStep title="Sign in" country={country} onChange={setCountry} onContinue={() => setStep("form")} />;
+  }
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex relative items-center justify-center p-12 bg-gradient-to-br from-surface to-background overflow-hidden">
@@ -71,10 +76,7 @@ function LoginPage() {
             <p className="text-sm text-muted-foreground mt-1">Access your trading account</p>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Country / Region</label>
-            <CountryPicker value={country} onChange={setCountry} showDial={mode === "phone"} />
-          </div>
+          <CountryChip country={country} onChange={() => setStep("country")} />
 
           <ModeTabs mode={mode} onChange={setMode} />
 

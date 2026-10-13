@@ -3,7 +3,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { CountryPicker } from "@/components/CountryPicker";
+import { CountryStep, CountryChip } from "@/components/CountryStep";
 import { DEFAULT_COUNTRY, phoneToSyntheticEmail, normalizePhone, type Country } from "@/lib/countries-list";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 function SignupPage() {
   const nav = useNavigate();
   const [country, setCountry] = React.useState<Country>(DEFAULT_COUNTRY);
+  const [step, setStep] = React.useState<"country" | "form">("country");
   const [mode, setMode] = React.useState<Mode>("email");
   const [username, setUsername] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -102,6 +103,10 @@ function SignupPage() {
     nav({ to: "/login" });
   };
 
+  if (step === "country") {
+    return <CountryStep title="Create account" country={country} onChange={setCountry} onContinue={() => setStep("form")} />;
+  }
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="flex items-center justify-center p-6 md:p-12 order-2 lg:order-1">
@@ -112,10 +117,7 @@ function SignupPage() {
             <p className="text-sm text-muted-foreground mt-1">Start trading XAU/USDT in seconds</p>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Country / Region</label>
-            <CountryPicker value={country} onChange={setCountry} showDial={mode === "phone"} />
-          </div>
+          <CountryChip country={country} onChange={() => setStep("country")} />
 
           <ModeTabs mode={mode} onChange={setMode} />
 
