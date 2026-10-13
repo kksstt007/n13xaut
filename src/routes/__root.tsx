@@ -51,7 +51,7 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {chunkErr ? "A new version is available. Reloading…" : error.message}
+          {chunkErr ? "A new version is available. Reloading…" : (error as Error)?.message}
         </p>
         <button
           onClick={() => {
