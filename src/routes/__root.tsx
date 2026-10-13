@@ -32,7 +32,7 @@ function isChunkLoadError(error: unknown): boolean {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   const chunkErr = isChunkLoadError(error);
 
