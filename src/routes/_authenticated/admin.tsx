@@ -12,7 +12,7 @@ import { sendNotification } from "@/lib/notifications.functions";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Admin — XAUT.trade"}, {"name": "description", "content": "Manage XAUT.trade accounts, requests and platform operations."}, {"property": "og:title", "content": "Admin — XAUT.trade"}, {"property": "og:description", "content": "Manage XAUT.trade accounts, requests and platform operations."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: AdminPage,
 });
 

@@ -8,7 +8,7 @@ import { DEFAULT_COUNTRY, phoneToSyntheticEmail, normalizePhone, type Country } 
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Sign in — XAUT.trade"}, {"name": "description", "content": "Sign in to your XAUT.trade account with your selected country or region."}, {"property": "og:title", "content": "Sign in — XAUT.trade"}, {"property": "og:description", "content": "Sign in to your XAUT.trade account with your selected country or region."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: LoginPage,
 });
 

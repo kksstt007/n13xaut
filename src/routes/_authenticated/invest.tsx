@@ -37,16 +37,7 @@ import {
 } from "@/lib/invest.functions";
 
 export const Route = createFileRoute("/_authenticated/invest")({
-  head: () => ({
-    meta: [
-      { title: "Earn — Gold Investment Plans | XAUT.trade" },
-      {
-        name: "description",
-        content:
-          "Earn daily yield on XAUT-backed gold plans. Five tiers from Starter to Institutional with transparent APR, locked terms, and same-day payouts.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{"title": "Earn — Gold Investment Plans | XAUT.trade"}, {"name": "description", "content": "Explore gold investment plans and manage your active XAUT.trade investments."}, {"property": "og:title", "content": "Earn — Gold Investment Plans | XAUT.trade"}, {"property": "og:description", "content": "Explore gold investment plans and manage your active XAUT.trade investments."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: InvestPage,
 });
 

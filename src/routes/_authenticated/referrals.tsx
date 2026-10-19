@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/referrals")({
-  head: () => ({ meta: [{ title: "Referrals — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Referrals — XAUT.trade"}, {"name": "description", "content": "View your XAUT.trade referral activity and rewards."}, {"property": "og:title", "content": "Referrals — XAUT.trade"}, {"property": "og:description", "content": "View your XAUT.trade referral activity and rewards."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: ReferralsPage,
 });
 

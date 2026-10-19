@@ -2,16 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({
-    meta: [
-      { title: "Terms of Service — XAUT.trade" },
-      {
-        name: "description",
-        content:
-          "Terms and Conditions governing the use of XAUT.trade — Tether Gold (XAUT) trading platform.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{"title": "Terms of Service — XAUT.trade"}, {"name": "description", "content": "Read the terms and conditions governing use of the XAUT.trade platform."}, {"property": "og:title", "content": "Terms of Service — XAUT.trade"}, {"property": "og:description", "content": "Read the terms and conditions governing use of the XAUT.trade platform."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: TermsPage,
 });
 

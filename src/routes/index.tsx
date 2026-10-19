@@ -16,12 +16,7 @@ import vaultGold from "@/assets/vault-gold.jpg";
 import xautCoin from "@/assets/xaut-coin.jpg";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "XAUT.trade — Trade Tether Gold (XAU₮ / USDT)" },
-      { name: "description", content: "Trade Tether Gold (XAU₮), the digital asset backed 1:1 by physical gold held in secure Swiss vaults. Institutional-grade custody, transparent reserves, mobile-first trading." },
-    ],
-  }),
+  head: () => ({ meta: [{"title": "XAUT.trade — Trade Tether Gold (XAU₮ / USDT)"}, {"name": "description", "content": "Explore Tether Gold trading, market information and investment plans on XAUT.trade."}, {"property": "og:title", "content": "XAUT.trade — Trade Tether Gold (XAU₮ / USDT)"}, {"property": "og:description", "content": "Explore Tether Gold trading, market information and investment plans on XAUT.trade."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: Landing,
 });
 

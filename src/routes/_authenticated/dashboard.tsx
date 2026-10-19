@@ -1,419 +1,168 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
-import { motion } from "framer-motion";
-import {
-  ArrowUp,
-  ArrowDown,
-  ArrowUpRight,
-  Wallet,
-  CandlestickChart,
-  Coins,
-  Gift,
-  History as HistoryIcon,
-  ShieldCheck,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpFromLine, ArrowUpRight, CandlestickChart, Coins, Eye, EyeOff, History, LifeBuoy, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { usePriceFeed } from "@/lib/price-feed";
-import { PriceChart } from "@/components/PriceChart";
-import { fmtUSD, fmtPct } from "@/lib/format";
+import { HomeBanners } from "@/components/HomeBanners";
+import { Button } from "@/components/ui/button";
+import { fmtUSD } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Home — XAUT.trade" }] }),
+  head: () => ({ meta: [
+    { title: "Home — XAUT.trade" },
+    { name: "description", content: "Your XAUT.trade account overview, Tether Gold market snapshot, open positions and recent trading activity." },
+    { property: "og:title", content: "Home — XAUT.trade" },
+    { property: "og:description", content: "Track your account, explore gold trading and manage your investment plans." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
   component: Dashboard,
 });
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Good evening";
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
-
 function Dashboard() {
   const { user } = useAuth();
-  const { data: chart, price, change, changePct } = usePriceFeed(60);
-  const up = changePct >= 0;
-
+  const userId = user?.id;
+  const [balanceVisible, setBalanceVisible] = React.useState(true);
+  const [activity, setActivity] = React.useState<"open" | "recent">("open");
   const { data: profile } = useQuery({
-    queryKey: ["profile-name", user?.id],
-    enabled: !!user?.id,
-    staleTime: 60_000,
-    queryFn: async () =>
-      (
-        await (supabase.from("profiles_safe" as any).select("display_name").eq("id", user!.id).maybeSingle() as any)
-      ).data,
+    queryKey: ["profile-name", userId], enabled: !!userId, staleTime: 60_000,
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase.from("profiles_safe" as any).select("display_name").eq("id", userId).maybeSingle();
+      if (error) throw error;
+      return data as { display_name: string | null } | null;
+    },
   });
-
-  const { data: wallet } = useQuery({
-    queryKey: ["wallet", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () =>
-      (await supabase.from("wallets").select("usdt_balance").eq("user_id", user!.id).maybeSingle()).data,
-    refetchInterval: 15_000,
+  const wallet = useQuery({
+    queryKey: ["wallet", userId], enabled: !!userId, refetchInterval: 15_000,
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase.from("wallets").select("usdt_balance").eq("user_id", userId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
-
-  const { data: openTrades } = useQuery({
-    queryKey: ["open-trades-mini", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () =>
-      (await supabase
-        .from("trades")
-        .select("id, amount, direction, opened_at, closes_at")
-        .eq("user_id", user!.id)
-        .eq("status", "open")
-        .order("closes_at", { ascending: true })
-        .limit(3)).data ?? [],
-    refetchInterval: 5_000,
+  const investments = useQuery({
+    queryKey: ["investments-mini", userId], enabled: !!userId, staleTime: 30_000,
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase.from("investments").select("id, amount, daily_rate, end_at, status").eq("user_id", userId).eq("status", "active");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
-
-  const { data: recentTrades } = useQuery({
-    queryKey: ["recent-trades-mini", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () =>
-      (await supabase
-        .from("trades")
-        .select("id, direction, amount, pnl, result, settled_at")
-        .eq("user_id", user!.id)
-        .eq("status", "settled")
-        .order("settled_at", { ascending: false })
-        .limit(4)).data ?? [],
-    staleTime: 30_000,
+  const openTrades = useQuery({
+    queryKey: ["open-trades-mini", userId], enabled: !!userId, refetchInterval: 5_000,
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase.from("trades").select("id, amount, direction, opened_at, closes_at").eq("user_id", userId).eq("status", "open").order("closes_at", { ascending: true }).limit(3);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
-
-  const { data: investments } = useQuery({
-    queryKey: ["investments-mini", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () =>
-      (await supabase
-        .from("investments")
-        .select("id, amount, daily_rate, end_at, status")
-        .eq("user_id", user!.id)
-        .eq("status", "active")).data ?? [],
-    staleTime: 30_000,
+  const recentTrades = useQuery({
+    queryKey: ["recent-trades-mini", userId], enabled: !!userId, staleTime: 30_000,
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase.from("trades").select("id, direction, amount, pnl, result, settled_at").eq("user_id", userId).eq("status", "settled").order("settled_at", { ascending: false }).limit(3);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
-
-  const balance = Number(wallet?.usdt_balance ?? 0);
-  const investedTotal = (investments ?? []).reduce((s, i: any) => s + Number(i.amount), 0);
-  const dailyYield = (investments ?? []).reduce(
-    (s, i: any) => s + Number(i.amount) * Number(i.daily_rate),
-    0,
-  );
-  const portfolio = balance + investedTotal;
-  const name = profile?.display_name || user?.email?.split("@")[0] || "Trader";
+  const market = useQuery({
+    queryKey: ["home-gold-snapshot"], refetchInterval: 30_000, retry: 1, staleTime: 20_000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether-gold&vs_currencies=usd&include_24hr_change=true", { signal });
+      if (!response.ok) throw new Error("Market quote unavailable");
+      const result = (await response.json())["tether-gold"];
+      const price = Number(result?.usd);
+      const change = result?.usd_24h_change == null ? null : Number(result.usd_24h_change);
+      if (!Number.isFinite(price) || price <= 0) throw new Error("Market quote unavailable");
+      return { price, change: change !== null && Number.isFinite(change) ? change : null };
+    },
+  });
+  const balance = Number(wallet.data?.usdt_balance ?? 0);
+  const invested = (investments.data ?? []).reduce((sum, item) => sum + Number(item.amount), 0);
+  const name = profile?.display_name || "Trader";
+  const amount = (value: number, loading: boolean, error: boolean) => !balanceVisible ? "••••••" : loading ? "…" : error ? "—" : fmtUSD(value);
+  const activityQuery = activity === "open" ? openTrades : recentTrades;
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* Greeting + portfolio */}
+    <div className="space-y-5 pb-3">
       <header className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[12px] text-muted-foreground">{greeting()},</p>
-          <h1 className="font-display text-xl font-semibold truncate">{name}</h1>
+          <p className="text-[11px] text-muted-foreground">Welcome back, {name}</p>
+          <h1 className="font-display text-xl font-semibold mt-0.5">Account overview</h1>
         </div>
-        <Link
-          to="/profile"
-          className="size-10 shrink-0 rounded-full bg-surface-elevated border border-border/60 grid place-items-center text-[12px] font-semibold uppercase hover:bg-surface transition"
-          aria-label="Open profile"
-        >
-          {name.slice(0, 2).toUpperCase()}
-        </Link>
+        <Button asChild variant="ghost" size="icon" className="rounded-full bg-surface border border-border" aria-label="Contact support"><Link to="/support"><LifeBuoy className="text-muted-foreground" /></Link></Button>
       </header>
 
-      {/* Portfolio hero */}
-      <motion.section
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-3xl border border-border/60 bg-surface/70 p-5"
-      >
-        <div className="flex items-baseline justify-between gap-3">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Portfolio value
-          </div>
-          <div className="text-[11px] text-muted-foreground num">USDT</div>
-        </div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span
-            className="num text-[34px] font-bold tracking-tight leading-none"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            ${fmtUSD(portfolio)}
-          </span>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Mini label="Available" value={`$${fmtUSD(balance)}`} icon={Wallet} />
-          <Mini
-            label="In plans"
-            value={`$${fmtUSD(investedTotal)}`}
-            sub={dailyYield > 0 ? `+$${fmtUSD(dailyYield)} / day` : undefined}
-            icon={Coins}
-            accent={dailyYield > 0}
-          />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <Link
-            to="/profile"
-            className="h-11 rounded-xl bg-gradient-gold text-primary-foreground text-[13px] font-semibold grid place-items-center shadow-gold-soft active:scale-[0.99] transition"
-          >
-            Deposit
-          </Link>
-          <Link
-            to="/profile"
-            className="h-11 rounded-xl border border-border/60 bg-surface text-foreground text-[13px] font-semibold grid place-items-center hover:bg-surface-elevated transition"
-          >
-            Withdraw
-          </Link>
-        </div>
-      </motion.section>
+      <HomeBanners />
 
-      {/* Live gold market card */}
-      <Link to="/market" className="block group">
-        <section className="rounded-3xl border border-border/60 bg-surface/70 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-semibold">XAU₮ / USDT</span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-success/15 text-success text-[9px] font-bold tracking-wider">
-                  <span className="size-1 rounded-full bg-success animate-pulse" />
-                  LIVE
-                </span>
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">Tether Gold · Spot</div>
-            </div>
-            <div className="text-right shrink-0">
-              <div
-                className={`num text-lg font-bold leading-none ${
-                  up ? "text-success" : "text-destructive"
-                }`}
-              >
-                ${fmtUSD(price)}
-              </div>
-              <div
-                className={`mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold num ${
-                  up ? "text-success" : "text-destructive"
-                }`}
-              >
-                {up ? <ArrowUp className="size-3" strokeWidth={3} /> : <ArrowDown className="size-3" strokeWidth={3} />}
-                {up ? "+" : "−"}${fmtUSD(Math.abs(change))} ({fmtPct(changePct)})
-              </div>
-            </div>
+      <section className="py-1" aria-label="Account balance">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-xs text-muted-foreground">Estimated total balance</h2>
+            <Button variant="ghost" size="icon" className="size-7 text-muted-foreground" aria-label={balanceVisible ? "Hide balance" : "Show balance"} title={balanceVisible ? "Hide balance" : "Show balance"} onClick={() => setBalanceVisible(!balanceVisible)}>{balanceVisible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}</Button>
           </div>
-          <div className="mt-3 h-20 -mx-1">
-            <PriceChart data={chart} up={up} />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Last 60 minutes</span>
-            <span className="inline-flex items-center gap-1 text-foreground/80 group-hover:text-gold transition">
-              Open chart <ArrowUpRight className="size-3" />
-            </span>
-          </div>
-        </section>
-      </Link>
-
-      {/* Quick actions */}
-      <section className="grid grid-cols-4 gap-2">
-        <Quick to="/trade" icon={CandlestickChart} label="Trade" />
-        <Quick to="/invest" icon={Coins} label="Invest" />
-        <Quick to="/history" icon={HistoryIcon} label="History" />
-        <Quick to="/referrals" icon={Gift} label="Refer" />
+          <Button asChild variant="link" className="h-7 p-0 text-[11px]"><Link to="/profile">Assets<ArrowUpRight /></Link></Button>
+        </div>
+        <div className="flex items-baseline flex-wrap gap-2 mt-1"><span className="num font-display text-3xl font-semibold break-all">{amount(balance + invested, wallet.isPending || investments.isPending, wallet.isError || investments.isError)}</span><span className="text-xs text-muted-foreground">USDT</span></div>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div><p className="text-[11px] text-muted-foreground">Available</p><p className="num text-sm font-medium mt-1">{amount(balance, wallet.isPending, wallet.isError)} <span className="text-[10px] text-muted-foreground">USDT</span></p></div>
+          <div className="border-l border-border pl-4"><p className="text-[11px] text-muted-foreground">In investment plans</p><p className="num text-sm font-medium mt-1">{amount(invested, investments.isPending, investments.isError)} <span className="text-[10px] text-muted-foreground">USDT</span></p></div>
+        </div>
+        {(wallet.isError || investments.isError) && <p className="text-xs text-destructive mt-2">Balance unavailable. <Button variant="link" className="h-auto p-0 text-xs" onClick={() => { void wallet.refetch(); void investments.refetch(); }}>Retry</Button></p>}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <Button asChild className="h-10 shadow-none"><Link to="/profile"><ArrowDownToLine />Deposit</Link></Button>
+          <Button asChild variant="outline" className="h-10"><Link to="/profile"><ArrowUpFromLine />Withdraw</Link></Button>
+        </div>
       </section>
 
-      {/* Active investments summary */}
-      {(investments?.length ?? 0) > 0 && (
-        <section className="rounded-2xl border border-border/60 bg-surface/60 overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-border/40">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-gold" />
-              <h2 className="text-sm font-semibold">Active plans</h2>
-            </div>
-            <Link to="/invest" className="text-[11px] text-gold hover:underline underline-offset-4">
-              Manage
-            </Link>
-          </div>
-          <ul className="divide-y divide-border/40">
-            {(investments ?? []).slice(0, 3).map((inv: any) => {
-              const dailyAmt = Number(inv.amount) * Number(inv.daily_rate);
-              return (
-                <li key={inv.id} className="px-4 py-3 flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold num">${fmtUSD(Number(inv.amount))}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      Matures {new Date(inv.end_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[12px] num font-semibold text-success">
-                      +${fmtUSD(dailyAmt)}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">per day</div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      <nav className="grid grid-cols-4 border-y border-border py-3" aria-label="Quick access">
+        <Shortcut to="/trade" icon={CandlestickChart} label="Trade" />
+        <Shortcut to="/invest" icon={Coins} label="Gold Earn" />
+        <Shortcut to="/history" icon={History} label="History" />
+        <Shortcut to="/kyc" icon={Wallet} label="Verify ID" />
+      </nav>
 
-      {/* Open positions */}
-      {(openTrades?.length ?? 0) > 0 && (
-        <section className="rounded-2xl border border-border/60 bg-surface/60 overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-border/40">
-            <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-success animate-pulse" />
-              <h2 className="text-sm font-semibold">
-                {openTrades!.length} open position{openTrades!.length > 1 ? "s" : ""}
-              </h2>
-            </div>
-            <Link to="/trade" className="text-[11px] text-gold hover:underline underline-offset-4">
-              View
-            </Link>
-          </div>
-          <ul className="divide-y divide-border/40">
-            {(openTrades ?? []).map((t: any) => {
-              const isBuy = t.direction === "buy";
-              return (
-                <li key={t.id} className="px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                        isBuy ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {isBuy ? <ArrowUp className="size-2.5" strokeWidth={3} /> : <ArrowDown className="size-2.5" strokeWidth={3} />}
-                      {isBuy ? "BUY" : "SELL"}
-                    </span>
-                    <span className="text-[12px] num font-medium">${fmtUSD(Number(t.amount))}</span>
-                  </div>
-                  <CountdownPill closesAt={t.closes_at} />
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      <section aria-label="Gold market">
+        <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-semibold">Market overview</h2><Button asChild variant="link" className="h-6 p-0 text-[11px]"><Link to="/market">View market<ArrowUpRight /></Link></Button></div>
+        <Link to="/market" className="flex items-center justify-between gap-3 py-3 border-y border-border/60 hover:bg-surface transition-colors">
+          <div className="flex gap-3 items-center min-w-0"><span className="size-9 shrink-0 rounded-full bg-gold/10 text-gold flex items-center justify-center"><Coins className="size-5" /></span><div><p className="text-[13px] font-semibold">XAU₮ / USDT</p><p className="text-[10px] text-muted-foreground mt-1">Tether Gold</p></div></div>
+          <div className="text-right"><p className="num text-sm font-semibold">{market.data ? `$${fmtUSD(market.data.price)}` : "—"}</p><p className="text-[10px] text-muted-foreground mt-1">{market.isPending ? "Loading quote" : market.isError ? "Quote unavailable" : "Spot price"}</p></div>
+          <div className="text-right shrink-0"><p className={`num text-[11px] font-semibold ${market.data?.change == null ? "text-muted-foreground" : market.data.change >= 0 ? "text-success" : "text-destructive"}`}>{market.data?.change == null ? "—" : `${market.data.change >= 0 ? "+" : ""}${market.data.change.toFixed(2)}%`}</p><p className="text-[10px] text-muted-foreground mt-1">24h change</p></div>
+        </Link>
+      </section>
 
-      {/* Recent trades */}
-      {(recentTrades?.length ?? 0) > 0 && (
-        <section className="rounded-2xl border border-border/60 bg-surface/60 overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-border/40">
-            <h2 className="text-sm font-semibold">Recent trades</h2>
-            <Link to="/history" className="text-[11px] text-gold hover:underline underline-offset-4">
-              All
-            </Link>
-          </div>
-          <ul className="divide-y divide-border/40">
-            {(recentTrades ?? []).map((t: any) => {
-              const win = t.result === "win";
-              const pnl = Number(t.pnl ?? 0);
-              return (
-                <li key={t.id} className="px-4 py-3 flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-medium capitalize">
-                      {t.direction} · ${fmtUSD(Number(t.amount))}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {t.settled_at
-                        ? new Date(t.settled_at).toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : ""}
-                    </div>
-                  </div>
-                  <div
-                    className={`text-[13px] num font-bold ${
-                      win ? "text-success" : "text-destructive"
-                    }`}
-                  >
-                    {win ? "+" : "−"}${fmtUSD(Math.abs(pnl))}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {/* Empty-state hint when truly fresh */}
-      {!openTrades?.length && !recentTrades?.length && !investments?.length && balance < 1 && (
-        <section className="rounded-2xl border border-dashed border-border/60 bg-surface/40 p-5 text-center">
-          <div className="size-10 mx-auto rounded-full bg-gold/10 grid place-items-center mb-3">
-            <ShieldCheck className="size-5 text-gold" />
-          </div>
-          <h3 className="text-sm font-semibold">Fund your account to begin</h3>
-          <p className="text-[12px] text-muted-foreground mt-1 max-w-xs mx-auto">
-            Deposit USDT to trade XAU₮ or start a gold-backed investment plan.
-          </p>
-          <Link
-            to="/profile"
-            className="mt-4 inline-flex items-center gap-1.5 h-10 px-5 rounded-xl bg-gradient-gold text-primary-foreground text-[13px] font-semibold shadow-gold-soft"
-          >
-            Make a deposit <ArrowUpRight className="size-4" />
-          </Link>
-        </section>
-      )}
-    </div>
-  );
-}
-
-function Mini({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: any;
-  accent?: boolean;
-}) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-background/40 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-        <Icon className="size-3" /> {label}
-      </div>
-      <div className="num text-base font-semibold mt-1 truncate">{value}</div>
-      {sub && (
-        <div className={`text-[10px] num mt-0.5 ${accent ? "text-success" : "text-muted-foreground"}`}>
-          {sub}
+      <section aria-label="Trading activity">
+        <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Trading activity</h2><Button asChild variant="link" className="h-6 p-0 text-[11px]"><Link to="/history">View all<ArrowUpRight /></Link></Button></div>
+        <div className="flex gap-5 border-b border-border mt-2" role="tablist" aria-label="Trading activity views">
+          <Button id="home-open-tab" role="tab" aria-controls="home-activity-panel" aria-selected={activity === "open"} variant="ghost" className={`h-10 px-0 rounded-none border-b-2 text-xs hover:bg-transparent ${activity === "open" ? "border-gold text-foreground" : "border-transparent text-muted-foreground"}`} onClick={() => setActivity("open")}>Open positions{openTrades.data?.length ? ` (${openTrades.data.length})` : ""}</Button>
+          <Button id="home-recent-tab" role="tab" aria-controls="home-activity-panel" aria-selected={activity === "recent"} variant="ghost" className={`h-10 px-0 rounded-none border-b-2 text-xs hover:bg-transparent ${activity === "recent" ? "border-gold text-foreground" : "border-transparent text-muted-foreground"}`} onClick={() => setActivity("recent")}>Recent trades</Button>
         </div>
-      )}
+        <div id="home-activity-panel" role="tabpanel" aria-labelledby={`home-${activity}-tab`}>
+          {activityQuery.isPending ? <p className="text-xs text-muted-foreground py-6 text-center">Loading activity…</p> : activityQuery.isError ? <div className="text-center py-5"><p className="text-xs text-muted-foreground">Activity unavailable</p><Button variant="link" size="sm" onClick={() => { void activityQuery.refetch(); }}>Retry</Button></div> : !(activityQuery.data?.length) ? <div className="flex flex-col items-center py-6"><CandlestickChart className="size-6 text-muted-foreground/50 mb-2" /><p className="text-xs text-muted-foreground">{activity === "open" ? "No open positions" : "No recent trades"}</p><Button asChild variant="link" size="sm" className="mt-1"><Link to="/trade">Go to trading<ArrowUpRight /></Link></Button></div> : (
+            <ul className="divide-y divide-border/60">
+              {activity === "open" ? openTrades.data?.map((trade) => <li key={trade.id} className="flex justify-between items-center gap-3 py-3"><div className="flex items-center gap-2"><Direction buy={trade.direction === "buy"} /><span className="num text-xs">{fmtUSD(Number(trade.amount))} USDT</span></div><Countdown closesAt={trade.closes_at} /></li>) : recentTrades.data?.map((trade) => <li key={trade.id} className="flex justify-between items-center gap-3 py-3"><div><div className="flex items-center gap-2"><Direction buy={trade.direction === "buy"} /><span className="num text-xs">{fmtUSD(Number(trade.amount))} USDT</span></div><p className="text-[10px] text-muted-foreground mt-1">{trade.settled_at ? new Date(trade.settled_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</p></div><span className={`num text-xs font-medium ${Number(trade.pnl) >= 0 ? "text-success" : "text-destructive"}`}>{Number(trade.pnl) >= 0 ? "+" : "−"}{fmtUSD(Math.abs(Number(trade.pnl ?? 0)))}</span></li>)}
+            </ul>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
 
-function Quick({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="flex flex-col items-center gap-1.5 rounded-xl border border-border/50 bg-surface/60 py-3 hover:bg-surface-elevated/60 active:scale-[0.97] transition"
-    >
-      <Icon className="size-[18px] text-foreground/85" />
-      <span className="text-[11px] font-medium text-foreground/85">{label}</span>
-    </Link>
-  );
+function Shortcut({ to, icon: Icon, label }: { to: "/trade" | "/invest" | "/history" | "/kyc"; icon: typeof Coins; label: string }) {
+  return <Button asChild variant="ghost" className="h-16 flex-col gap-2 px-1 text-[11px]"><Link to={to}><Icon className="size-5 text-gold" />{label}</Link></Button>;
 }
-
-function CountdownPill({ closesAt }: { closesAt: string }) {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(t);
-  }, []);
-  const end = new Date(closesAt).getTime();
-  const remaining = Math.max(0, Math.ceil((end - now) / 1000));
-  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
-  const ss = String(remaining % 60).padStart(2, "0");
-  return (
-    <span className="text-[11px] num font-semibold text-foreground tabular-nums">
-      {mm}:{ss}
-    </span>
-  );
+function Direction({ buy }: { buy: boolean }) {
+  return <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${buy ? "text-success" : "text-destructive"}`}>{buy ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}{buy ? "BUY" : "SELL"}</span>;
+}
+function Countdown({ closesAt }: { closesAt: string }) {
+  const [now, setNow] = React.useState(Date.now);
+  React.useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
+  const remaining = Math.max(0, Math.ceil((new Date(closesAt).getTime() - now) / 1000));
+  return <span className="num text-xs text-muted-foreground">{remaining === 0 ? "Settling…" : `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`}</span>;
 }
