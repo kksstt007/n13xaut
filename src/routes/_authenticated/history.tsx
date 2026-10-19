@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/history")({
-  head: () => ({ meta: [{ title: "Trade History — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Trade History — XAUT.trade"}, {"name": "description", "content": "Review your XAUT.trade orders, settled trades and trading results."}, {"property": "og:title", "content": "Trade History — XAUT.trade"}, {"property": "og:description", "content": "Review your XAUT.trade orders, settled trades and trading results."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: HistoryPage,
 });
 

@@ -21,7 +21,7 @@ import { openTrade, settleTrade } from "@/lib/trade.functions";
 import tetherGoldLogo from "@/assets/tether-gold-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/trade")({
-  head: () => ({ meta: [{ title: "Trade XAU/USDT — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Trade XAU/USDT — XAUT.trade"}, {"name": "description", "content": "Access XAU/USDT charts and manage trading positions on XAUT.trade."}, {"property": "og:title", "content": "Trade XAU/USDT — XAUT.trade"}, {"property": "og:description", "content": "Access XAU/USDT charts and manage trading positions on XAUT.trade."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: TradePage,
 });
 

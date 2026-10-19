@@ -81,8 +81,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "XAUT.trade — Premium XAU/USDT Trading Platform" },
       { name: "twitter:description", content: "Trade Tether Gold (XAUT) against USDT with live charts, real-time execution, and institutional-grade tooling." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4a0b9e52-fc42-44e7-9808-620a4b58e8a6/id-preview-8c68a6c2--b20ed8f4-5e58-41ff-8613-ed2367b362ad.lovable.app-1779908274478.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4a0b9e52-fc42-44e7-9808-620a4b58e8a6/id-preview-8c68a6c2--b20ed8f4-5e58-41ff-8613-ed2367b362ad.lovable.app-1779908274478.png" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

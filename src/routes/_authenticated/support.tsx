@@ -3,7 +3,7 @@ import * as React from "react";
 import { ChevronDown, MessageCircle, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/support")({
-  head: () => ({ meta: [{ title: "Support — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Support — XAUT.trade"}, {"name": "description", "content": "Contact XAUT.trade support and access live assistance."}, {"property": "og:title", "content": "Support — XAUT.trade"}, {"property": "og:description", "content": "Contact XAUT.trade support and access live assistance."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: SupportPage,
 });
 

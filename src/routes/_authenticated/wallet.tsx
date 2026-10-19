@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fmtUSD } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
-  head: () => ({ meta: [{ title: "Wallet — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Wallet — XAUT.trade"}, {"name": "description", "content": "View your XAUT.trade wallet, deposits and withdrawal activity."}, {"property": "og:title", "content": "Wallet — XAUT.trade"}, {"property": "og:description", "content": "View your XAUT.trade wallet, deposits and withdrawal activity."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: WalletPage,
 });
 

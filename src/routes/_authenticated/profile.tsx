@@ -16,7 +16,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Profile — XAUT.trade"}, {"name": "description", "content": "Manage your XAUT.trade account profile, balances and preferences."}, {"property": "og:title", "content": "Profile — XAUT.trade"}, {"property": "og:description", "content": "Manage your XAUT.trade account profile, balances and preferences."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: ProfilePage,
 });
 

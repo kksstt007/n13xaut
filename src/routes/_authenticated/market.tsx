@@ -14,7 +14,7 @@ import { CandleChart } from "@/components/CandleChart";
 import { fmtUSD, fmtPct } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/market")({
-  head: () => ({ meta: [{ title: "Market — XAUT.trade" }] }),
+  head: () => ({ meta: [{"title": "Market — XAUT.trade"}, {"name": "description", "content": "View Tether Gold market prices and charts on XAUT.trade."}, {"property": "og:title", "content": "Market — XAUT.trade"}, {"property": "og:description", "content": "View Tether Gold market prices and charts on XAUT.trade."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary_large_image"}] }),
   component: MarketPage,
 });
 
