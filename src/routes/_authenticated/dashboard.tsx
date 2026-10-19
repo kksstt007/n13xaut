@@ -100,7 +100,7 @@ function Dashboard() {
 
       <HomeBanners />
 
-      <section className="py-1" aria-label="Account balance">
+      <section className="home-balance-glass rounded-lg p-5 sm:p-6" aria-label="Account balance">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <h2 className="text-xs text-muted-foreground">Estimated total balance</h2>
@@ -114,9 +114,9 @@ function Dashboard() {
           <div className="border-l border-border pl-4"><p className="text-[11px] text-muted-foreground">In investment plans</p><p className="num text-sm font-medium mt-1">{amount(invested, investments.isPending, investments.isError)} <span className="text-[10px] text-muted-foreground">USDT</span></p></div>
         </div>
         {(wallet.isError || investments.isError) && <p className="text-xs text-destructive mt-2">Balance unavailable. <Button variant="link" className="h-auto p-0 text-xs" onClick={() => { void wallet.refetch(); void investments.refetch(); }}>Retry</Button></p>}
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <Button asChild className="h-10 shadow-none"><Link to="/profile"><ArrowDownToLine />Deposit</Link></Button>
-          <Button asChild variant="outline" className="h-10"><Link to="/profile"><ArrowUpFromLine />Withdraw</Link></Button>
+        <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-foreground/10">
+          <Button asChild variant="ghost" className="group h-20 flex-col gap-2 rounded-lg hover:bg-foreground/5"><Link to="/profile"><span className="flex size-10 items-center justify-center rounded-full bg-gold text-primary-foreground transition-transform group-hover:-translate-y-0.5"><ArrowDownToLine className="size-5" /></span><span className="text-xs font-medium">Deposit</span></Link></Button>
+          <Button asChild variant="ghost" className="group h-20 flex-col gap-2 rounded-lg hover:bg-foreground/5"><Link to="/profile"><span className="flex size-10 items-center justify-center rounded-full bg-foreground/10 text-foreground border border-foreground/15 transition-transform group-hover:-translate-y-0.5"><ArrowUpFromLine className="size-5" /></span><span className="text-xs font-medium">Withdraw</span></Link></Button>
         </div>
       </section>
 
@@ -150,6 +150,15 @@ function Dashboard() {
           )}
         </div>
       </section>
+
+      <footer className="border-t border-border pt-6 mt-8" aria-label="Platform footer">
+        <div className="flex items-baseline justify-between gap-3 mb-5"><p className="font-display text-base font-semibold">XAUT<span className="text-gold">.trade</span></p><span className="text-[10px] text-muted-foreground">Gold trading</span></div>
+        <div className="grid grid-cols-2 gap-6">
+          <nav aria-label="Footer markets" className="flex flex-col items-start gap-1"><h2 className="text-xs font-semibold mb-1">Markets & products</h2>{([{ to: "/market", label: "Gold market" }, { to: "/trade", label: "Trade XAU₮" }, { to: "/invest", label: "Gold Earn" }] as const).map(item => <Button key={item.to} asChild variant="link" className="h-8 p-0 text-[11px] text-muted-foreground hover:text-gold"><Link to={item.to}>{item.label}</Link></Button>)}</nav>
+          <nav aria-label="Footer support" className="flex flex-col items-start gap-1"><h2 className="text-xs font-semibold mb-1">Support & legal</h2>{([{ to: "/support", label: "Help & support" }, { to: "/kyc", label: "Identity verification" }, { to: "/terms", label: "Terms & conditions" }] as const).map(item => <Button key={item.to} asChild variant="link" className="h-8 p-0 text-[11px] text-muted-foreground hover:text-gold"><Link to={item.to}>{item.label}</Link></Button>)}</nav>
+        </div>
+        <div className="border-t border-border mt-5 pt-4 space-y-3"><p className="text-[10px] leading-relaxed text-muted-foreground"><span className="font-medium text-foreground/70">Risk notice.</span> Digital assets and gold prices can fluctuate. Trading involves risk of loss. Returns are not guaranteed.</p><p className="text-[10px] text-muted-foreground">© XAUT.trade. All rights reserved.</p></div>
+      </footer>
     </div>
   );
 }
