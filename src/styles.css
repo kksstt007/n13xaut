@@ -98,6 +98,9 @@
   --shadow-gold: 0 18px 48px -22px oklch(0.80 0.115 86 / 0.55);
   --shadow-gold-soft: 0 10px 30px -14px oklch(0.80 0.115 86 / 0.45);
   --shadow-elevated: 0 14px 40px -16px oklch(0 0 0 / 0.55);
+  --home-glass-fill: linear-gradient(135deg, oklch(1 0 0 / 0.10), oklch(1 0 0 / 0.025) 55%, oklch(0.78 0.13 84 / 0.045));
+  --home-glass-border: oklch(1 0 0 / 0.14);
+  --home-glass-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12), inset 0 -1px 0 oklch(1 0 0 / 0.025), 0 10px 28px -16px oklch(0 0 0 / 0.55);
 }
 
 @layer base {
@@ -178,6 +181,12 @@
 .animate-ticker { animation: ticker-up 0.3s ease-out; }
 
 /* Home banners retain stable framing and respect reduced motion. */
+.home-balance-glass {
+  background: var(--home-glass-fill);
+  border: 1px solid var(--home-glass-border);
+  box-shadow: var(--home-glass-shadow);
+  backdrop-filter: blur(24px) saturate(140%);
+}
 .home-banner { height: 208px; touch-action: pan-y; }
 .home-banner-track { display: flex; height: 100%; transition: transform 450ms ease; }
 .home-banner-second { transform: translateX(-100%); }

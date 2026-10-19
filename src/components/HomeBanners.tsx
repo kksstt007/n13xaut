@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import tradeImage from "@/assets/home-gold-trade.jpg";
 import investImage from "@/assets/home-gold-invest.jpg";
@@ -12,7 +12,6 @@ const banners = [
 
 export function HomeBanners() {
   const [active, setActive] = React.useState(0);
-  const [paused, setPaused] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
   const [reducedMotion, setReducedMotion] = React.useState(true);
@@ -35,10 +34,10 @@ export function HomeBanners() {
   }, []);
 
   React.useEffect(() => {
-    if (paused || hovered || focused || reducedMotion || !visible) return;
+    if (hovered || focused || reducedMotion || !visible) return;
     const timer = window.setInterval(() => move(1), 6000);
     return () => window.clearInterval(timer);
-  }, [paused, hovered, focused, reducedMotion, visible, move]);
+  }, [hovered, focused, reducedMotion, visible, move]);
 
   return (
     <section
@@ -75,18 +74,13 @@ export function HomeBanners() {
           </div>
         ))}
       </div>
-      <div className="absolute inset-x-5 sm:inset-x-7 bottom-2 flex justify-between items-center">
+      <div className="absolute inset-x-0 bottom-2 flex justify-center">
         <div className="flex gap-1" aria-label="Choose banner">
           {banners.map((banner, index) => (
             <Button key={banner.to} variant="ghost" size="icon" className="h-7 w-6 hover:bg-transparent" aria-label={`Show ${banner.title.replace(".", "")} banner`} aria-pressed={active === index} onClick={() => setActive(index)}>
-              <span className={`h-1 rounded-full transition-all ${active === index ? "w-5 bg-gold" : "w-2 bg-foreground/30"}`} />
+              <span className={`size-1.5 rounded-full transition-colors ${active === index ? "bg-gold" : "bg-foreground/30"}`} />
             </Button>
           ))}
-        </div>
-        <div className="flex gap-1">
-          {!reducedMotion && <Button variant="ghost" size="icon" className="size-7 bg-background/60" aria-label={paused ? "Resume banners" : "Pause banners"} title={paused ? "Resume banners" : "Pause banners"} onClick={() => setPaused(!paused)}>{paused ? <Play /> : <Pause />}</Button>}
-          <Button variant="ghost" size="icon" className="size-7 bg-background/60" aria-label="Previous banner" title="Previous banner" onClick={() => move(-1)}><ChevronLeft /></Button>
-          <Button variant="ghost" size="icon" className="size-7 bg-background/60" aria-label="Next banner" title="Next banner" onClick={() => move(1)}><ChevronRight /></Button>
         </div>
       </div>
     </section>
