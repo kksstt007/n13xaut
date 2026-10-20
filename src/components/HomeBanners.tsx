@@ -41,7 +41,7 @@ export function HomeBanners() {
 
   return (
     <section
-      className="home-banner relative overflow-hidden rounded-lg border border-border"
+      className="home-banner relative overflow-hidden rounded-[8px] border border-border"
       aria-label="Gold highlights" aria-roledescription="carousel"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}

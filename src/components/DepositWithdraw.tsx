@@ -130,7 +130,7 @@ function ActionButton({ kind, onClick }: { kind: "deposit" | "withdraw"; onClick
 
 /* ----------------------------- Funds sheet ---------------------------- */
 
-function FundsSheet({
+export function FundsSheet({
   open, mode, onClose, available,
 }: { open: boolean; mode: "deposit" | "withdraw"; onClose: () => void; available: number }) {
   const { user } = useAuth();
