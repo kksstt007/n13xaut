@@ -1,4 +1,5 @@
 # Home refresh
+- [ ] Complete final desktop/mobile review and correct Home action behavior and chat overlap.
 - [ ] Center banner dots and remove play, pause and arrow controls.
 - [ ] Style balance as liquid glass and Deposit/Withdraw as icon-over-label actions.
 - [ ] Add Home footer with platform links and trading risk notice.
