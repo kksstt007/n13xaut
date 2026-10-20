@@ -5,6 +5,8 @@ import { ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpFromLine, ArrowUpRight, Can
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { HomeBanners } from "@/components/HomeBanners";
+import { FundsSheet } from "@/components/DepositWithdraw";
+import { WithdrawWizard } from "@/components/WithdrawWizard";
 import { Button } from "@/components/ui/button";
 import { fmtUSD } from "@/lib/format";
 
@@ -24,6 +26,7 @@ function Dashboard() {
   const { user } = useAuth();
   const userId = user?.id;
   const [balanceVisible, setBalanceVisible] = React.useState(true);
+  const [fundsAction, setFundsAction] = React.useState<"deposit" | "withdraw" | null>(null);
   const [activity, setActivity] = React.useState<"open" | "recent">("open");
   const { data: profile } = useQuery({
     queryKey: ["profile-name", userId], enabled: !!userId, staleTime: 60_000,
@@ -100,7 +103,7 @@ function Dashboard() {
 
       <HomeBanners />
 
-      <section className="home-balance-glass rounded-lg p-5 sm:p-6" aria-label="Account balance">
+      <section className="home-balance-glass rounded-[8px] p-5 sm:p-6" aria-label="Account balance">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <h2 className="text-xs text-muted-foreground">Estimated total balance</h2>
@@ -115,8 +118,8 @@ function Dashboard() {
         </div>
         {(wallet.isError || investments.isError) && <p className="text-xs text-destructive mt-2">Balance unavailable. <Button variant="link" className="h-auto p-0 text-xs" onClick={() => { void wallet.refetch(); void investments.refetch(); }}>Retry</Button></p>}
         <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-foreground/10">
-          <Button asChild variant="ghost" className="group h-20 flex-col gap-2 rounded-lg hover:bg-foreground/5"><Link to="/profile"><span className="flex size-10 items-center justify-center rounded-full bg-gold text-primary-foreground transition-transform group-hover:-translate-y-0.5"><ArrowDownToLine className="size-5" /></span><span className="text-xs font-medium">Deposit</span></Link></Button>
-          <Button asChild variant="ghost" className="group h-20 flex-col gap-2 rounded-lg hover:bg-foreground/5"><Link to="/profile"><span className="flex size-10 items-center justify-center rounded-full bg-foreground/10 text-foreground border border-foreground/15 transition-transform group-hover:-translate-y-0.5"><ArrowUpFromLine className="size-5" /></span><span className="text-xs font-medium">Withdraw</span></Link></Button>
+          <Button variant="ghost" className="group h-20 flex-col gap-2 rounded-[8px] hover:bg-foreground/5" onClick={() => setFundsAction("deposit")}><span className="flex size-10 items-center justify-center rounded-full bg-gold text-primary-foreground transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowDownToLine className="size-5" /></span><span className="text-xs font-medium">Deposit</span></Button>
+          <Button variant="ghost" className="group h-20 flex-col gap-2 rounded-[8px] hover:bg-foreground/5" disabled={wallet.isPending || wallet.isError} onClick={() => setFundsAction("withdraw")}><span className="flex size-10 items-center justify-center rounded-full bg-foreground/10 text-foreground border border-foreground/15 transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowUpFromLine className="size-5" /></span><span className="text-xs font-medium">Withdraw</span></Button>
         </div>
       </section>
 
@@ -151,7 +154,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <footer className="border-t border-border pt-6 mt-8" aria-label="Platform footer">
+      <footer role="contentinfo" className="border-t border-border pt-6 mt-8" aria-label="Platform footer">
         <div className="flex items-baseline justify-between gap-3 mb-5"><p className="font-display text-base font-semibold">XAUT<span className="text-gold">.trade</span></p><span className="text-[10px] text-muted-foreground">Gold trading</span></div>
         <div className="grid grid-cols-2 gap-6">
           <nav aria-label="Footer markets" className="flex flex-col items-start gap-1"><h2 className="text-xs font-semibold mb-1">Markets & products</h2>{([{ to: "/market", label: "Gold market" }, { to: "/trade", label: "Trade XAU₮" }, { to: "/invest", label: "Gold Earn" }] as const).map(item => <Button key={item.to} asChild variant="link" className="h-8 p-0 text-[11px] text-muted-foreground hover:text-gold"><Link to={item.to}>{item.label}</Link></Button>)}</nav>
@@ -159,6 +162,8 @@ function Dashboard() {
         </div>
         <div className="border-t border-border mt-5 pt-4 space-y-3"><p className="text-[10px] leading-relaxed text-muted-foreground"><span className="font-medium text-foreground/70">Risk notice.</span> Digital assets and gold prices can fluctuate. Trading involves risk of loss. Returns are not guaranteed.</p><p className="text-[10px] text-muted-foreground">© XAUT.trade. All rights reserved.</p></div>
       </footer>
+      {fundsAction === "deposit" && <FundsSheet open mode="deposit" onClose={() => setFundsAction(null)} available={balance} />}
+      <WithdrawWizard open={fundsAction === "withdraw"} onClose={() => setFundsAction(null)} available={balance} />
     </div>
   );
 }

@@ -89,9 +89,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" },
     ],
-    scripts: [
-      { src: "https://plugin-code.salesmartly.com/js/project_745267_769704_1781238182.js", async: true },
-    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -124,6 +121,14 @@ function AuthSync() {
 function SalesmartlyPositionFix() {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+    // Load only after hydration: the widget mutates the document on startup.
+    if (!document.getElementById("xaut-live-chat-script")) {
+      const script = document.createElement("script");
+      script.id = "xaut-live-chat-script";
+      script.src = "https://plugin-code.salesmartly.com/js/project_745267_769704_1781238182.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
     const SELECTORS = [
       "#s-chat-code", "#salesmartly-chat", '[id^="salesmartly"]', '[class*="salesmartly"]',
       "salesmartly-chat-widget", ".ss-widget-container", ".ss-chat-widget",
