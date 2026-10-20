@@ -103,7 +103,7 @@ function Dashboard() {
 
       <HomeBanners />
 
-      <section className="home-balance-glass rounded-[8px] p-5 sm:p-6" aria-label="Account balance">
+      <section className="home-balance-glass rounded-[8px] px-4 py-3 sm:px-5 sm:py-4" aria-label="Account balance">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <h2 className="text-xs text-muted-foreground">Estimated total balance</h2>
@@ -111,15 +111,15 @@ function Dashboard() {
           </div>
           <Button asChild variant="link" className="h-7 p-0 text-[11px]"><Link to="/profile">Assets<ArrowUpRight /></Link></Button>
         </div>
-        <div className="flex items-baseline flex-wrap gap-2 mt-1"><span className="num font-display text-3xl font-semibold break-all">{amount(balance + invested, wallet.isPending || investments.isPending, wallet.isError || investments.isError)}</span><span className="text-xs text-muted-foreground">USDT</span></div>
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div><p className="text-[11px] text-muted-foreground">Available</p><p className="num text-sm font-medium mt-1">{amount(balance, wallet.isPending, wallet.isError)} <span className="text-[10px] text-muted-foreground">USDT</span></p></div>
-          <div className="border-l border-border pl-4"><p className="text-[11px] text-muted-foreground">In investment plans</p><p className="num text-sm font-medium mt-1">{amount(invested, investments.isPending, investments.isError)} <span className="text-[10px] text-muted-foreground">USDT</span></p></div>
+        <div className="flex items-baseline flex-wrap gap-2"><span className="num font-display text-2xl font-semibold leading-tight break-all">{amount(balance + invested, wallet.isPending || investments.isPending, wallet.isError || investments.isError)}</span><span className="text-[11px] text-muted-foreground">USDT</span></div>
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="min-w-0"><p className="text-[10px] text-muted-foreground">Available</p><p className="num text-xs font-medium mt-0.5 break-words">{amount(balance, wallet.isPending, wallet.isError)} <span className="text-[9px] text-muted-foreground">USDT</span></p></div>
+          <div className="min-w-0 border-l border-border pl-3"><p className="text-[10px] text-muted-foreground">In investment plans</p><p className="num text-xs font-medium mt-0.5 break-words">{amount(invested, investments.isPending, investments.isError)} <span className="text-[9px] text-muted-foreground">USDT</span></p></div>
         </div>
         {(wallet.isError || investments.isError) && <p className="text-xs text-destructive mt-2">Balance unavailable. <Button variant="link" className="h-auto p-0 text-xs" onClick={() => { void wallet.refetch(); void investments.refetch(); }}>Retry</Button></p>}
-        <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-foreground/10">
-          <Button variant="ghost" className="group h-20 flex-col gap-2 rounded-[8px] hover:bg-foreground/5" onClick={() => setFundsAction("deposit")}><span className="flex size-10 items-center justify-center rounded-full bg-gold text-primary-foreground transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowDownToLine className="size-5" /></span><span className="text-xs font-medium">Deposit</span></Button>
-          <Button variant="ghost" className="group h-20 flex-col gap-2 rounded-[8px] hover:bg-foreground/5" disabled={wallet.isPending || wallet.isError} onClick={() => setFundsAction("withdraw")}><span className="flex size-10 items-center justify-center rounded-full bg-foreground/10 text-foreground border border-foreground/15 transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowUpFromLine className="size-5" /></span><span className="text-xs font-medium">Withdraw</span></Button>
+        <div className="grid grid-cols-2 gap-3 mt-3 pt-2 border-t border-foreground/10">
+          <Button variant="ghost" className="group h-14 flex-col gap-1 rounded-[8px] hover:bg-foreground/5" onClick={() => setFundsAction("deposit")}><span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gold text-primary-foreground transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowDownToLine className="size-4" /></span><span className="text-[11px] font-medium">Deposit</span></Button>
+          <Button variant="ghost" className="group h-14 flex-col gap-1 rounded-[8px] hover:bg-foreground/5" disabled={wallet.isPending || wallet.isError} onClick={() => setFundsAction("withdraw")}><span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-foreground border border-foreground/15 transition-transform motion-safe:group-hover:-translate-y-0.5"><ArrowUpFromLine className="size-4" /></span><span className="text-[11px] font-medium">Withdraw</span></Button>
         </div>
       </section>
 
